@@ -138,7 +138,9 @@ dr hab.\ inż.\ Tomasz Szydło, prof.\ AGH}
 % poniższą zawartość rodziału należy usunąć z finalnej wersji pracy.
 \emph{Charakterystyka problemu, motywacja projektu (w tym przegląd istniejących rozwiązań prowadząca do uzasadnienia celu prac), wizja produktu i analiza zagrożeń.}
 
-\begin{tikzpicture}[node distance=2cm]
+\begin{figure}[!htbp]
+  \centering
+\begin{tikzpicture}
 \pgfdeclarelayer{background}
 \pgfsetlayers{background,main}
 
@@ -172,7 +174,7 @@ dr hab.\ inż.\ Tomasz Szydło, prof.\ AGH}
     draw,
     dashed,
     rectangle,
-    inner sep=0.25cm,
+    inner sep=0.5cm,
     fit=(tsetlinmachine) (trainer),
     label=above:\texttt{green\_tsetlin},
 ] (greentsetlin) {};
@@ -180,7 +182,8 @@ dr hab.\ inż.\ Tomasz Szydło, prof.\ AGH}
 \node [
     draw,
     rectangle,
-    right=1cm of tsetlinmachine,
+    right=1.5cm of tsetlinmachine,
+    yshift=-0.5cm,
 ] (savetofbs) {\texttt{save\_to\_fbs}};
 
 \node [
@@ -192,7 +195,8 @@ dr hab.\ inż.\ Tomasz Szydło, prof.\ AGH}
 \node [
     draw,
     rectangle,
-    right=0.5cm of savetofbs,
+    right=-0.5cm of savetofbs,
+    yshift=1cm,
 ] (ctsetlinclassifier) {\texttt{CTsetlinClassifier}};
 
 \node [
@@ -205,14 +209,15 @@ dr hab.\ inż.\ Tomasz Szydło, prof.\ AGH}
     draw,
     dotted,
     rectangle,
-    below=7cm of ctsetlinclassifier,
+    below=5cm of savetobin,
+    xshift=2cm,
 ] (modelstate) {\texttt{MODEL STATE}};
 
 \node [
     draw,
     dashed,
     rectangle,
-    inner sep=0.25cm,
+    inner sep=0.5cm,
     label=above:\texttt{tsetlin\_machine\_py},
     fit=(savetofbs) (savetobin) (ctsetlinclassifier),
 ] (tsetlinmachinepy) {};
@@ -231,7 +236,7 @@ dr hab.\ inż.\ Tomasz Szydło, prof.\ AGH}
 \node [
     draw,
     rectangle,
-    left=4cm of modelstate,
+    left=2cm of modelstate,
 ] (tmload) {\texttt{tm\_load}};
 
 \node [
@@ -250,8 +255,8 @@ dr hab.\ inż.\ Tomasz Szydło, prof.\ AGH}
     draw,
     dotted,
     rectangle,
-    left=1cm of tmtrain,
-] (externaldata) {\texttt{TRAIN DATA}};
+    left=1.5cm of tmtrain,
+] (externaldata) {\texttt{EXTERNAL DATA}};
 
 \node [
     draw,
@@ -269,7 +274,7 @@ dr hab.\ inż.\ Tomasz Szydło, prof.\ AGH}
     draw,
     dashed,
     rectangle,
-    inner sep=0.25cm,
+    inner sep=0.5cm,
     label=above:\texttt{tsetlin\_machine\_c},
     fit=(tmload) (tmtrain) (tmsave) (tmpredict) (tmcreate),
 ] (tsetlinmachinec) {};
@@ -284,7 +289,38 @@ dr hab.\ inż.\ Tomasz Szydło, prof.\ AGH}
     label=above:Embedded (On-Device),
 ] (embedded) {};
 
+% --- connections ---
+\begin{scope}[->, very thick]
+\draw [->] (tsetlinmachine.south) -| (trainer.north);
+
+\draw [->] (traindata.north) -| (trainer.south);
+\draw [->] (evaldata.north) |- (trainer.west);
+
+\draw [->] (trainer.east) -| (savetofbs.south west);
+\draw [->] (trainer.east) -| (savetobin.north west);
+
+\draw [->] (savetofbs.east) -| (modelstate.north);
+\draw [->] (savetobin.east) -| (modelstate.north);
+
+\draw [->] (ctsetlinclassifier.east) -| (jupyternotebook.south east);
+\draw [->] (tsetlinmachinec.east) -| (ctsetlinclassifier.south east) node[near start, below] {\texttt{Python Bindings}};
+
+\draw [->] (modelstate.west) |- (tmload.east);
+
+\draw [->] (tmcreate.south) -| (tmload.north);
+\draw [->] (tmload.south) -| (tmtrain.north);
+\draw [->] (tmload.south) -| (tmtrain.north);
+\draw [->] (tmtrain.south) -| (tmsave.north);
+\draw [->] (tmsave.south) -| (tmpredict.north);
+
+\draw [->] (externaldata.east) |- (tmtrain.west);
+\end{scope}
+
 \end{tikzpicture}
+
+\caption[Project diagram]{Project diagram where \texttt{green\_tsetlin} is the external library.}
+\label{fig:projdiagram}
+\end{figure}
 
 
 % Przykład cytowania literatury~\cite{wilson2009prediction-interday}. Kolejny przykład
