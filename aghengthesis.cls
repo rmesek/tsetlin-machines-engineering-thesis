@@ -25,9 +25,11 @@
   \newcommand*{\LangSecondaryTitle}{\@titleEN}
 
   \newcommand*{\ChapterTitleProjectVision}{Cel prac i wizja produktu}
+  \newcommand*{\ChapterTitleTheory}{Podstawy teoretyczne}	
   \newcommand*{\ChapterTitleScope}{Zakres funkcjonalności}	
   \newcommand*{\ChapterTitleRealizationAspects}{Wybrane aspekty realizacji}
   \newcommand*{\ChapterTitleWorkOrganization}{Organizacja pracy}
+  \newcommand*{\ChapterTitleDocumentation}{Zastosowanie i sposób użycia}
   \newcommand*{\ChapterTitleResults}{Wyniki projektu}
 
   \newcommand*{\BabelLang}{polish}
@@ -48,9 +50,11 @@
   \newcommand*{\LangSecondaryTitle}{\@titlePL}
 	
   \newcommand*{\ChapterTitleProjectVision}{Project goals and vision}
+  \newcommand*{\ChapterTitleTheory}{Theoretical background}	
   \newcommand*{\ChapterTitleScope}{Functional scope}
   \newcommand*{\ChapterTitleRealizationAspects}{Selected realization aspects}
   \newcommand*{\ChapterTitleWorkOrganization}{Work organization}
+  \newcommand*{\ChapterTitleDocumentation}{Application and usage}
   \newcommand*{\ChapterTitleResults}{Project results}
 
 
@@ -69,10 +73,9 @@
 \newcommand*{\LangAgh}{Akademia Górniczo-Hutnicza im. Stanisława Staszica
   w Krakowie}
 
-\newcommand*{\LangFaculty}{Wydział Informatyki, Elektroniki i
-  Telekomunikacji}
+\newcommand*{\LangFaculty}{Wydział Informatyki}
 
-\newcommand*{\LangInstitute}{Instytut Informatyki}
+\newcommand*{\LangInstitute}{}
 
 \newcommand*{\LangFieldOfStudy}{Kierunek: }
 
@@ -186,12 +189,12 @@
 \vfill
 \vspace*{1cm}
 
-\begin{tabbing}
-\small{\LangThesisAuthor} \hspace{2cm} \= {\@author} \\
-\small{\LangFieldOfStudy} \> {\@fieldofstudy}\\
-%\small{\LangTypeOfStudies} \> {\@typeofstudies}\\
-\small{\LangSupervisor} \> {\@supervisor}
-\end{tabbing}
+\begin{tabularx}{\linewidth}{@{}l X@{}} 
+\small{\LangThesisAuthor} & \@author \\ 
+\small{\LangFieldOfStudy} & \@fieldofstudy \\ 
+% \small{\LangTypeOfStudies} & \@typeofstudies \\ 
+\small{\LangSupervisor} & \@supervisor 
+\end{tabularx}
 
 \vfill
 \vspace*{1cm}

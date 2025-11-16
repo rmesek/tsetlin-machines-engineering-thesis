@@ -1,14 +1,778 @@
-\documentclass{article}
-\usepackage{graphicx} % Required for inserting images
+%%%%%% -*- Coding: utf-8-unix; Mode: latex
 
-\title{Tsetlin Machines execution engine for embedded devices}
-\author{Robert Mesek}
-\date{November 2025}
+%\documentclass[polish]{aghengthesis}
+\documentclass[english]{aghengthesis} %dla pracy w języku angielskim. Uwaga, w przypadku strony tytułowej zmiana języka dotyczy tylko kolejności wersji językowych tytułu pracy. 
+% Szablon przystosowany jest do druku dwustronnego. 
 
+\usepackage[utf8]{inputenc}
+\usepackage{url}
+\usepackage{subfigure}
+\usepackage{tabularx}
+\usepackage{ltablex}
+\usepackage{ragged2e}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{grffile}
+\usepackage{indentfirst}
+\usepackage{caption}
+\usepackage{listings}
+\usepackage[ruled,linesnumbered,lined]{algorithm2e}
+\usepackage[bookmarks=false]{hyperref}
+\usepackage{array}
+\usepackage{tikz}
+\usetikzlibrary{positioning, arrows, fit, backgrounds}
+
+\hypersetup{colorlinks,
+  linkcolor=blue,
+  citecolor=blue,
+  urlcolor=blue}
+
+\usepackage[svgnames]{xcolor}
+\usepackage{inconsolata}
+
+\usepackage{csquotes}
+% \DeclareQuoteStyle[quotes]{polish}
+%   {\quotedblbase}
+%   {\textquotedblright}
+%   [0.05em]
+%   {\quotesinglbase}
+%   {\fixligatures\textquoteright}
+% \DeclareQuoteAlias[quotes]{polish}{polish}
+
+\usepackage[nottoc]{tocbibind}
+
+\usepackage[
+style=numeric,
+sorting=nyt,
+isbn=false,
+doi=true,
+url=true,
+backref=false,
+backrefstyle=none,
+maxnames=10,
+giveninits=true,
+abbreviate=true,
+defernumbers=false,
+backend=biber]{biblatex}
+\addbibresource{bibliografia.bib}
+
+\lstset{
+    %language=Python, %% PHP, C, Java, etc.
+    basicstyle=\ttfamily\footnotesize,
+    backgroundcolor=\color{gray!5},
+    commentstyle=\it\color{Green},
+    keywordstyle=\color{Red},
+    stringstyle=\color{Blue},
+    numberstyle=\tiny\color{Black},    
+    % morekeywords={TestKeyword},
+    % mathescape=true,
+    escapeinside=`',
+    frame=single, %shadowbox, 
+    tabsize=2,
+    rulecolor=\color{black!30},
+    title=\lstname,
+    breaklines=true,
+    breakatwhitespace=true,
+    framextopmargin=2pt,
+    framexbottommargin=2pt,
+    extendedchars=false,
+    captionpos=b,
+    abovecaptionskip=5pt,
+    keepspaces=true,            
+    numbers=left,                    
+    numbersep=5pt,                  
+    showspaces=false,                
+    showstringspaces=false,
+    showtabs=false,
+    tabsize=2
+  }
+
+\SetAlgorithmName{\LangAlgorithm}{\LangAlgorithmRef}{\LangListOfAlgorithms}
+\newcommand{\listofalgorithmes}{\tocfile{\listalgorithmcfname}{loa}}
+
+\renewcommand{\lstlistingname}{\LangListing}
+\renewcommand\lstlistlistingname{\LangListOfListings}
+
+\renewcommand{\lstlistoflistings}{\begingroup
+\tocfile{\lstlistlistingname}{lol}
+\endgroup}
+
+% Definicje nowych rodzajów kolumn w tabeli
+\newcolumntype{Y}{>{\small\centering\arraybackslash}X}
+%\newcolumntype{b}{>{\hsize=1.6\hsize}Y}
+%\newcolumntype{m}{>{\hsize=.6\hsize}Y}
+%\newcolumntype{s}{>{\hsize=.4\hsize}Y}
+
+\captionsetup[figure]{skip=5pt,position=bottom}
+\captionsetup[table]{skip=5pt,position=top}
+
+\newcommand*{\LibraryName}{\emph{tsetlin\_machine\_c }}
+\newcommand*{\GreenTsetlinName}{\emph{green\_tsetlin }}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\author{Robert Mesek, Igor Sikora, Michał Tomaszewski}
+
+\titlePL{Silnik wykonawczy Maszyn Tsetlina dla urządzeń o ograniczonych zasobach}
+\titleEN{Tsetlin Machines execution engine for embedded devices}
+
+\fieldofstudy{Informatyka}
+
+%\typeofstudies{Stacjonarne}
+
+\supervisor{dr hab.\ inż.\ Bartłomiej Śnieżyński, prof.\ AGH, \newline
+dr hab.\ inż.\ Tomasz Szydło, prof.\ AGH}
+
+\date{\the\year}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \begin{document}
 
 \maketitle
 
-\section{Introduction}
+\tableofcontents
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\chapter{\ChapterTitleProjectVision}
+\label{sec:goals-vision}
+
+% poniższą zawartość rodziału należy usunąć z finalnej wersji pracy.
+\emph{Charakterystyka problemu, motywacja projektu (w tym przegląd istniejących rozwiązań prowadząca do uzasadnienia celu prac), wizja produktu i analiza zagrożeń.}
+
+\begin{tikzpicture}[node distance=2cm]
+\pgfdeclarelayer{background}
+\pgfsetlayers{background,main}
+
+% --- host components (Main Layer) ---
+\node [
+    draw,
+    rectangle,
+] (tsetlinmachine) {\texttt{TsetlinMachine}};
+
+\node [
+    draw,
+    rectangle,
+    below=0.5cm of tsetlinmachine,
+] (trainer) {\texttt{Trainer}};
+
+\node [
+    draw,
+    dotted,
+    rectangle,
+    below=1cm of trainer,
+] (traindata) {\texttt{TRAIN DATA}};
+
+\node [
+    draw,
+    dotted,
+    rectangle,
+    left=0.5cm of traindata,
+] (evaldata) {\texttt{EVAL DATA}};
+
+\node [
+    draw,
+    dashed,
+    rectangle,
+    inner sep=0.25cm,
+    fit=(tsetlinmachine) (trainer),
+    label=above:\texttt{green\_tsetlin},
+] (greentsetlin) {};
+
+\node [
+    draw,
+    rectangle,
+    right=1cm of tsetlinmachine,
+] (savetofbs) {\texttt{save\_to\_fbs}};
+
+\node [
+    draw,
+    rectangle,
+    below=0.5cm of savetofbs,
+] (savetobin) {\texttt{save\_to\_bin}};
+
+\node [
+    draw,
+    rectangle,
+    right=0.5cm of savetofbs,
+] (ctsetlinclassifier) {\texttt{CTsetlinClassifier}};
+
+\node [
+    draw,
+    rectangle,
+    above=1.5cm of ctsetlinclassifier,
+] (jupyternotebook) {\texttt{Jupyter Notebook Examples}};
+
+\node [
+    draw,
+    dotted,
+    rectangle,
+    below=7cm of ctsetlinclassifier,
+] (modelstate) {\texttt{MODEL STATE}};
+
+\node [
+    draw,
+    dashed,
+    rectangle,
+    inner sep=0.25cm,
+    label=above:\texttt{tsetlin\_machine\_py},
+    fit=(savetofbs) (savetobin) (ctsetlinclassifier),
+] (tsetlinmachinepy) {};
+
+% --- host container ---
+\node [
+    draw,
+    dashed,
+    rectangle,
+    fit=(greentsetlin) (tsetlinmachinepy) (traindata) (evaldata) (jupyternotebook),
+    inner sep=0.75cm,
+    label=above:Host (PC),
+] (host) {};
+
+% --- embedded component ---
+\node [
+    draw,
+    rectangle,
+    left=4cm of modelstate,
+] (tmload) {\texttt{tm\_load}};
+
+\node [
+    draw,
+    rectangle,
+    above=0.5cm of tmload,
+] (tmcreate) {\texttt{tm\_create}};
+
+\node [
+    draw,
+    rectangle,
+    below=0.5cm of tmload,
+] (tmtrain) {\texttt{tm\_train}};
+
+\node [
+    draw,
+    dotted,
+    rectangle,
+    left=1cm of tmtrain,
+] (externaldata) {\texttt{TRAIN DATA}};
+
+\node [
+    draw,
+    rectangle,
+    below=0.5cm of tmtrain,
+] (tmsave) {\texttt{tm\_save}};
+
+\node [
+    draw,
+    rectangle,
+    below=0.5cm of tmsave,
+] (tmpredict) {\texttt{tm\_predict}};
+
+\node [
+    draw,
+    dashed,
+    rectangle,
+    inner sep=0.25cm,
+    label=above:\texttt{tsetlin\_machine\_c},
+    fit=(tmload) (tmtrain) (tmsave) (tmpredict) (tmcreate),
+] (tsetlinmachinec) {};
+
+% --- embedded container ---
+\node [
+    draw,
+    dashed,
+    rectangle,
+    fit=(tsetlinmachinec) (externaldata),
+    inner sep=0.75cm,
+    label=above:Embedded (On-Device),
+] (embedded) {};
+
+\end{tikzpicture}
+
+
+% Przykład cytowania literatury~\cite{wilson2009prediction-interday}. Kolejny przykład
+% cytowania kilku pozycji bibliograficznych~\cite{allen1999using-genetic, zitzler1999evolutionary-algorithms, pictet1995genetic-algorithms, wilhelmstotter2021jenetics, chmaj2015DistributedProcessingApplications}.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\chapter{\ChapterTitleTheory}
+\label{sec:theoretical-background}
+
+\section{Original Tsetlin Machine}
+
+\section{Improvements to the original}
+
+\section{Sparse Tsetlin Machine}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\chapter{\ChapterTitleScope}
+\label{sec:functional-scope}
+
+% poniższą zawartość rodziału należy usunąć z finalnej wersji pracy.
+\emph{Kontekst użytkowania produktu (aktorzy, współpracujące systemy) oraz specyfikacja wymagań funkcjonalnych i niefunkcjonalnych.}
+
+C library that can work (both infer and train) on embeds for Tsetlin Machine + model serialization format standard
+
+\section{Existing solutions}
+green\_tsetlin itself can already export a model into a C header file. Then it can be used for inference but not training – and is stored less efficiently in text format instead of binary. 
+
+Our solution aims to allow both inference and training, or on more resource constrained systems, just inference in (this is subject to debate) a more efficient format. 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\chapter{\ChapterTitleRealizationAspects}
+\label{sec:realization-aspects}
+
+% poniższą zawartość rodziału należy usunąć z finalnej wersji pracy.
+\emph{Przyjęte założenia, struktura i zasada działania systemu, wykorzystane rozwiązania technologiczne wraz z uzasadnieniem ich wyboru, istotne mechanizmy i zastosowane algorytmy.}
+
+\section{Dense}
+\section{Sparse}
+\section{Stateless}
+\section{Optimizations}
+
+\subsection{Pseudo random number generation}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\chapter{\ChapterTitleWorkOrganization}
+\label{sec:work-organization}
+
+% poniższą zawartość rodziału należy usunąć z finalnej wersji pracy.
+\emph{Struktura zespołu (role poszczególnych osób), krótki opis i uzasadnienie przyjętej metodyki i/lub kolejności prac, planowane i zrealizowane etapy prac ze wskazaniem udziału poszczególnych członków zespołu, wykorzystane praktyki i narzędzia w zarządzaniu projektem.}
+
+the whole saga on dc
+  
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\chapter{\ChapterTitleDocumentation}
+\label{sec:documentation-usage}
+
+The \LibraryName library is a low-level C implementation of the Tsetlin Machine. It is optimized for speed and size, making it suitable for environments with limited resources. It comes with a model serialization format designed to minimize model size and a way to convert existing \GreenTsetlinName models to this format. It is also possible to use \LibraryName conveniently from Python with the same syntax as many popular Machine Learning libraries thanks to its python bindings.
+
+\section{Quick start - C}
+
+Listing ~\ref{lst:example-c} shows the basic usage of \LibraryName in C for both training and inference.
+\begin{lstlisting}[language=C,caption={[Example C usage for both training and inference]Example C usage for both training and inference},label=lst:example-c]
+#include <stdint.h>
+#include <stdlib.h>
+#include "tsetlin_machine.h"
+// ...
+
+srand(42);
+
+// Set TsetlinMachine parameters
+uint32_t num_classes = 10;
+uint32_t threshold = 1200;
+uint32_t num_literals = 784;
+uint32_t num_clauses = 1000;
+int8_t max_state = 127;
+int8_t min_state = -127;
+uint8_t boost_true_positive_feedback = 1;
+uint32_t y_size = 1;
+uint32_t y_element_size = sizeof(int32_t);
+float s = 20.0f;
+uint32_t seed = 42;
+
+struct TsetlinMachine *tm = tm_create(num_classes, threshold, num_literals, num_clauses,
+    max_state, min_state, boost_true_positive_feedback, y_size, y_element_size, s, seed);
+if (tm == NULL) {
+    perror("tm_load failed");
+    return 1;
+}
+
+// Load in data
+uint32_t rows = 70000;
+uint32_t cols = 784;
+uint8_t *x_data = malloc(rows * cols * sizeof(uint8_t));
+int32_t *y_data = malloc(rows * sizeof(int32_t));
+if (x_data == NULL || y_data == NULL) {
+    fprintf(stderr, "Failed to allocate memory for x_data or y_data\n");
+    return 1;
+}
+printf("Loading MNIST data\n");
+load_mnist_data(x_data, y_data);  // helper function to load data
+
+uint8_t *x_train = x_data;
+int32_t *y_train = y_data;
+uint8_t *x_test = x_data + 60000 * cols;
+int32_t *y_test = y_data + 60000;
+
+// Train model on 1000 train rows for 1 epoch
+tm_train(tm, x_train, y_train, 1000, 1);
+
+// Evaluate models on 1000 test rows
+tm_evaluate(tm, x_test, y_test, 1000);
+
+// Clean up
+tm_free(tm);
+free(x_data);
+free(y_data);
+
+\end{lstlisting}
+
+\section{Quick start - Python}
+
+Listing ~\ref{lst:example-py} shows the basic usage of \LibraryName in Python for both training and inference.
+\begin{lstlisting}[language=Python,caption={[Example Python usage for both training and inference]Example Python usage for both training and inference},label=lst:example-py]
+import numpy as np
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.datasets import load_digits
+from sklearn.preprocessing import OneHotEncoder
+from sklearn.metrics import accuracy_score
+from tsetlin_machine_py.c_tsetlin_clf import CTsetlinClassifier
+
+# Generate the dataset with specified parameters
+digits = load_digits()
+X_data, y_data = digits.data, digits.target
+
+# Convert the dataset to binary classification
+X_data = OneHotEncoder(sparse_output=False).fit_transform(X_data)
+
+# Split the dataset into training and testing sets
+X_train_np, X_test_np, y_train, y_test = train_test_split(
+    X_data, y_data, test_size=0.2, stratify=y_data, random_state=42
+)
+
+# Convert NumPy arrays to Pandas DataFrames
+feature_names = [f"feature_{i}" for i in range(X_data.shape[1])]
+X_train = pd.DataFrame(X_train_np, columns=feature_names)
+X_test = pd.DataFrame(X_test_np, columns=feature_names)
+
+# Fit the model
+c_tsetlin_clf = CTsetlinClassifier(random_state=42)
+c_tsetlin_clf.fit(X_train, y_train)
+
+# Predict on the test set
+y_test_pred = model.predict(X_test)
+
+# Calculate Accuracy
+test_accuracy = accuracy_score(y_test, y_test_pred)
+print(test_accuracy)
+
+\end{lstlisting}
+
+\section{API}
+The three main components of the \LibraryName library are the \emph{TsetlinMachine}, \emph{SparseTsetlinMachine}, and \emph{StatelessTsetlinMachine} classes.
+
+\paragraph{Data layout conventions used across the API:}
+\begin{itemize}
+    \item X: flat array of shape (rows, num\_literals) of uint8\_t (each value 0 or 1)
+    \item y: flat array of shape (rows, y\_size) with element size y\_element\_size
+    \item y\_pred: flat array of shape (rows, num\_classes) with element size y\_element\_size
+\end{itemize}
+
+\subsection{TsetlinMachine}
+The basic Tsetlin Machine variant
+
+\subsubsection{Public API (quick reference)}
+
+\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X}
+\textbf{Method} \newline \textit{Description} \\
+\hline
+
+\texttt{tm\_create(uint32\_t num\_classes, uint32\_t threshold, uint32\_t num\_literals, uint32\_t num\_clauses, int8\_t max\_state, int8\_t min\_state, uint8\_t boost\_true\_positive\_feedback, uint32\_t y\_size, uint32\_t y\_element\_size, float s, uint32\_t seed)} 
+\newline \textit{Create and initialize a Tsetlin Machine instance.} \\ \hline
+
+\texttt{tm\_load(const char *filename, uint32\_t y\_size, uint32\_t y\_element\_size)} 
+\newline \textit{ Load a TsetlinMachine from a binary file produced by \texttt{tm\_save}.} \\ \hline
+
+\texttt{tm\_save(const struct TsetlinMachine *tm, const char *filename)}
+\newline \textit{ Save a TsetlinMachine instance to a binary file.} \\ \hline
+
+\texttt{tm\_free(struct TsetlinMachine *tm)}
+\newline \textit{ Free a TsetlinMachine and all internally allocated memory.} \\ \hline
+
+\texttt{tm\_train(struct TsetlinMachine *tm, const uint8\_t *X, const void *y, uint32\_t rows, uint32\_t epochs)}
+\newline \textit{ Train the TsetlinMachine on a dataset.} \\ \hline
+
+\texttt{tm\_predict(struct TsetlinMachine *tm, const uint8\_t *X, void *y\_pred, uint32\_t rows)}
+\newline \textit{ Run inference with a TsetlinMachine.} \\ \hline
+
+\texttt{tm\_evaluate(struct TsetlinMachine *tm, const uint8\_t *X, const void *y, uint32\_t rows)}
+\newline \textit{ Evaluate accuracy on a dataset and print results to stdout.} \\ \hline
+\end{tabularx}
+
+\hspace{5pt}
+\subsubsection{Select detailed function descriptions}
+
+\paragraph{\texttt{tm\_create()}}
+\begin{description}
+    \item[Description:]  Create and initialize a Tsetlin Machine instance. \\
+Allocates internal arrays and seeds the PRNG. Needs to be deallocated with \texttt{tm\_free}
+    \item[Parameters:]\ %no clue why this works but don't remove this \
+    \begin{tabularx}{\textwidth}{XX}
+        \texttt{ num\_classes } &	Number of classes to predict. \\
+        \texttt{ threshold } &	Threshold for clause votes. \\
+        \texttt{ num\_literals } &	Number of literals (features) in the input data.\\
+        \texttt{ num\_clauses } &	Number of clauses in the Tsetlin Machine.\\
+        \texttt{ max\_state } &	Maximum automaton state value.\\
+        \texttt{ min\_state } &	Minimum automaton state value.\\
+        \texttt{ boost\_true\_positive\_feedback } &	Whether to boost true positive feedback (0/1).\\
+        \texttt{ y\_size } &	Size of the output vector (e.g., 1 for single-label classification).\\
+        \texttt{ y\_element\_size } &	Size of each output element (in bytes).\\
+        \texttt{ s } &	Sensitivity / learning parameter (> 1.0).\\
+        \texttt{ seed } &	Random seed for reproducibility. \\
+    \end{tabularx}
+    \item[Returns:] Pointer to the created TsetlinMachine, or NULL on allocation failure.
+\end{description}
+
+
+\hspace{5pt}
+\subsubsection{Advanced usage}
+
+This implementation is highly versatile; both input and output may come in any shape. The only limiting factors are that the input is binary and it is a classification architecture (as opposed to regression). There are two presets available:
+\begin{enumerate}
+    \item class\_idx - the output is a 32-bit unsigned integer signifying the index of chosen class
+    \item bin\_vector - the output is an array of 8-bit binary values, where 1 signifies a chosen class
+\end{enumerate}
+Custom formats can also be freely implemented. All that is required is to write the implementation based on the functions below and then set them as callbacks with the corresponding \texttt{tm\_set\_[...]}
+
+\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X}
+\textbf{Method} \newline \textit{Description} \\
+\hline
+
+\texttt{tm\_y\_eq\_generic(const struct TsetlinMachine *tm, const void *y, const void *y\_pred)}
+\newline \textit{ Generic equality comparator for outputs.} \\ \hline
+
+\texttt{tm\_oa\_class\_idx(const struct TsetlinMachine *tm, const void *y\_pred)}
+\newline \textit{ Output activation returning the index with highest vote.} \\ \hline
+
+\texttt{tm\_oa\_bin\_vector(const struct TsetlinMachine *tm, const void *y\_pred)}
+\newline \textit{ Output activation returning a per-class binary vector using the mid\_state threshold.} \\ \hline
+
+\texttt{tm\_set\_output\_activation(struct TsetlinMachine *tm, void (*output\_activation)(const struct TsetlinMachine *tm, const void *y\_pred))}
+\newline \textit{ Set a custom output activation function.} \\ \hline
+
+\texttt{tm\_feedback\_class\_idx(struct TsetlinMachine *tm, const uint8\_t *X, const void *y)}
+\newline \textit{ Calculate feedback when \texttt{y} contains a class index (\texttt{y\_size == 1}).} \\ \hline
+
+\texttt{tm\_feedback\_bin\_vector(struct TsetlinMachine *tm, const uint8\_t *X, const void *y)}
+\newline \textit{ Calculate feedback when \texttt{y} is a per-class binary indicator vector.} \\ \hline
+
+\texttt{tm\_apply\_feedback(struct TsetlinMachine *tm, uint32\_t clause\_id, uint32\_t class\_id, uint8\_t is\_class\_positive, const uint8\_t *X)}
+\newline \textit{ Internal helper to determine and apply correct feedback (type 1 or type 2).} \\ \hline
+
+\texttt{tm\_set\_calculate\_feedback(struct TsetlinMachine *tm, void (*calculate\_feedback)(struct TsetlinMachine *tm, const uint8\_t *X, const void *y))}
+\newline \textit{ Set a custom feedback calculation function.} \\ 
+\end{tabularx}
+
+
+
+\subsection{SparseTsetlinMachine}
+A Tsetlin Machine variant utilizing sparse memory layout. Its usage is very much symmetrical to the vanilla \texttt{TsetlinMachine}.
+
+\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X}
+\textbf{Method} \newline \textit{Description} \\
+\hline
+
+\texttt{stm\_create(uint32\_t num\_classes, uint32\_t threshold, uint32\_t num\_literals, uint32\_t num\_clauses, int8\_t max\_state, int8\_t min\_state, uint8\_t boost\_true\_positive\_feedback, uint32\_t y\_size, uint32\_t y\_element\_size, float s, uint32\_t seed)} \\
+\textit{Create and allocate a SparseTsetlinMachine instance.} \\
+\hline
+
+\texttt{stm\_load\_dense(const char *filename, uint32\_t y\_size, uint32\_t y\_element\_size)} \\
+\textit{Load a sparse TsetlinMachine from a binary file.} \\
+\hline
+
+\texttt{stm\_save(const struct SparseTsetlinMachine *stm, const char *filename)} \\
+\textit{Save a sparse TsetlinMachine to a binary file.} \\
+\hline
+
+\texttt{stm\_free(struct SparseTsetlinMachine *stm)} \\
+\textit{Free a SparseTsetlinMachine and all associated memory.} \\
+\hline
+
+\texttt{stm\_train(struct SparseTsetlinMachine *stm, const uint8\_t *X, const void *y, uint32\_t rows, uint32\_t epochs)} \\
+\textit{Train a sparse TsetlinMachine on a dataset.} \\
+\hline
+
+\texttt{stm\_predict(struct SparseTsetlinMachine *stm, const uint8\_t *X, void *y\_pred, uint32\_t rows)} \\
+\textit{Perform inference with a sparse TsetlinMachine.} \\
+\hline
+
+\texttt{stm\_evaluate(struct SparseTsetlinMachine *stm, const uint8\_t *X, const void *y, uint32\_t rows)} \\
+\textit{Evaluate sparse model accuracy on a dataset and print result.} \\ 
+\end{tabularx}
+
+\hspace{5pt}
+\subsubsection{Select detailed function descriptions}
+
+\paragraph{\texttt{stm\_create()}}
+\begin{description}
+    \item[Description:]  Create and initialize a Sparse Tsetlin Machine instance. \\
+Allocates internal arrays and seeds the PRNG. Needs to be deallocated with \texttt{stm\_free}.
+    \item[Parameters:]\ %no clue why this works but don't remove this \
+    \begin{tabularx}{\textwidth}{XX}
+        \texttt{ num\_classes } &	Number of classes to predict. \\
+        \texttt{ threshold } &	Threshold for clause votes. \\
+        \texttt{ num\_literals } &	Number of literals (features) in the input data.\\
+        \texttt{ num\_clauses } &	Number of clauses in the Tsetlin Machine.\\
+        \texttt{ max\_state } &	Maximum automaton state value.\\
+        \texttt{ min\_state } &	Minimum automaton state value.\\
+        \texttt{ boost\_true\_positive\_feedback } &	Whether to boost true positive feedback (0/1).\\
+        \texttt{ y\_size } &	Size of the output vector (e.g., 1 for single-label classification).\\
+        \texttt{ y\_element\_size } &	Size of each output element (in bytes).\\
+        \texttt{ s } &	Sensitivity / learning parameter (> 1.0).\\
+        \texttt{ seed } &	Random seed for reproducibility. \\
+    \end{tabularx}
+    \item[Returns:] Pointer to the created TsetlinMachine, or NULL on allocation failure.
+\end{description}
+
+\hspace{5pt}
+\subsubsection{Advanced usage}
+Similarly, custom formats can also be freely implemented. All that is required is to write the implementation based on the functions below and then set them as callbacks with the corresponding \texttt{stm\_set\_[...]}
+
+\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X}
+\textbf{Method} \newline \textit{Description} \\
+\hline
+\texttt{stm\_y\_eq\_generic(const struct SparseTsetlinMachine *stm, const void *y, const void *y\_pred)} \\
+\textit{Generic equality comparator for sparse TsetlinMachine outputs.} \\
+\hline
+
+\texttt{stm\_oa\_class\_idx(const struct SparseTsetlinMachine *stm, const void *y\_pred)} \\
+\textit{Output activation returning the class index with highest vote (sparse).} \\
+\hline
+
+\texttt{stm\_oa\_bin\_vector(const struct SparseTsetlinMachine *stm, const void *y\_pred)} \\
+\textit{Output activation producing per-class binary predictions (sparse).} \\
+\hline
+
+\texttt{stm\_set\_output\_activation(struct SparseTsetlinMachine *stm, void(*output\_activation)(const struct SparseTsetlinMachine *stm, const void *y\_pred))} \\
+\textit{Set a custom output activation function for sparse machine.} \\
+\hline
+
+\texttt{stm\_feedback\_class\_idx(struct SparseTsetlinMachine *stm, const uint8\_t *X, const void *y)} \\
+\textit{Calculate feedback when label is provided as a class index (sparse).} \\
+\hline
+
+\texttt{stm\_feedback\_bin\_vector(struct SparseTsetlinMachine *stm, const uint8\_t *X, const void *y)} \\
+\textit{Calculate feedback when label is provided as a binary vector (sparse).} \\
+\hline
+
+\texttt{stm\_apply\_feedback(struct SparseTsetlinMachine *stm, uint32\_t clause\_id, uint32\_t class\_id, uint8\_t is\_class\_positive, const uint8\_t *X)} \\
+\textit{Decide and apply appropriate feedback for a clause/class pair (sparse).} \\
+\hline
+
+\texttt{stm\_set\_calculate\_feedback(struct SparseTsetlinMachine *stm, void(*calculate\_feedback)(struct SparseTsetlinMachine *stm, const uint8\_t *X, const void *y))} \\
+\textit{Set a custom feedback calculation function for the sparse machine.} \\
+\hline
+
+\end{tabularx}
+
+
+
+
+\subsection{StatelessTsetlinMachine}
+An inference-only Tsetlin Machine variant utilizing sparse memory layout optimized for small size and inference speed
+
+\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X}
+\textbf{Method} \newline \textit{Description} \\
+\hline
+
+\texttt{sltm\_create(uint32\_t num\_classes, uint32\_t threshold, uint32\_t num\_literals, uint32\_t num\_clauses, int8\_t max\_state, int8\_t min\_state, uint8\_t boost\_true\_positive\_feedback, uint32\_t y\_size, uint32\_t y\_element\_size, float s)} \\
+\textit{Allocate and initialize a StatelessTsetlinMachine instance.} \\
+\hline
+
+\texttt{sltm\_load\_dense(const char *filename, uint32\_t y\_size, uint32\_t y\_element\_size)} \\
+\textit{Load a stateless machine by reading a dense TM binary and pruning.} \\
+\hline
+
+\texttt{sltm\_save(const struct StatelessTsetlinMachine *sltm, const char *filename)} \\
+\textit{Save a StatelessTsetlinMachine to a binary file.} \\
+\hline
+
+\texttt{sltm\_free(struct StatelessTsetlinMachine *sltm)} \\
+\textit{Free a StatelessTsetlinMachine and its resources.} \\
+\hline
+
+\texttt{sltm\_predict(struct StatelessTsetlinMachine *sltm, const uint8\_t *X, void *y\_pred, uint32\_t rows)} \\
+\textit{Run inference with a stateless machine.} \\
+\hline
+
+\texttt{sltm\_evaluate(struct StatelessTsetlinMachine *sltm, const uint8\_t *X, const void *y, uint32\_t rows)} \\
+\textit{Evaluate predictions on a dataset and print accuracy (stateless).} \\
+\end{tabularx}
+
+\hspace{5pt}
+\subsubsection{Select detailed function descriptions}
+
+\paragraph{\texttt{stm\_create()}}
+\begin{description}
+    \item[Description:]  Create and initialize a Stateless Tsetlin Machine instance. \\
+Allocates internal arrays. Needs to be deallocated with \texttt{sltm\_free}.
+    \item[Parameters:]\ %no clue why this works but don't remove this \
+    \begin{tabularx}{\textwidth}{XX}
+        \texttt{ num\_classes } &	Number of classes to predict. \\
+        \texttt{ threshold } &	Threshold for clause votes. \\
+        \texttt{ num\_literals } &	Number of literals (features) in the input data.\\
+        \texttt{ num\_clauses } &	Number of clauses in the Tsetlin Machine.\\
+        \texttt{ max\_state } &	Maximum automaton state value.\\
+        \texttt{ min\_state } &	Minimum automaton state value.\\
+        \texttt{ boost\_true\_positive\_feedback } &	Whether to boost true positive feedback (0/1).\\
+        \texttt{ y\_size } &	Size of the output vector (e.g., 1 for single-label classification).\\
+        \texttt{ y\_element\_size } &	Size of each output element (in bytes).\\
+        \texttt{ s } &	Sensitivity / learning parameter (> 1.0).\\
+        \texttt{ seed } &	Random seed for reproducibility. \\
+    \end{tabularx}
+    \item[Returns:] Pointer to the created TsetlinMachine, or NULL on allocation failure.
+\end{description}
+
+\hspace{5pt}
+\subsubsection{Advanced usage}
+Similarly, custom formats can also be freely implemented. All that is required is to write the implementation based on the functions below and then set them as callbacks with the corresponding\texttt{sltm\_set\_[...]} 
+
+\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X}
+\textbf{Method} \newline \textit{Description} \\
+\hline
+\texttt{sltm\_y\_eq\_generic(const struct StatelessTsetlinMachine *sltm, const void *y, const void *y\_pred)} \\
+\textit{Generic comparator for StatelessTsetlinMachine outputs.} \\
+\hline
+
+\texttt{sltm\_oa\_class\_idx(const struct StatelessTsetlinMachine *sltm, const void *y\_pred)} \\
+\textit{Output activation returning the class index with highest vote.} \\
+\hline
+
+\texttt{sltm\_oa\_bin\_vector(const struct StatelessTsetlinMachine *sltm, const void *y\_pred)} \\
+\textit{Output activation producing a per-class binary vector using \texttt{mid\_state}.} \\
+\hline
+
+\texttt{sltm\_set\_output\_activation(struct StatelessTsetlinMachine *sltm, void(*output\_activation)(const struct StatelessTsetlinMachine *sltm, const void *y\_pred))} \\
+\textit{Set a custom output activation function for the stateless machine.} \\
+\hline
+
+\end{tabularx}
+
+
+\section{Testing and examples}
+To run accuracy tests these commands can be ran:
+\begin{verbatim}
+    rm -rf build
+    cmake -B build
+    cmake --build build
+    ./build/tests/test_runner
+\end{verbatim}
+
+TODO: examples?
+
+
+\section{Linking to a project}
+To build the library into a shared object these commands can be ran:
+\begin{verbatim}
+    rm -rf build install
+    cmake -B build -DCMAKE_INSTALL_PREFIX=install -DBUILD_SHARED_LIBS=ON
+    cmake --build build
+    cmake --install build --component tsetlin_machine_c
+\end{verbatim}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\chapter{\ChapterTitleResults}
+\label{sec:results}
+
+% poniższą zawartość rodziału należy usunąć z finalnej wersji pracy.
+\emph{Wskazanie wyników projektu (co konkretnie udało się uzyskać: oprogramowanie, dokumentacja, raporty z testów/wdrożenia, itd.), prezentacja wyników i ocena ich użyteczności (jak zostało to zweryfikowane --- np.\ wnioski klienta/użytkownika, zrealizowane testy wydajnościowe, itd.), istniejące ograniczenia i propozycje dalszych prac.}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\printbibliography
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% \listoffigures
+% \listoftables
+% \listofalgorithmes
+% \lstlistoflistings
 
 \end{document}
