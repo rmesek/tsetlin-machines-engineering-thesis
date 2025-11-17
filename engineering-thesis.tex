@@ -139,7 +139,7 @@ dr hab.\ inż.\ Tomasz Szydło, prof.\ AGH}
 \emph{Charakterystyka problemu, motywacja projektu (w tym przegląd istniejących rozwiązań prowadząca do uzasadnienia celu prac), wizja produktu i analiza zagrożeń.}
 
 \begin{figure}[!htbp]
-  \centering
+\centering
 \begin{tikzpicture}
 \pgfdeclarelayer{background}
 \pgfsetlayers{background,main}
@@ -170,6 +170,7 @@ dr hab.\ inż.\ Tomasz Szydło, prof.\ AGH}
     left=0.5cm of traindata,
 ] (evaldata) {\texttt{EVAL DATA}};
 
+\begin{pgfonlayer}{background}
 \node [
     draw,
     dashed,
@@ -177,7 +178,9 @@ dr hab.\ inż.\ Tomasz Szydło, prof.\ AGH}
     inner sep=0.5cm,
     fit=(tsetlinmachine) (trainer),
     label=above:\texttt{green\_tsetlin},
+    fill=green!10,
 ] (greentsetlin) {};
+\end{pgfonlayer}
 
 \node [
     draw,
@@ -213,6 +216,7 @@ dr hab.\ inż.\ Tomasz Szydło, prof.\ AGH}
     xshift=2cm,
 ] (modelstate) {\texttt{MODEL STATE}};
 
+\begin{pgfonlayer}{background}
 \node [
     draw,
     dashed,
@@ -220,7 +224,9 @@ dr hab.\ inż.\ Tomasz Szydło, prof.\ AGH}
     inner sep=0.5cm,
     label=above:\texttt{tsetlin\_machine\_py},
     fit=(savetofbs) (savetobin) (ctsetlinclassifier),
+    fill=blue!10,
 ] (tsetlinmachinepy) {};
+\end{pgfonlayer}
 
 % --- host container ---
 \node [
@@ -229,7 +235,7 @@ dr hab.\ inż.\ Tomasz Szydło, prof.\ AGH}
     rectangle,
     fit=(greentsetlin) (tsetlinmachinepy) (traindata) (evaldata) (jupyternotebook),
     inner sep=0.75cm,
-    label=above:Host (PC),
+    label=above:\textbf{Host (PC)},
 ] (host) {};
 
 % --- embedded component ---
@@ -272,12 +278,22 @@ dr hab.\ inż.\ Tomasz Szydło, prof.\ AGH}
 
 \node [
     draw,
+    dotted,
+    rectangle,
+    left=1.5cm of tmpredict,
+] (modeloutput) {\texttt{MODEL OUTPUT}};
+
+\begin{pgfonlayer}{background}
+\node [
+    draw,
     dashed,
     rectangle,
     inner sep=0.5cm,
     label=above:\texttt{tsetlin\_machine\_c},
     fit=(tmload) (tmtrain) (tmsave) (tmpredict) (tmcreate),
+    fill=yellow!10,
 ] (tsetlinmachinec) {};
+\end{pgfonlayer}
 
 % --- embedded container ---
 \node [
@@ -286,7 +302,7 @@ dr hab.\ inż.\ Tomasz Szydło, prof.\ AGH}
     rectangle,
     fit=(tsetlinmachinec) (externaldata),
     inner sep=0.75cm,
-    label=above:Embedded (On-Device),
+    label=above:\textbf{Embedded (On-Device)},
 ] (embedded) {};
 
 % --- connections ---
@@ -303,23 +319,23 @@ dr hab.\ inż.\ Tomasz Szydło, prof.\ AGH}
 \draw [->] (savetobin.east) -| (modelstate.north);
 
 \draw [->] (ctsetlinclassifier.east) -| (jupyternotebook.south east);
-\draw [->] (tsetlinmachinec.east) -| (ctsetlinclassifier.south east) node[near start, below] {\texttt{Python Bindings}};
+\draw [->, dashed] (tsetlinmachinec.south east) -| (ctsetlinclassifier.south east) node[near start, below] {\texttt{Python Bindings}};
 
 \draw [->] (modelstate.west) |- (tmload.east);
+\draw [->] (tmsave.east) -| (modelstate.south);
 
-\draw [->] (tmcreate.south) -| (tmload.north);
 \draw [->] (tmload.south) -| (tmtrain.north);
 \draw [->] (tmload.south) -| (tmtrain.north);
 \draw [->] (tmtrain.south) -| (tmsave.north);
-\draw [->] (tmsave.south) -| (tmpredict.north);
 
 \draw [->] (externaldata.east) |- (tmtrain.west);
+\draw [->] (tmpredict.west) |- (modeloutput.east);
 \end{scope}
 
 \end{tikzpicture}
 
-\caption[Project diagram]{Project diagram where \texttt{green\_tsetlin} is the external library.}
-\label{fig:projdiagram}
+\caption[Project diagram]{Project diagram where \texttt{green\_tsetlin} is the external library with Host, On-Device separation.}
+\label{fig:projectdiagram}
 \end{figure}
 
 
