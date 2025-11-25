@@ -107,7 +107,7 @@ backend=biber]{biblatex}
 \captionsetup[table]{skip=5pt,position=top}
 
 \newcommand*{\LibraryName}{\emph{tsetlin\_machine\_c }}
-\newcommand*{\GreenTsetlinName}{\emph{green\_tsetlin }}
+\newcommand*{\GreenTsetlinName}{\emph{green\_tsetlin}~\cite{glimsdal2024greentsetlin} }
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \author{Robert Mesek, Igor Sikora, Michał Tomaszewski}
@@ -137,6 +137,21 @@ dr hab.\ inż.\ Tomasz Szydło, prof.\ AGH}
 
 % poniższą zawartość rodziału należy usunąć z finalnej wersji pracy.
 \emph{Charakterystyka problemu, motywacja projektu (w tym przegląd istniejących rozwiązań prowadząca do uzasadnienia celu prac), wizja produktu i analiza zagrożeń.}
+
+\vspace{10pt}
+Machine learning architectures are becoming a popular topic of research as they continue to show promise in various use cases. Recent years have shown rapid developments in this field, aimed especially to improve model accuracy and scaling. Not all applications can benefit from these advancements however, as they typically suffer from issues such as low model explainability, high computation power requirements and high energy usage. This thesis explores how an implementation of the Tsetlin Machine ML architecture could bridge these gaps and allow for an efficient, lightweight execution engine that can train and infer even on edge devices. To allow transferring a model to and from the edge device, a lightweight model serialization format was developed.
+
+\vspace{10pt}
+Tsetlin Machine is a ... (summary of ch2)  
+
+\vspace{10pt}
+The Tsetlin Machine execution engine, to be able to run on edge devices, is limited in a number of ways. Firstly, it has to be implemented in a low-level programming language - C was chosen for that purpose. Secondly, the choice of available libraries that can be utilized is severely limited. And finally, the implementation itself has to be optimized to avoid unnecessarily using too much resources.
+
+\vspace{10pt}
+The Tsetlin Machine model serialization format is another major topic of this thesis. Due to the many limitations, popular ML model serialization formats like ONNX or Protocol Buffers couldn't be used. Either the library itself is too big and resource-intensive, or the resulting model file is too large or can't be memory-mapped. In this case, the only fitting option was found to be a minimalist C implementation of FlatBuffers.
+
+\newpage
+\section{Concept of the solution}
 
 \begin{figure}[!htbp]
 \centering
@@ -214,7 +229,7 @@ dr hab.\ inż.\ Tomasz Szydło, prof.\ AGH}
     rectangle,
     below=5cm of savetobin,
     xshift=2cm,
-] (modelstate) {\texttt{MODEL STATE}};
+] (modelstate) {\texttt{ENCODED MODEL STATE}};
 
 \begin{pgfonlayer}{background}
 \node [
@@ -334,9 +349,27 @@ dr hab.\ inż.\ Tomasz Szydło, prof.\ AGH}
 
 \end{tikzpicture}
 
-\caption[Project diagram]{Project diagram where \texttt{green\_tsetlin} is the external library with Host, On-Device separation.}
+\caption[Project diagram]{Project diagram where \texttt{green\_tsetlin} is the external library with host and embedded parts separation.}
 \label{fig:projectdiagram}
 \end{figure}
+
+
+\newpage
+\section{Competitive solutions}
+According to the authors' knowledge, \GreenTsetlinName is the only production-ready implementation of the Tsetlin Machine. It is primarily a Python library with a C++ backend. A trained model can then be exported into a C header file and used for inference.  
+This approach was found lacking in a number of ways;
+\begin{enumerate}
+    \item the exported model cannot be interpreted back to its previous form to perform modifications on it
+    \item in particular, it makes training and fine-tuning the model impossible
+    \item the model serialization is saved in a text format, which in this case allows inference without a separate interpreter, but otherwise means wasting a lot of storage space
+\end{enumerate}
+
+There are also numerous projects with far less mature implementations that were taken into consideration that didn't classify for this reason. [TODO: citations]
+
+% Our solution aims to allow both inference and training, or on more resource constrained systems, just inference in (this is subject to debate) a more efficient format. 
+
+% \section{Risk analysis}
+% any?
 
 
 % Przykład cytowania literatury~\cite{wilson2009prediction-interday}. Kolejny przykład
@@ -345,26 +378,66 @@ dr hab.\ inż.\ Tomasz Szydło, prof.\ AGH}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \chapter{\ChapterTitleTheory}
 \label{sec:theoretical-background}
+This chapter contains a brief explanation of the theory behind Tsetlin Machines
 
-\section{Original Tsetlin Machine}
+\section{Tsetlin Machine}
 
-\section{Improvements to the original}
+\subsection{Per-class clause weights}
+As introduced in a later work ...  
+% other improvements to the original as subsections
 
 \section{Sparse Tsetlin Machine}
+
+\section{Stateless Tsetlin Machine}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \chapter{\ChapterTitleScope}
 \label{sec:functional-scope}
 
 % poniższą zawartość rodziału należy usunąć z finalnej wersji pracy.
-\emph{Kontekst użytkowania produktu (aktorzy, współpracujące systemy) oraz specyfikacja wymagań funkcjonalnych i niefunkcjonalnych.}
+% \emph{Kontekst użytkowania produktu (aktorzy, współpracujące systemy) oraz specyfikacja wymagań funkcjonalnych i niefunkcjonalnych.}
 
-C library that can work (both infer and train) on embeds for Tsetlin Machine + model serialization format standard
+This chapter outlines the considerations and requirements for the library. Describes the intended audience and details the key decisions made during development. These choices are further described in subsequent sections on Functional and Non-functional requirements.
 
-\section{Existing solutions}
-green\_tsetlin itself can already export a model into a C header file. Then it can be used for inference but not training – and is stored less efficiently in text format instead of binary. 
+\section{Target audience}
+Due to the experimental nature of this work, the key design goal was to make the library both easy to use and easy to understand. This is necessary as we anticipate that users may need to adapt the library for integration into their specific applications.
 
-Our solution aims to allow both inference and training, or on more resource constrained systems, just inference in (this is subject to debate) a more efficient format. 
+\paragraph{Embedded Developers}
+The library was designed with the limitations of embedded hardware in mind. Unlike many alternatives, it supports every step of the process on-device, while others implement predictions on-device only. Thanks to the designed model exchange format, users can choose to train models on faster hardware or use the \GreenTsetlinName library to later move them to the edge device. Additionally, the efficiency gains promised by Tsetlin Machines~\cite{granmo2021tsetlinmachinegame} are highly beneficial for these resource limited devices, where standard machine learning methods are often too expensive or complicated to run.
+
+\paragraph{Researchers}
+As Tsetlin Machines have only recently started getting more recognition we expect the researchers familiar with classic machine learning models to benefit from being able to implement them in their workflows. Making the library's interface familiar to them allows for rapid prototyping which differs our solution from others which require more domain knowledge. This in turn makes it easier to benchmark them in various potential use cases.
+
+
+\section{Functional requirements}
+
+\paragraph{On-device Training and Inference}
+Our solution was designed to support all steps of a Tsetlin Machine model directly on target hardware. Unlike other embedded machine learning frameworks that perform only inference on edge devices, this library enables the model to learn directly from newly gathered data. This is necessary for applications that adapt to local sensor data without a constant connection to the central server.
+
+\paragraph{Interoperability and Serialization}
+The library must implement functionality for saving and loading model states. This requires a standardized serialization format to ensure compatibility with the \GreenTsetlinName library. This compatibility is essential for the users to leverage high-performance workstations to pre-train models, export them, and then deploy them directly to the embedded devices. Furthermore, models trained or tuned on the edge must also be exportable for backup or analysis on faster hardware.
+
+\paragraph{Configurable Hyperparameters}
+Exposing Tsetlin Machine model hyperparameters is necessary for fitting the model to its application with varied limitations dictated by hardware or the input data itself. Researchers and developers must be able to easily fine-tune these parameters when designing their solution for each specific problem. This allows optimization of performance, memory footprint, or accuracy without modifying library code. 
+
+\paragraph{Correctness with the Theoretical Work}
+The implementation must behave as described in theoretical research~\cite{granmo2021tsetlinmachinegame}. It is required to accurately model the Tsetlin Automata logic and implement the specific learning rules (Type I and Type II feedback) defined in the original papers. This ensures that the software is a close representation of the method proposed in the theory and avoids unintended assumptions.
+
+
+\section{Non-functional requirements}
+
+\paragraph{Portability}
+The library must be designed for compatibility, avoiding dependencies on any specific hardware or operating system. The functionality of the external library should be defined during compilation if there is a risk that it may not work on the desired target. This strategy ensures that the code can be compiled with minimal, if any, modifications for a wide range of hardware architectures. The resulting portability, coupled with the adjustable model parameters, allows end users to create a solution that is both widely adoptable and future-proof.
+
+\paragraph{Performance and Memory Usage}
+Optimizations are significantly beneficial, as the library's performance impacts both the training step and, more importantly, the real-time predictions on target devices. Given that Tsetlin Machines heavily rely on binary logic and random number generators, optimizing these areas allows for better utilization of limited hardware resources. This optimization extends to memory management, since the memory is needed to store the model on the device, as well as the memory used during runtime, must also be considered.
+
+\paragraph{Simple API}
+The Applications Programming Interface (API) must be intuitive and well-documented. Its design should follow standard interfaces developed by major machine learning libraries, allowing users unfamiliar with Tsetlin Machine theory to quickly prototype concepts. This simple interface allows a developer to easily integrate the library into an existing project. Moreover, supporting quick prototyping in environments like Python Jupyter Notebooks alongside established models from libraries such as Scikit-learn speeds up development before deployment to embedded devices.
+
+\paragraph{Testing and Examples}
+As with any software project, testing enhances the development process and maintenance. Code examples provide a starting point for users unfamiliar with the project. Furthermore, simple installation and easy to run examples encourage potential users to quickly try the library. Finally, these tests help verify that the library runs correctly on new devices with different hardware limitations.
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \chapter{\ChapterTitleRealizationAspects}
@@ -373,9 +446,51 @@ Our solution aims to allow both inference and training, or on more resource cons
 % poniższą zawartość rodziału należy usunąć z finalnej wersji pracy.
 \emph{Przyjęte założenia, struktura i zasada działania systemu, wykorzystane rozwiązania technologiczne wraz z uzasadnieniem ich wyboru, istotne mechanizmy i zastosowane algorytmy.}
 
+\section{Design}
+\subsection{Programming language}
+Since the thesis topic requires \LibraryName to be designed for embedded devices, there were only a few suitable options like C/C++, Rust or MicroPython. C was chosen as the most widely used language for embedded systems - it is efficient, lightweight and portable. It's popularity also means it has extensive third party library support. The authors' previous experience working with C/C++ also influenced this decision.  
+Exporting models from \GreenTsetlinName is done in Python, as it is a Python library.  
+\LibraryName also has Python bindings so that it can be used conveniently from Python.
+
+\subsection{Execution engine}
+steps working on it, inspiration from green tsetlin but wrote everything from the ground up
+
+\newpage
+\subsection{Model serialization library}
+Several libraries were compiled and compared as possible options to implement the model serialization format. Only C libraries were taken into consideration. See table ~\ref{tab:serial-lib-comp}
+% TODO: czemu to nie jest 4.1
+\begin{table}[h]
+\centering
+\begin{tabularx}{\textwidth}{
+  | >{\raggedright\arraybackslash}X 
+  | >{\raggedright\arraybackslash}X 
+  | >{\raggedright\arraybackslash}X 
+  | >{\raggedright\arraybackslash}X 
+  | >{\raggedright\arraybackslash}X |
+}
+\hline
+Format name & Comment & Schema complexity & Efficiency on edge device & Library size on edge device \\
+\hline
+Protocol Buffers & Simple and small model representation & Low & Fast but needs object parsing & Too big \\
+\hline
+ONNX & A standardized way to store models and operation graphs & High & Low - needs graph and tensor parsing & Much too big \\
+\hline
+FlatBuffers & “Protocol buffers lite” & Low & Very fast, zero-copy & Acceptable \\
+\hline
+\end{tabularx}
+\caption{Comparison of selected model serialization libraries}
+\label{tab:serial-lib-comp}
+\end{table}
+
 \section{Dense}
+\subsection{Model serialization format}
+
 \section{Sparse}
+\subsection{Model serialization format}
+
 \section{Stateless}
+\subsection{Model serialization format}
+
 \section{Optimizations}
 
 \subsection{Pseudo random number generation}
@@ -387,7 +502,38 @@ Our solution aims to allow both inference and training, or on more resource cons
 % poniższą zawartość rodziału należy usunąć z finalnej wersji pracy.
 \emph{Struktura zespołu (role poszczególnych osób), krótki opis i uzasadnienie przyjętej metodyki i/lub kolejności prac, planowane i zrealizowane etapy prac ze wskazaniem udziału poszczególnych członków zespołu, wykorzystane praktyki i narzędzia w zarządzaniu projektem.}
 
+Mention development and research (to even start development for one)
+
+\section{Team members and their roles}
+
+\paragraph{Igor Sikora} - C implementation of the Tsetlin Machine execution engine, correctness tests, optimizations
+
+\paragraph{Robert Mesek} - Python bindings and examples, benchmarks, CI/CD, integration with FlatBuffers
+
+\section{Work planning and order of tasks}
 the whole saga on dc
+
+\section{Used tools}
+
+\paragraph{Git} gud
+
+\paragraph{GitHub} - popular hosting service for git
+
+\paragraph{Visual Studio Code} - versatile, lightweight, free
+
+\paragraph{Cmake} - like make but worse :p
+
+\paragraph{Discord} - group communication; texting, voice and video calls, free, conversations separated between thematic channels and threads
+
+\paragraph{MS Teams} - communication with project supervisor
+
+\paragraph{Email} - communication with project supervisor
+
+\paragraph{Overleaf} - free online \LaTeX editor
+
+\paragraph{arXiv} - searching for and viewing scientific papers on the Tsetlin Machines
+
+% \section{Used methodologies}
   
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \chapter{\ChapterTitleDocumentation}
@@ -789,6 +935,10 @@ Similarly, custom formats can also be freely implemented. All that is required i
 \end{tabularx}
 
 
+\section{Installation}
+TODO: ?
+
+
 \section{Testing and examples}
 To run accuracy tests these commands can be ran:
 \begin{verbatim}
@@ -817,6 +967,15 @@ To build the library into a shared object these commands can be ran:
 
 % poniższą zawartość rodziału należy usunąć z finalnej wersji pracy.
 \emph{Wskazanie wyników projektu (co konkretnie udało się uzyskać: oprogramowanie, dokumentacja, raporty z testów/wdrożenia, itd.), prezentacja wyników i ocena ich użyteczności (jak zostało to zweryfikowane --- np.\ wnioski klienta/użytkownika, zrealizowane testy wydajnościowe, itd.), istniejące ograniczenia i propozycje dalszych prac.}
+
+\section{Experiment results}
+
+\section{Further work}
+
+\subsection{Tsetlin Machine instead of Linear layer}
+
+\subsection{Integer only implementation of Tsetlin Machine}
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \printbibliography
