@@ -21,6 +21,7 @@
 \usepackage{array}
 \usepackage{tikz}
 \usetikzlibrary{positioning, arrows, fit, backgrounds}
+\usepackage{amsmath}
 
 \hypersetup{colorlinks,
   linkcolor=blue,
@@ -349,7 +350,7 @@ The Tsetlin Machine model serialization format is another major topic of this th
 
 \end{tikzpicture}
 
-\caption[Project diagram]{Project diagram where \texttt{green\_tsetlin} is the external library with host and embedded parts separation.}
+\caption[Project diagram]{Project diagram where \texttt{green\_tsetlin} is the external library with host and embedded parts separation.} % TODO: Add references to each block and briefly describe it; consider changing text to something more clear
 \label{fig:projectdiagram}
 \end{figure}
 
@@ -378,17 +379,118 @@ There are also numerous projects with far less mature implementations that were 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \chapter{\ChapterTitleTheory}
 \label{sec:theoretical-background}
-This chapter contains a brief explanation of the theory behind Tsetlin Machines
+This chapter introduces the Tsetlin Machine, a method for pattern recognition based on propositional logic and game theory. We briefly examine the ideas developed in the original research~\cite{granmo2021tsetlinmachinegame, glimsdal2021coalescedmultioutputtsetlinmachines} that were necessary for our work, explaining how the model is designed from the ground up. Finally, we discuss scenarios where this approach has the potential to be a viable alternative to neural networks. For a more extensive introduction to Tsetlin Machines, refer to~\cite{granmo2022tsetlinmachinebookchap1, granmo2022tsetlinmachinebookchap2}.
 
-\section{Tsetlin Machine}
+\section{Tsetlin Machine Overview}
+The emergence of the Tsetlin Machine is rooted in the development of a lesser-known, yet fundamental and versatile learning mechanism called the Tsetlin Automaton, developed by M.L. Tsetlin in the early 1960s~\cite{granmo2021tsetlinmachinegame, tsetlin1961behaviour}. Further research on this topic proposes a novel technique for complex large scale classification constructed using Tsetlin Automata~\cite{granmo2021tsetlinmachinegame}.
 
-\subsection{Per-class clause weights}
-As introduced in a later work ...  
-% other improvements to the original as subsections
+\paragraph{Pattern Recognition}
+The most important distinction of the Tsetlin Machine lies in how it addresses pattern recognition problems. While the precision of a machine learning technique is related to its capability to represent patterns, the Tsetlin Machine decomposes complex problems into self-contained sub-patterns~\cite{granmo2021tsetlinmachinegame}. Instead of using the complex arithmetic found in neural networks, this method utilizes Boolean algebra, which is the basis of how digital computers operate. As a result, the machine captures the structure of the data by expressing patterns as conjunctive clauses in propositional logic.
 
-\section{Sparse Tsetlin Machine}
+\paragraph{Logic-Based Approach}
+The Tsetlin Machine processes input features as bits to construct propositional logic expressed as "If-Then" rules, which offers both computational simplicity and interpretability.
+In short, given an input vector of propositional variables $X = (x_1, \dots, x_n) \in \{0,1\}^n$, we add their negated counterparts $\overline{x}_k = 1 - x_k$ to build a set of literals $L = \{l_1 \dots, l_{2n}\}$. From these literals, we construct conjunctive clauses that determine the output vector $Y = (y_1, \dots, y_m) \in \{0,1\}^m$. For example, clause $C(X) = x_1 \land x_2 = x_1 x_2$ consists of literals $\{x_1, x_2\}$ and outputs $1$ if and only if $x_1 = x_2 = 1$~\cite{granmo2021tsetlinmachinegame}. The simple inference structure of the Tsetlin machine can be seen in Figure \ref{fig:tsetlinmachinestructure}.
 
-\section{Stateless Tsetlin Machine}
+\begin{figure}[!htbp]
+    \centering
+    \includegraphics[width=.9\textwidth]{images/Overall_Architecture_Summation[1804.01508v15].pdf}
+    \caption[The Tsetlin Machine inference structure]{The Tsetlin Machine inference structure (source: \cite{granmo2021tsetlinmachinegame})}
+    \label{fig:tsetlinmachinestructure}
+\end{figure}
+
+\section{Tsetlin Automaton}
+
+\paragraph{State-Based Memory}
+% - Solves simple choice problem
+% - Construction based on Finite State Machine
+% - Uses single integer index to track memory
+\paragraph{Decision Making}
+% - The automaton based on its state (memory) decides between "Include" and "Exclude" action
+
+\begin{figure}[!htbp]
+    \centering
+    \includegraphics[width=.9\textwidth]{images/Tsetlin_Automaton_Generic[1804.01508v15].pdf}
+    \caption[A Tsetlin Automaton for two-action environment]{A Tsetlin Automaton for two-action environment (source: \cite{granmo2021tsetlinmachinegame})}
+    \label{fig:tsetlinautomatongeneric}
+\end{figure}
+
+\section{Architecture and Problem Representation}
+
+\paragraph{Rule Construction}
+% - Teams of automata are grouped into "Clauses" (AND rules) (example: wheels and not wings and doors)
+% - Complex data can be broken into simpler patterns
+\paragraph{Class Prediction by Voting}
+% - Positive clauses vote for specific class and negative clauses vote against
+% - Needs to distinguish noise and data
+\paragraph{Binarization of Data}
+% - This approach requires turinging real-world data into binary format that is the input to the machine
+
+\begin{figure}[!htbp]
+    \centering
+    \includegraphics[width=.9\textwidth]{images/Tsetlin_Machine_Example_Configuration_Full[1804.01508v15].pdf}
+    \caption[Two Tsetlin Automata teams]{Two Tsetlin Automata teams, each producing a conjunctive clause (source: \cite{granmo2021tsetlinmachinegame})}
+    \label{fig:tsetlinmachineconfiguration}
+\end{figure}
+
+\begin{figure}[!htbp]
+    \centering
+    \includegraphics[width=.9\textwidth]{images/Memory_IMDb[2108.07594v1].pdf}
+    \caption[Sticky memory for IMDb example]{Sticky memory for IMDb example with depth N for the clause: "good" AND "movie" (source: \cite{glimsdal2021coalescedmultioutputtsetlinmachines})}
+    \label{fig:memoryimdb}
+\end{figure}
+
+\section{Learning Algorithm}
+\paragraph{Addressing False Negatives (Type I Feedback)}
+% - Recognize Feedback
+\paragraph{Addressing False Positives (Type II Feedback)}
+% - Erase Feedback
+
+\begin{figure}[!htbp]
+    \begin{center}
+        \subfigure[Type Ia feedback triggered by input "The movie was good, and I had popcorn."]{%
+        \label{fig:memoryimdbtypeIa}
+        \includegraphics[width=.9\textwidth]{images/Memory_IMDb_Type_Ia[2108.07594v1].pdf}}%
+        \\
+        \subfigure[Type Ib feedback triggered by input "Was good, and I had popcorn."]{%
+        \label{fig:memoryimdbtypeIb}
+        \includegraphics[width=.9\textwidth]{images/Memory_IMDb_Type_Ib[2108.07594v1].pdf}}%
+        \\
+        \subfigure[Type II feedback applied to input "The movie was bad, and I had popcorn."]{%
+        \label{fig:memoryimdbtypeII}
+        \includegraphics[width=.9\textwidth]{images/Memory_IMDb_Type_II[2108.07594v1].pdf}}%
+    \end{center}
+    \caption[Comparison of feedback types for IMDb example]{Comparison of feedback types Ia, Ib, and II for IMDb example (source: \cite{glimsdal2021coalescedmultioutputtsetlinmachines})}
+    \label{fig:memoryimdbtypes}
+\end{figure}
+
+\section{Tsetlin Machine Variants}
+\paragraph{Standard Dense Architecture}
+\paragraph{Sparse Architecture}
+% - removes automata that are not contributing
+\paragraph{Stateless Inference Model}
+% - saves memory when required only on predictions
+
+\section{Comparison with Neural Networks}
+
+% moje 2 grosze
+% https://arxiv.org/abs/2212.13634
+% TM używa w większości algebry całkowitoliczbowej nie floatów co może być bardzo atutem na niektórych platformach, szczególnie takich co procesor nie ma operacji na floatach w ogóle
+% problem 1 - no tyle że nie lol bo jednak używa floatów (czego dało by się pozbyć, patrz further work w ostatnim rozdziale)
+% problem 2 - z punktu hardwareowej optymalizacji, mimo że floaty są bardzo kosztowne, to ich algebra i bardzo dziwne sposoby optymalizacji są giga zoptymalizowane (temu że tyle kosztowały a całe ML na nich stoi) i to tak mocno że teraz to algebra na intach się nie opłaca
+
+\paragraph{Transparent Logic}
+% - Learned logic is human readable (If X and not Y then Z) compared to Black Box approach of neural networks
+\paragraph{Energy Efficiency}
+% - More optimizations possible when working with logic operations like AND/OR/NOT, compared to float operations on Neural Networks
+\paragraph{Performance with Training Data}
+% - (cite) TM often require less training data to reach high accuracy
+
+\begin{figure}[!htbp]
+    \centering
+    \includegraphics[width=.9\textwidth]{images/TM[arXiv-2212.13634v1].pdf}
+    \caption[Tsetlin Machine XOR-gate training]{Tsetlin Machine learning dynamics for an XOR-gate training sample, with input $(x_1 = 0, x_2 = 1)$ and output target $y = 1$ (source: \cite{sharma2022equivalenceweightedtsetlinmachine})}
+    \label{fig:tsetlinmachinexorgate}
+\end{figure}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \chapter{\ChapterTitleScope}
@@ -446,14 +548,19 @@ As with any software project, testing enhances the development process and maint
 % poniższą zawartość rodziału należy usunąć z finalnej wersji pracy.
 \emph{Przyjęte założenia, struktura i zasada działania systemu, wykorzystane rozwiązania technologiczne wraz z uzasadnieniem ich wyboru, istotne mechanizmy i zastosowane algorytmy.}
 
+This section describes the design choices of \LibraryName as well as the rationale behind them, and the overarching architecture of the solution. The actual Tsetlin Machine implementation is described in detail to make it intuitive. It describes used tools, solutions and algorithms. Additionally, it discusses several interesting problems that were encountered.
+
 \section{Design}
+Even though optimization was the primary objective, not every method could be utilized due to the target environments having very limited resources and hardware limitations. In particular, vectorization was completely out of the picture, even though \GreenTsetlinName has it enabled by default. GPU programming was obviously dismissed for the same reason - although notably, such an implementation is possible. % TODO: citation for cuda project
+
 \subsection{Programming language}
 Since the thesis topic requires \LibraryName to be designed for embedded devices, there were only a few suitable options like C/C++, Rust or MicroPython. C was chosen as the most widely used language for embedded systems - it is efficient, lightweight and portable. It's popularity also means it has extensive third party library support. The authors' previous experience working with C/C++ also influenced this decision.  
 Exporting models from \GreenTsetlinName is done in Python, as it is a Python library.  
 \LibraryName also has Python bindings so that it can be used conveniently from Python.
 
 \subsection{Execution engine}
-steps working on it, inspiration from green tsetlin but wrote everything from the ground up
+Even though there exists a number of existing libraries implementing the Tsetlin Machine, \LibraryName was essentially created from the ground up without taking much inspiration or hints from them. It was required to be written primarily with optimization in mind so that it works as fast as possible while maintaining small size and portability on top of utilizing little power and memory. \\
+It was also decided \LibraryName should support multiple different Tsetlin Machine variants so their efficiency could be tested - Coalesced, Sparse and Stateless.
 
 \newpage
 \subsection{Model serialization library}
@@ -475,25 +582,190 @@ Protocol Buffers & Simple and small model representation & Low & Fast but needs 
 \hline
 ONNX & A standardized way to store models and operation graphs & High & Low - needs graph and tensor parsing & Much too big \\
 \hline
-FlatBuffers & “Protocol buffers lite” & Low & Very fast, zero-copy & Acceptable \\
+FlatBuffers & "Protocol buffers lite" & Low & Very fast, zero-copy & Acceptable \\
 \hline
 \end{tabularx}
 \caption{Comparison of selected model serialization libraries}
 \label{tab:serial-lib-comp}
 \end{table}
 
-\section{Dense}
-\subsection{Model serialization format}
 
-\section{Sparse}
+\subsection{Concept of the solution}
+move here, describe
+
+
+\subsection{Tsetlin Automaton}
+A Tsetlin Automaton is the smallest part of a Tsetlin Machine, and it is what clauses consist of. Implementation-wise it is represented by a singular, 8-bit integer, meaning its values can range from -127 to 127 by default. The range can be made smaller by setting model parameters $max\_state$ and $min\_state$ \\
+Further on in this thesis, the term that a Tsetlin Automaton is active, means its internal integer value is greater or equal than halfway between $max\_state$ and $min\_state$; $value \ge \frac{max\_state + min\_state}{2}$  \\
+One input bit on position $i$ has two corresponding Tsetlin Automata at positions in clause $2 \times i$ and $2 \times i + 1$. The first one -- positive -- decides whether the input bit -- $x_i$ -- should be included in the clause, and the other -- negative -- whether its negation -- $\neg x_i$ -- should be included.
+
+
+\section{Coalesced Tsetlin Machine}
+Coalesced Tsetlin Machine is the variant most closely resembling the original Tsetlin Machine out of those implemented by \LibraryName. The implementation closely follows the paper.~\cite{glimsdal2021coalescedmultioutputtsetlinmachines}
+
+
+\subsection{Training}
+The training loop consists of three distinct steps repeated for each datapoint.
+\begin{enumerate}
+    \item Calculate clause output
+    \item Sum votes
+    \item Calculate and apply feedback
+\end{enumerate}
+
+\subsubsection{Calculate clause output}
+The current states of Tsetlin Automata in each clause are used to determine whether the clause activates - 1, or not - 0. This output is temporarily stored in an internal array. \\
+For this step specifically, a clause is active if either of two conditions is met:
+\begin{itemize}
+    \item \textbf{the clause is empty} - no Tsetlin Automaton is active
+    \item for the training input datapoint, all bits corresponding to active positive Tsetlin Automata of this clause are set and all bits corresponding to active negative Tsetlin Automata of this clause are unset
+\end{itemize}
+
+\subsubsection{Sum votes}
+This step uses the information calculated in the previous point whether clauses are active or not. Active clauses vote for all possible classes with trained weights. Specifically, clause $i$ votes for class $j$ with trained weight $w_{i,j}$. $w_{i,j}$ can be positive or negative.\\
+As all active clauses vote, each class accumulates their votes. The sum of votes is then clipped to parameter $treshold$. It serves the same purpose as gradient clipping in other ML architectures, mainly for numerical stability. %TODO: citation
+
+\subsubsection{Calculate and apply feedback}
+As the sum of votes indicates whether a class should be chosen or not, that prediction can be compared to the actual datapoint label. Based on this information, a suitable feedback to be applied to Tsetlin Automata. \\
+For each datapoint two classes are specified for feedback
+\begin{enumerate}
+    \item positive - one of the classes, or the one class, specified by label
+    \item negative - one of the classes not specified by label
+\end{enumerate}
+Both have a chance to trigger feedback to all clauses. \\
+For the positive class, the chance is inversely proportional to the clipped sum of votes it received. That means the model applies feedback more often the \textit{less} sure it is the class is correct. Although unintuitive at first, this practice is used to avoid overfitting. \\
+For the negative class, the chance is proportional to the clipped sum of votes it received. This means the model applies feedback more often the more sure it is the class is incorrect. \\
+
+\paragraph{Customization}
+What is unique to \LibraryName, it allows both predictions and output to be customized to be virtually anything. \\
+A custom feedback function can be set for the model, to override how positive and negative classes are chosen. The default uses normal classification, where the output and prediction is an integer identifying a class. \\
+Another predefined function allows multi-class classification, where output and prediction is an 8-bit integer array where the length is the number of classes, where value 1 signifies a class with a given identifier being chosen, value 0 - not chosen. \\
+\vspace{7pt}
+Also a custom comparison function can be set for the model, to override when the output and prediction data classes should be treated as equal. By default a simple memory comparison is used, which handles the vast majority of uses -- even when fully customized.
+
+\subsubsection{Feedback}
+\label{feedback-dense}
+When a chosen class triggers feedback to all clauses, for each clause separately one of three feedback types may be applied. \\
+Tsetlin Automata changes specified in \textbf{Action} aren't always changed -- they have a random chance to do so based on the parameter \textit{s} -- sensitivity -- further explained in \textbf{Sensitivity} for each feedback type. \\
+
+\paragraph{Type Ia}
+\begin{description}
+    \item[Condition] the clause is active and voted correctly for the chosen class (with the correct weight sign)
+    \item[Action] reinforce Tsetlin Automata making up the clause, reinforce weight for the chosen class
+    \item[Sensitivity] the chance for change is either \( \frac{1}{s} \) for true positive and true negative Tsetlin Automata, and otherwise its inversion -- \( \frac{s - 1}{s} \). Model parameter \textit{boost\_true\_positive} makes it so that true positive Tsetlin Automata are always changed.
+    \item[Intuition] the clause should continue to vote for the same class
+\end{description}
+
+\paragraph{Type Ib}
+\begin{description}
+    \item[Condition] the clause is inactive and (would have) voted correctly for the chosen class
+    \item[Action] lower the confidence of all the Tsetlin Automata making up the clause, positive and negative
+    \item[Sensitivity] the chance for change is always \( \frac{1}{s} \)
+    \item[Intuition] the clause should "find something else to do", countering force
+\end{description}
+
+\paragraph{Type II}
+\begin{description}
+    \item[Condition] the clause is active and voted incorrectly for the chosen class
+    \item[Action] raise, towards activation, inactive Tsetlin Automatons that could deactivate the clause for this datapoint, punish the weight of the chosen class towards zero
+    \item[Sensitivity] change always happens
+    \item[Intuition] try two things at once: exclude the clause and fix the weight (flip the sign). Although these goals are opposing, just one of them needs to come true, and the hope is one of them should do so before the other.
+\end{description}
+
+Nothing happens if the clause if inactive and would have voted incorrectly.
+
+\subsection{Inference}
+Inference on a datapoint looks very similar to training, with few key differences.
+\begin{enumerate}
+    \item Calculate clause output
+    \item Sum votes
+    \item Apply output activation
+\end{enumerate}
+
+\subsubsection{Calculate clause output}
+Unlike in training, an empty clause -- with no active Tsetlin Automata -- is inactive. Otherwise it does the same thing -- calculates which clauses are active with a given input.
+
+\subsubsection{Sum votes}
+Exactly the same as training. Sums up class votes from active clauses.
+
+\subsubsection{Apply output activation}
+Applies a function to determine the output from the summed up class votes. By default, it simply returns an integer -- an identifier of a class with the most votes.
+
+\paragraph{Customization}
+Again, this can be fully customized. A custom output activation function can be set for the model, to override what the model outputs based on the summed up weights. \\
+Another predefined function allows multi-class classification, where the output is an 8-bit integer array where the length is the number of classes, where value 1 signifies a class with a given identifier being chosen, value 0 - not chosen.
+
+\subsection{Model serialization format}
+TODO
+
+\section{Sparse Tsetlin Machine}
+A Sparse Tsetlin Machine~\cite{glimsdal2024sparsetsetlinmachine} 
+
 \subsection{Model serialization format}
 
 \section{Stateless}
 \subsection{Model serialization format}
 
 \section{Optimizations}
+Seeing as speed, size, portability as well as limiting the usage of power and memory were all key requirements, optimizations were the main focus of this thesis. In this section a few of the more interesting examples are listed.
 
 \subsection{Pseudo random number generation}
+Analyzing the efficiency of a development version with valgrind and callgrind, it was obvious that most training time was spent on calls to \textit{rand()} - pseudo random number generation. \\
+While it isn't costly to call once, the cost quickly accumulates over millions of calls.
+
+\subsubsection{Analysis}
+\textit{rand()} is costly because it aims for a uniform spread, as evenly as possible. \LibraryName doesn't care that much as the deviation spreads across millions of calls - but it does very much care for speed and lower power usage. The pseudo random number generation for this purpose doesn't need to by cryptographically secure either -- \textit{rand()} isn't anyways. \\
+A quick look at \GreenTsetlinName revealed that it suffered from the same problem. Its solution was to use a wyhash64 algorithm. Using just an 64-bit integer addition, two 128-bit integer multiplications and few bitwise operations as well as a double multiplication, it is overall a much cheaper solution.\\
+Listing ~\ref{lst:wyhash64} shows the \GreenTsetlinName implementation of wyhash64.
+\begin{lstlisting}[language=C,caption={[\GreenTsetlinName implementation of wyhash64]\GreenTsetlinName implementation of wyhash64},label=lst:wyhash64]
+double next_u()
+{
+    wyhash64_x += 0x60bee2bee120fc15;
+    __uint128_t tmp;
+    tmp = (__uint128_t) wyhash64_x * 0xa3b195354a39b70d;
+    uint64_t m1 = (tmp >> 64) ^ tmp;
+    tmp = (__uint128_t)m1 * 0x1b03738712fad5c9;
+    uint64_t m2 = ((tmp >> 64) ^ tmp);
+
+    double r = 0x1.0p-64 * m2;
+    return r;
+}
+\end{lstlisting}
+
+\subsubsection{Solution}
+Wyhash64 is a much cheaper solution, but it's still not cheap. 128-bit integer multiplications and double multiplication cost many precious CPU cycles which means time and power. \\
+Listing ~\ref{lst:fast-prng} shows the \LibraryName implementation of xorshift32. \\
+All that's really needed is a few bit shifts and XOR operations. It uses so few CPU cycles it's basically free. It might also be the case one of the authors likes low-level optimization an unhealthy amount. 
+
+\begin{lstlisting}[language=C,caption={[\LibraryName implementation of xorshift32]\LibraryName implementation of xorshift32},label=lst:fast-prng]
+uint32_t prng_next_uint32(struct FastPRNG* prng) {
+    uint32_t x = prng->state;
+    x ^= x << 13;
+    x ^= x >> 17;
+    x ^= x << 5;
+    prng->state = x;
+    return x;
+}
+
+float prng_next_float(struct FastPRNG* prng) {
+    uint32_t x = prng->state;
+    x ^= x << 13;
+    x ^= x >> 17;
+    x ^= x << 5;
+    prng->state = x;
+
+    static union {
+        uint32_t u32;
+        float f;
+    } caster;
+
+    /* Reinterpret x as float: keep random mantissa, set exponent to 127
+       (1.0f), then subtract 1.0f to obtain value in [0,1). */
+    caster.u32 = 0x3F800000 | x >> 9;
+
+    return caster.f - 1.0f;
+}
+\end{lstlisting}
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \chapter{\ChapterTitleWorkOrganization}
@@ -519,6 +791,8 @@ the whole saga on dc
 
 \paragraph{GitHub} - popular hosting service for git
 
+\paragraph{valgrind with callgrind} my beloved
+
 \paragraph{Visual Studio Code} - versatile, lightweight, free
 
 \paragraph{Cmake} - like make but worse :p
@@ -532,6 +806,7 @@ the whole saga on dc
 \paragraph{Overleaf} - free online \LaTeX editor
 
 \paragraph{arXiv} - searching for and viewing scientific papers on the Tsetlin Machines
+
 
 % \section{Used methodologies}
   
@@ -962,19 +1237,29 @@ To build the library into a shared object these commands can be ran:
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\chapter{\ChapterTitleEvaluation}
+\label{sec:evaluation}
+Experiment results / evaluation
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \chapter{\ChapterTitleResults}
 \label{sec:results}
 
 % poniższą zawartość rodziału należy usunąć z finalnej wersji pracy.
 \emph{Wskazanie wyników projektu (co konkretnie udało się uzyskać: oprogramowanie, dokumentacja, raporty z testów/wdrożenia, itd.), prezentacja wyników i ocena ich użyteczności (jak zostało to zweryfikowane --- np.\ wnioski klienta/użytkownika, zrealizowane testy wydajnościowe, itd.), istniejące ograniczenia i propozycje dalszych prac.}
 
-\section{Experiment results}
+\section{Restrictions}
+Sparse broke lol
 
 \section{Further work}
+Due to time constraints and other circumstances, not the full scope of the thesis could be realized. Furthermore, many fascinating ideas were born, ones the authors may not be able to pursue themselves.
 
 \subsection{Tsetlin Machine instead of Linear layer}
+... \\
+Due to how customizable \LibraryName is, a custom feedback function and output activation function can be written to facilitate a Tsetlin Machine to be used as a layer of a larger model - painlessly, without the need to rewrite the main logic of the execution engine.
 
 \subsection{Integer only implementation of Tsetlin Machine}
+Like 99\% if not 100\% of it is in RNG and that can be eeasily rewritten to being integer based.
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

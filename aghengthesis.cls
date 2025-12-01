@@ -29,7 +29,8 @@
   \newcommand*{\ChapterTitleScope}{Zakres funkcjonalności}	
   \newcommand*{\ChapterTitleRealizationAspects}{Wybrane aspekty realizacji}
   \newcommand*{\ChapterTitleWorkOrganization}{Organizacja pracy}
-  \newcommand*{\ChapterTitleDocumentation}{Zastosowanie i sposób użycia}
+  \newcommand*{\ChapterTitleDocumentation}{Dokumentacja techniczna}
+  \newcommand*{\ChapterTitleEvaluation}{Wyniki eksperymentów}
   \newcommand*{\ChapterTitleResults}{Wyniki projektu}
 
   \newcommand*{\BabelLang}{polish}
@@ -54,7 +55,8 @@
   \newcommand*{\ChapterTitleScope}{Functional scope}
   \newcommand*{\ChapterTitleRealizationAspects}{Selected realization aspects}
   \newcommand*{\ChapterTitleWorkOrganization}{Work organization}
-  \newcommand*{\ChapterTitleDocumentation}{Application and usage}
+  \newcommand*{\ChapterTitleDocumentation}{Technical documentation}
+  \newcommand*{\ChapterTitleEvaluation}{Experiment results}
   \newcommand*{\ChapterTitleResults}{Project results}
 
 
