@@ -385,7 +385,7 @@ This chapter introduces the Tsetlin Machine, a method for pattern recognition ba
 The emergence of the Tsetlin Machine is rooted in the development of a lesser-known, yet fundamental and versatile learning mechanism called the Tsetlin Automaton, developed by M.L. Tsetlin in the early 1960s~\cite{granmo2021tsetlinmachinegame, tsetlin1961behaviour}. Further research on this topic proposes a novel technique for complex large scale classification constructed using Tsetlin Automata~\cite{granmo2021tsetlinmachinegame}.
 
 \paragraph{Pattern Recognition}
-The most important distinction of the Tsetlin Machine lies in how it addresses pattern recognition problems. While the precision of a machine learning technique is related to its capability to represent patterns, the Tsetlin Machine decomposes complex problems into self-contained sub-patterns~\cite{granmo2021tsetlinmachinegame}. Instead of using the complex arithmetic found in neural networks, this method utilizes Boolean algebra, which is the basis of how digital computers operate. As a result, the machine captures the structure of the data by expressing patterns as conjunctive clauses in propositional logic.
+The most important distinction of the Tsetlin Machine lies in how it addresses pattern recognition problems. While the accuracy of a machine learning technique is related to its capability to represent patterns, the Tsetlin Machine decomposes complex problems into self-contained sub-patterns~\cite{granmo2021tsetlinmachinegame}. Instead of using the complex arithmetic found in neural networks, this method utilizes Boolean algebra, which is the basis of how digital computers operate. As a result, the machine captures the structure of the data by expressing patterns as conjunctive clauses in propositional logic.
 
 \paragraph{Logic-Based Approach}
 The Tsetlin Machine processes input features as bits to construct propositional logic expressed as "If-Then" rules, which offers both computational simplicity and interpretability.
@@ -399,13 +399,14 @@ In short, given an input vector of propositional variables $X = (x_1, \dots, x_n
 \end{figure}
 
 \section{Tsetlin Automaton}
+The basic building block of a Tsetlin Machine is the Tsetlin Automaton 
+(Figure \ref{fig:tsetlinautomatongeneric}), recognized as one of the first solutions to the multi-armed bandit problem~\cite{granmo2021tsetlinmachinegame}. It is capable of learning the optimal action when operating in unknown stochastic environments and is considered the first Learning Automaton~\cite{narendra2012learning}.
+
+\paragraph{Decision Making}
+The Tsetlin Automaton performs actions $\{\alpha_z, z \in \{1, 2\}\}$ sequentially in an environment. Each action $\alpha_z$ triggers a reward or a penalty. The action is rewarded with probability $p_z$, otherwise it is penalized. The reward probabilities are unknown to the automaton and may change over time. Under these conditions, the goal is to identify the action with the highest probability of reward using as few attempts as possible~\cite{granmo2021tsetlinmachinegame}.
 
 \paragraph{State-Based Memory}
-% - Solves simple choice problem
-% - Construction based on Finite State Machine
-% - Uses single integer index to track memory
-\paragraph{Decision Making}
-% - The automaton based on its state (memory) decides between "Include" and "Exclude" action
+The Tsetlin Automaton operates as a finite-state machine with $2N$ states, as illustrated in Figure \ref{fig:tsetlinautomatongeneric}. The current state determines the action: action 1 ($\alpha_1$) is performed in states $1$ to $N$, while action 2 ($\alpha_2$) is performed in states $N+1$ to $2N$. State transitions control how the automaton learns. One set of state transitions is activated upon receiving a reward (solid lines in the figure), and another set of state transitions is activated upon receiving a penalty (dotted lines in the figure). This mechanism is designed to reinforce successful (reward producing) actions~\cite{granmo2021tsetlinmachinegame}.
 
 \begin{figure}[!htbp]
     \centering
@@ -423,7 +424,7 @@ In short, given an input vector of propositional variables $X = (x_1, \dots, x_n
 % - Positive clauses vote for specific class and negative clauses vote against
 % - Needs to distinguish noise and data
 \paragraph{Binarization of Data}
-% - This approach requires turinging real-world data into binary format that is the input to the machine
+% - This approach requires turinging real-world data into binary format that is the input to the machine (e.g. building intervals from continous data, thresholding for mnist, etc.)
 
 \begin{figure}[!htbp]
     \centering
