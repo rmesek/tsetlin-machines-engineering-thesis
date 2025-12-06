@@ -152,7 +152,7 @@ The Tsetlin Machine execution engine, to be able to run on edge devices, is limi
 The Tsetlin Machine model serialization format is another major topic of this thesis. Due to the many limitations, popular ML model serialization formats like ONNX or Protocol Buffers couldn't be used. Either the library itself is too big and resource-intensive, or the resulting model file is too large or can't be memory-mapped. In this case, the only fitting option was found to be a minimalist C implementation of FlatBuffers.
 
 \newpage
-\section{Concept of the solution}
+\section{Concept of the solution} % TODO: Move to the correct place and use human readable names with annotations instead of function names.
 
 \begin{figure}[!htbp]
 \centering
@@ -416,15 +416,19 @@ The Tsetlin Automaton operates as a finite-state machine with $2N$ states, as il
 \end{figure}
 
 \section{Architecture and Problem Representation}
+With the Tsetlin Automaton introduced as the main learning mechanism, the Tsetlin Machine architecture arranges these automata into teams responsible for composing clauses. These teams collaborate to solve complex problems by optimizing pattern recognition accuracy. The generated clauses function as rules that vote for or against a specific class output while providing transparent logic to reach a final decision~\cite{granmo2021tsetlinmachinegame}. However, this approach requires specific input, where the data must be processed to produce features compatible with logic-based reasoning.
+
+\paragraph{Binarization of Data}
+Since the Tsetlin Machine operates using propositional logic, the input data is required to be represented as Boolean features. Nevertheless, this constraint can be mitigated with a simple pre-processing step that transforms the input into a suitable binary format. For categorical data, the universal one-got encoding approach will suffice. For example, in the digit recognition problem with $8 \times 8$ images ($64$ elements) and $16$ possible brightness levels, the sample can be flattened and expanded to a binary vector. The handling of continuous features presents a different challenge, commonly addressed by segmenting data into predefined intervals. A continuous variable, such as temperature, can be transformed into a set of Boolean ranges like $[15^\circ,20^\circ)$ or $[20^\circ,25^\circ)$, allowing the machine to simply match the value.
+
 
 \paragraph{Rule Construction}
 % - Teams of automata are grouped into "Clauses" (AND rules) (example: wheels and not wings and doors)
 % - Complex data can be broken into simpler patterns
+
 \paragraph{Class Prediction by Voting}
 % - Positive clauses vote for specific class and negative clauses vote against
 % - Needs to distinguish noise and data
-\paragraph{Binarization of Data}
-% - This approach requires turinging real-world data into binary format that is the input to the machine (e.g. building intervals from continous data, thresholding for mnist, etc.)
 
 \begin{figure}[!htbp]
     \centering
@@ -433,18 +437,18 @@ The Tsetlin Automaton operates as a finite-state machine with $2N$ states, as il
     \label{fig:tsetlinmachineconfiguration}
 \end{figure}
 
+\section{Learning Algorithm}
+\paragraph{Addressing False Negatives (Type I Feedback)}
+% - Recognize Feedback
+\paragraph{Addressing False Positives (Type II Feedback)}
+% - Erase Feedback
+
 \begin{figure}[!htbp]
     \centering
     \includegraphics[width=.9\textwidth]{images/Memory_IMDb[2108.07594v1].pdf}
     \caption[Sticky memory for IMDb example]{Sticky memory for IMDb example with depth N for the clause: "good" AND "movie" (source: \cite{glimsdal2021coalescedmultioutputtsetlinmachines})}
     \label{fig:memoryimdb}
 \end{figure}
-
-\section{Learning Algorithm}
-\paragraph{Addressing False Negatives (Type I Feedback)}
-% - Recognize Feedback
-\paragraph{Addressing False Positives (Type II Feedback)}
-% - Erase Feedback
 
 \begin{figure}[!htbp]
     \begin{center}
@@ -465,7 +469,8 @@ The Tsetlin Automaton operates as a finite-state machine with $2N$ states, as il
 \end{figure}
 
 \section{Tsetlin Machine Variants}
-\paragraph{Standard Dense Architecture}
+% \paragraph{Standard Dense Architecture}
+\paragraph{Coalesced Architecture}
 \paragraph{Sparse Architecture}
 % - removes automata that are not contributing
 \paragraph{Stateless Inference Model}
@@ -1238,7 +1243,7 @@ To build the library into a shared object these commands can be ran:
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\chapter{\ChapterTitleEvaluation}
+\chapter{\ChapterTitleEvaluation} % TODO: Move this chapter to "Project results" and remove it.
 \label{sec:evaluation}
 Experiment results / evaluation
 
