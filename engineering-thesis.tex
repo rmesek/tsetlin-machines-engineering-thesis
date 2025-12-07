@@ -423,12 +423,26 @@ Since the Tsetlin Machine operates using propositional logic, the input data is 
 
 
 \paragraph{Rule Construction}
-% - Teams of automata are grouped into "Clauses" (AND rules) (example: wheels and not wings and doors)
-% - Complex data can be broken into simpler patterns
+The mechanism for building a Tsetlin Machine involves organizing Tsetlin Automata into teams, where each team is responsible for constructing a single conjunctive clause (AND-rule). These rules follow a logical pattern:
+$$\textbf{if} \ \textit{condition} \ \textbf{then} \ \textit{class} \text{.}$$
+For every potential literal in the input set (both original features and their negations), an assigned automaton determines whether to "Include" or "Exclude" that literal based on its internal state~\cite{granmo2021tsetlinmachinegame}. By combining these decisions through the AND-operator, the team produces a logical rule. For the vehicle classification task described in~\cite{granmo2022tsetlinmachinebookchap1}, a resulting rule can be expressed as: 
+$$\textbf{if} \ \textit{Four Wheels} \ \textbf{and} \ \textit{Transports People} \ \textbf{then} \ \textit{Car} \text{.}$$
 
 \paragraph{Class Prediction by Voting}
-% - Positive clauses vote for specific class and negative clauses vote against
-% - Needs to distinguish noise and data
+The Tsetlin Machine, as shown in Figure \ref{fig:tsetlinmachinestructure}, feeds an input vector $X = (x_1, \dots, x_n) \in \{0,1\}^n$ to several conjunctive clauses for evaluation. The number of clauses used is a user-defined parameter $K$. The clauses are assigned into two groups based on polarity: positive clauses ($C_j^1, \ j \in \{1,\dots,K/2\}$) vote in favor of the target class ($y=1$), negative clauses ($C_j^0, \ j \in \{1,\dots,K/2\}$) vote against it ($y=0$)~\cite{granmo2021tsetlinmachinegame}.
+
+While a standard clause learns to capture sub-patterns in $X$ and outputs the conjunction of its literals, the Tsetlin Machine uses a specific mechanism for empty clauses ($L_j = \emptyset$). These clauses without literals are not required for classification and can be pruned from the inference structure, but during learning, they remain active:
+$$C_j(X) = \begin{cases}
+1, & \textbf{if } L_j=\emptyset \text{ during learning},\\
+0, & \textbf{if } L_j=\emptyset \text{ during classification},\\
+\bigwedge_{l_k \in L_j}l_k, & \textbf{if } L_j=\emptyset \text{.}
+\end{cases}$$
+The final classification $\hat{y}$ is reached through a majority vote. The clause evaluations are combined into a final output through summation and unit step thresholding:
+$$\hat{y} = u \left( \sum_{j=1}^{K/2}C_j^1(X) - \sum_{j=1}^{K/2}C_j^0(X) \right)$$
+where $u(v) = 1 \textbf{ if } v \ge 0 \textbf{ else } 0$. The summation allows the model to weigh positive against negative evidence found in the input $X$. The example classifier that captures the XOR-relation can be represented as $\hat{y} = u(x_1\overline{x}_2 + \overline{x}_1x_2 - x_1x_2 - \overline{x}_1\overline{x}_2)$~\cite{granmo2021tsetlinmachinegame}.
+
+Figure \ref{fig:tsetlinmachineconfiguration} depicts two clauses, one with positive polarity and one with negative polarity. They are both assigned teams of four Tsetlin Automata, controlling the inclusion of literals $L = \{x_1,x_2,\overline{x}_1,\overline{x}_2\}$. The leftmost Tsetlin Automaton in the figure, for example, decided to include literal $x_1$. Given the decisions of the four Tsetlin Automata of $C_1$, the clause has the form $x_1\overline{x}_2$. Similarly, clause $C_0$ obtains the form $x_1x_2$~\cite{granmo2021tsetlinmachinegame}.
+
 
 \begin{figure}[!htbp]
     \centering
@@ -700,16 +714,231 @@ Applies a function to determine the output from the summed up class votes. By de
 Again, this can be fully customized. A custom output activation function can be set for the model, to override what the model outputs based on the summed up weights. \\
 Another predefined function allows multi-class classification, where the output is an 8-bit integer array where the length is the number of classes, where value 1 signifies a class with a given identifier being chosen, value 0 - not chosen.
 
+\subsection{Data layout}
+A clause is represented as a simple array of Tsetlin Automata states. For the sake of efficiency they are ordered by the literals they correspond to, in pairs of positive and negative Tsetlin Automata. This simplified representation is visualised in figure~\ref{fig:dense-data-layout}.
+\par The \textit{i}-th array field represents the state of Tsetlin Automaton corresponding to literal with index $\lfloor \frac{i}{2} \rfloor$ -- positive if \textit{i} is even, negative if odd.
+
+\begin{figure}[!htbp]
+\centering
+\begin{tikzpicture}
+    % Indices
+    \foreach \i in {0,1,2,3} {
+        \node at (\i*1.2,0.7) {\small \i};
+    }
+    \node at (4*1.2,0.7) {$\cdots$};
+    \node at (6.9,0.7) {\scriptsize $2 \times num\_literals - 2$};
+    \node at (9.9,0.7) {\scriptsize $2 \times num\_literals - 1$};
+    
+    % Literals
+    \node at (0*1.2,0) {\small $x_0$};
+    \node at (1*1.2,0) {\small $\neg x_0$};
+    \node at (2*1.2,0) {\small $x_1$};
+    \node at (3*1.2,0) {\small $\neg x_1$};
+    \node at (4*1.2,0) {$\cdots$};
+    \node at (6.9,0) { $x_{num\_literals - 1}$};
+    \node at (9.9,0) { $\neg x_{num\_literals - 1}$};
+    
+    % States
+    \foreach \i/\v in {
+            0/13,1/-43,
+            2/-48,3/-12,
+            4/$\cdots$
+            } {
+        \node[draw, minimum width=1.2cm, minimum height=0.8cm] (cell\i) at (\i*1.2,-0.7) {\v};
+    }
+    \node[draw, minimum width=3cm, minimum height=0.8cm] (cell5) at (6.9,-0.7) {17};
+    \node[draw, minimum width=3cm, minimum height=0.8cm] (cell6) at (9.9,-0.7) {-5};
+
+    % Labels
+    \node at (-2.5,0.7) {Index:};
+    \node at (-2.5,0) {Corresponding literal:};
+    \node at (-2.5,-0.7) {TA state:};
+\end{tikzpicture}
+\caption{Clause data layout of Coalesced Tsetlin Machine}
+\label{fig:dense-data-layout}
+\end{figure}
+
 \subsection{Model serialization format}
-TODO
+
+The model state is represented as:
+\begin{itemize}
+    \item Parameters:
+    \begin{itemize}
+        \item number of classes
+        \item threshold
+        \item number of literals
+        \item number of clauses
+        \item maximum state
+        \item minimum state
+        \item boost true positive feedback
+        \item learning sensitivity (s)
+    \end{itemize}
+    \item clause weights
+    \item clauses - Tsetlin Automata states
+    \item (optional) names of literals
+\end{itemize}
+This is described in FlatBuffers format in the listing~\ref{lst:dense-schema}
+
+\begin{lstlisting}[caption={[Coalesced Tsetlin Machine FlatBuffers serialization format]Coalesced Tsetlin Machine FlatBuffers serialization format},label=lst:dense-schema]
+table Parameters {
+  threshold:  uint;  // tsetlin automaton threshold
+  n_literals: uint;  // total number of literals
+  n_clauses:  uint;  // total number of clauses
+  n_classes:  uint;  // number of output classes
+  max_state:  byte;  // maximum state for automaton
+  min_state:  byte;  // minimum state for automaton
+  boost_tp:   ubyte; // boost true positive feedback
+  learn_s:    float; // learning sensitivity (s)
+}
+
+table ClauseWeightsTensor {
+  weights: [short]; // clause weights
+  shape:   [uint];  // dimensions e.g. [n_clauses, n_classes]
+}
+
+table AutomatonStatesTensor {
+  states: [byte]; // automaton states
+  shape:  [uint]; // dimensions e.g. [n_clauses, n_literals, 2]
+}
+
+table Model {
+  params:           Parameters            (required); // model hyperparameters
+  automaton_states: AutomatonStatesTensor (required); // automaton states
+  clause_weights:   ClauseWeightsTensor   (required); // clause weights
+  literal_names:    [string];                         // names of literals
+}
+
+root_type Model;
+\end{lstlisting}
+
 
 \section{Sparse Tsetlin Machine}
-A Sparse Tsetlin Machine~\cite{glimsdal2024sparsetsetlinmachine} 
+A Sparse Tsetlin Machine~\cite{glimsdal2024sparsetsetlinmachine} aims to efficiently process sparse data. It uses the same core principles and mechanics as the Coalesced Tsetlin Machine, its main difference being the underlying data layout.
 
-\subsection{Model serialization format}
+\subsection{Data layout}
+Unlike the Coalesced Tsetlin Machine, the Sparse Tsetlin Machine doesn't store all Tsetlin Automata. Simply put, it only keeps the Tsetlin Automata, which state is above a certain threshold. By doing so, in principle it doesn't need to waste space and computation power for Tsetlin Automata it deems unlikely to become active for a given clause. The simplified structure is shown in figure ~\ref{fig:sparse-data-layout}
+\par Since not all Tsetlin Automata are present in a clause a linked list is used as the underlying data structure. Identifying indices cannot be inferred from the data structure and need to be stored in nodes.
+
+\begin{figure}[!htbp]
+\centering
+\begin{tikzpicture}
+    
+    % Literals
+    \node at (0*1.8,0) { $\neg x_{0}$};
+    \node at (1*1.8,0) { $x_{2}$};
+    \node at (2*1.8,0) { $\neg x_{11}$};
+    \node at (3*1.8,0) { $\neg x_{21}$};
+    \node at (4*1.8,0) { $\cdots$};
+    \node at (5*1.8,0) { $x_{28}$};
+    
+    % Indices
+    \foreach \i/\v in {
+            0/1,1/4,
+            2/23,3/43,
+            4/$\cdots$,
+            5/56
+            } {
+        \node[draw, minimum width=1.0cm, minimum height=0.6cm] (id\i) at (\i*1.8,-0.7) {\v};
+    }
+    
+    % States
+    \foreach \i/\v in {
+            0/13,1/-43,
+            2/-48,3/-12,
+            4/$\cdots$,
+            5/-48
+            } {
+        \node[draw, minimum width=1.0cm, minimum height=0.6cm] (state\i) at (\i*1.8,-1.4) {\v};
+    }
+    
+    % Pointer
+    \foreach \i/\v in {
+            0/\textit{next},1/\textit{next},
+            2/\textit{next},3/\textit{next},
+            4/$\cdots$,
+            5/\textit{null}
+            } {
+        \node[draw, minimum width=1.0cm, minimum height=0.6cm] (ptr\i) at (\i*1.8,-2.1) {\v};
+    }
+
+    \foreach \i in {0,1,2,3,4,5} {
+        \node[draw, fit=(id\i) (state\i) (ptr\i)] (cell\i) {};
+    }
+
+    \draw [->] (ptr0.east)  -| ++(.4, .7) -- (cell1.west);
+    \draw [->] (ptr1.east)  -| ++(.4, .7) -- (cell2.west);
+    \draw [->] (ptr2.east)  -| ++(.4, .7) -- (cell3.west);
+    \draw [->, dashed] (ptr3.east)  -| ++(.4, .7) -- (cell4.west);
+    \draw [->, dashed] (ptr4.east)  -| ++(.4, .7) -- (cell5.west);
+
+    % Labels
+    \node at (-2.5,0) {Corresponding literal:};
+    \node at (-2.5,-0.7) {Index:};
+    \node at (-2.5,-1.4) {TA state:};
+    \node at (-2.5,-2.1) {Pointer:};
+\end{tikzpicture}
+\caption{Clause data layout of Sparse Tsetlin Machine}
+\label{fig:sparse-data-layout}
+\end{figure}
+
 
 \section{Stateless}
-\subsection{Model serialization format}
+A Stateless Tsetlin Machine is a slimmed down version of Sparse Tsetlin Machine that doesn't allow any model training, at the same time further reducing model size to the smallest and fastest possible for inference. It should only be created from a trained model of a different Tsetlin Machine variant.
+
+\subsection{Data layout}
+Stateless Tsetlin Machine, as name suggests, doesn't store Tsetlin Automaton states at all. Here a degenerated version of Tsetlin Automaton is active if it is present at all. The simplified structure is shown in figure ~\ref{fig:stateless-data-layout}
+
+
+\begin{figure}[!htbp]
+\centering
+\begin{tikzpicture}
+    
+    % Literals
+    \node at (0*1.8,0) { $\neg x_{0}$};
+    \node at (1*1.8,0) { $x_{2}$};
+    \node at (2*1.8,0) { $\neg x_{11}$};
+    \node at (3*1.8,0) { $\neg x_{21}$};
+    \node at (4*1.8,0) { $\cdots$};
+    \node at (5*1.8,0) { $x_{28}$};
+    
+    % Indices
+    \foreach \i/\v in {
+            0/1,1/4,
+            2/23,3/43,
+            4/$\cdots$,
+            5/56
+            } {
+        \node[draw, minimum width=1.0cm, minimum height=0.6cm] (id\i) at (\i*1.8,-0.7) {\v};
+    }
+    
+    % Pointer
+    \foreach \i/\v in {
+            0/\textit{next},1/\textit{next},
+            2/\textit{next},3/\textit{next},
+            4/$\cdots$,
+            5/\textit{null}
+            } {
+        \node[draw, minimum width=1.0cm, minimum height=0.6cm] (ptr\i) at (\i*1.8,-1.4) {\v};
+    }
+
+    \foreach \i in {0,1,2,3,4,5} {
+        \node[draw, fit=(id\i) (state\i) (ptr\i)] (cell\i) {};
+    }
+
+    \draw [->] (ptr0.east)  -| ++(.4, .35) -- (cell1.west);
+    \draw [->] (ptr1.east)  -| ++(.4, .35) -- (cell2.west);
+    \draw [->] (ptr2.east)  -| ++(.4, .35) -- (cell3.west);
+    \draw [->, dashed] (ptr3.east)  -| ++(.4, .35) -- (cell4.west);
+    \draw [->, dashed] (ptr4.east)  -| ++(.4, .35) -- (cell5.west);
+
+    % Labels
+    \node at (-2.5,0) {Corresponding literal:};
+    \node at (-2.5,-0.7) {Index:};
+    \node at (-2.5,-1.4) {Pointer:};
+\end{tikzpicture}
+\caption{Clause data layout of Sparse Tsetlin Machine}
+\label{fig:stateless-data-layout}
+\end{figure}
 
 \section{Optimizations}
 Seeing as speed, size, portability as well as limiting the usage of power and memory were all key requirements, optimizations were the main focus of this thesis. In this section a few of the more interesting examples are listed.
@@ -938,41 +1167,41 @@ The three main components of the \LibraryName library are the \emph{TsetlinMachi
 \subsection{TsetlinMachine}
 The basic Tsetlin Machine variant
 
-\subsubsection{Public API (quick reference)}
+% \subsubsection{Public API (quick reference)}
 
-\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X}
-\textbf{Method} \newline \textit{Description} \\
-\hline
+% \begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X}
+% \textbf{Method} \newline \textit{Description} \\
+% \hline
 
-\texttt{tm\_create(uint32\_t num\_classes, uint32\_t threshold, uint32\_t num\_literals, uint32\_t num\_clauses, int8\_t max\_state, int8\_t min\_state, uint8\_t boost\_true\_positive\_feedback, uint32\_t y\_size, uint32\_t y\_element\_size, float s, uint32\_t seed)} 
-\newline \textit{Create and initialize a Tsetlin Machine instance.} \\ \hline
+% \texttt{tm\_create(uint32\_t num\_classes, uint32\_t threshold, uint32\_t num\_literals, uint32\_t num\_clauses, int8\_t max\_state, int8\_t min\_state, uint8\_t boost\_true\_positive\_feedback, uint32\_t y\_size, uint32\_t y\_element\_size, float s, uint32\_t seed)} 
+% \newline \textit{Create and initialize a Tsetlin Machine instance.} \\ \hline
 
-\texttt{tm\_load(const char *filename, uint32\_t y\_size, uint32\_t y\_element\_size)} 
-\newline \textit{ Load a TsetlinMachine from a binary file produced by \texttt{tm\_save}.} \\ \hline
+% \texttt{tm\_load(const char *filename, uint32\_t y\_size, uint32\_t y\_element\_size)} 
+% \newline \textit{ Load a TsetlinMachine from a binary file produced by \texttt{tm\_save}.} \\ \hline
 
-\texttt{tm\_save(const struct TsetlinMachine *tm, const char *filename)}
-\newline \textit{ Save a TsetlinMachine instance to a binary file.} \\ \hline
+% \texttt{tm\_save(const struct TsetlinMachine *tm, const char *filename)}
+% \newline \textit{ Save a TsetlinMachine instance to a binary file.} \\ \hline
 
-\texttt{tm\_free(struct TsetlinMachine *tm)}
-\newline \textit{ Free a TsetlinMachine and all internally allocated memory.} \\ \hline
+% \texttt{tm\_free(struct TsetlinMachine *tm)}
+% \newline \textit{ Free a TsetlinMachine and all internally allocated memory.} \\ \hline
 
-\texttt{tm\_train(struct TsetlinMachine *tm, const uint8\_t *X, const void *y, uint32\_t rows, uint32\_t epochs)}
-\newline \textit{ Train the TsetlinMachine on a dataset.} \\ \hline
+% \texttt{tm\_train(struct TsetlinMachine *tm, const uint8\_t *X, const void *y, uint32\_t rows, uint32\_t epochs)}
+% \newline \textit{ Train the TsetlinMachine on a dataset.} \\ \hline
 
-\texttt{tm\_predict(struct TsetlinMachine *tm, const uint8\_t *X, void *y\_pred, uint32\_t rows)}
-\newline \textit{ Run inference with a TsetlinMachine.} \\ \hline
+% \texttt{tm\_predict(struct TsetlinMachine *tm, const uint8\_t *X, void *y\_pred, uint32\_t rows)}
+% \newline \textit{ Run inference with a TsetlinMachine.} \\ \hline
 
-\texttt{tm\_evaluate(struct TsetlinMachine *tm, const uint8\_t *X, const void *y, uint32\_t rows)}
-\newline \textit{ Evaluate accuracy on a dataset and print results to stdout.} \\ \hline
-\end{tabularx}
+% \texttt{tm\_evaluate(struct TsetlinMachine *tm, const uint8\_t *X, const void *y, uint32\_t rows)}
+% \newline \textit{ Evaluate accuracy on a dataset and print results to stdout.} \\ \hline
+% \end{tabularx}
 
-\hspace{5pt}
-\subsubsection{Select detailed function descriptions}
+% \hspace{5pt}
+% \subsubsection{Select detailed function descriptions}
 
-\paragraph{\texttt{tm\_create()}}
+% \paragraph{\texttt{tm\_create()}}
 \begin{description}
-    \item[Description:]  Create and initialize a Tsetlin Machine instance. \\
-Allocates internal arrays and seeds the PRNG. Needs to be deallocated with \texttt{tm\_free}
+%     \item[Description:]  Create and initialize a Tsetlin Machine instance. \\
+% Allocates internal arrays and seeds the PRNG. Needs to be deallocated with \texttt{tm\_free}
     \item[Parameters:]\ %no clue why this works but don't remove this \
     \begin{tabularx}{\textwidth}{XX}
         \texttt{ num\_classes } &	Number of classes to predict. \\
@@ -987,11 +1216,11 @@ Allocates internal arrays and seeds the PRNG. Needs to be deallocated with \text
         \texttt{ s } &	Sensitivity / learning parameter (> 1.0).\\
         \texttt{ seed } &	Random seed for reproducibility. \\
     \end{tabularx}
-    \item[Returns:] Pointer to the created TsetlinMachine, or NULL on allocation failure.
+    % \item[Returns:] Pointer to the created TsetlinMachine, or NULL on allocation failure.
 \end{description}
 
 
-\hspace{5pt}
+% \hspace{5pt}
 \subsubsection{Advanced usage}
 
 This implementation is highly versatile; both input and output may come in any shape. The only limiting factors are that the input is binary and it is a classification architecture (as opposed to regression). There are two presets available:
@@ -1001,136 +1230,136 @@ This implementation is highly versatile; both input and output may come in any s
 \end{enumerate}
 Custom formats can also be freely implemented. All that is required is to write the implementation based on the functions below and then set them as callbacks with the corresponding \texttt{tm\_set\_[...]}
 
-\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X}
-\textbf{Method} \newline \textit{Description} \\
-\hline
+% \begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X}
+% \textbf{Method} \newline \textit{Description} \\
+% \hline
 
-\texttt{tm\_y\_eq\_generic(const struct TsetlinMachine *tm, const void *y, const void *y\_pred)}
-\newline \textit{ Generic equality comparator for outputs.} \\ \hline
+% \texttt{tm\_y\_eq\_generic(const struct TsetlinMachine *tm, const void *y, const void *y\_pred)}
+% \newline \textit{ Generic equality comparator for outputs.} \\ \hline
 
-\texttt{tm\_oa\_class\_idx(const struct TsetlinMachine *tm, const void *y\_pred)}
-\newline \textit{ Output activation returning the index with highest vote.} \\ \hline
+% \texttt{tm\_oa\_class\_idx(const struct TsetlinMachine *tm, const void *y\_pred)}
+% \newline \textit{ Output activation returning the index with highest vote.} \\ \hline
 
-\texttt{tm\_oa\_bin\_vector(const struct TsetlinMachine *tm, const void *y\_pred)}
-\newline \textit{ Output activation returning a per-class binary vector using the mid\_state threshold.} \\ \hline
+% \texttt{tm\_oa\_bin\_vector(const struct TsetlinMachine *tm, const void *y\_pred)}
+% \newline \textit{ Output activation returning a per-class binary vector using the mid\_state threshold.} \\ \hline
 
-\texttt{tm\_set\_output\_activation(struct TsetlinMachine *tm, void (*output\_activation)(const struct TsetlinMachine *tm, const void *y\_pred))}
-\newline \textit{ Set a custom output activation function.} \\ \hline
+% \texttt{tm\_set\_output\_activation(struct TsetlinMachine *tm, void (*output\_activation)(const struct TsetlinMachine *tm, const void *y\_pred))}
+% \newline \textit{ Set a custom output activation function.} \\ \hline
 
-\texttt{tm\_feedback\_class\_idx(struct TsetlinMachine *tm, const uint8\_t *X, const void *y)}
-\newline \textit{ Calculate feedback when \texttt{y} contains a class index (\texttt{y\_size == 1}).} \\ \hline
+% \texttt{tm\_feedback\_class\_idx(struct TsetlinMachine *tm, const uint8\_t *X, const void *y)}
+% \newline \textit{ Calculate feedback when \texttt{y} contains a class index (\texttt{y\_size == 1}).} \\ \hline
 
-\texttt{tm\_feedback\_bin\_vector(struct TsetlinMachine *tm, const uint8\_t *X, const void *y)}
-\newline \textit{ Calculate feedback when \texttt{y} is a per-class binary indicator vector.} \\ \hline
+% \texttt{tm\_feedback\_bin\_vector(struct TsetlinMachine *tm, const uint8\_t *X, const void *y)}
+% \newline \textit{ Calculate feedback when \texttt{y} is a per-class binary indicator vector.} \\ \hline
 
-\texttt{tm\_apply\_feedback(struct TsetlinMachine *tm, uint32\_t clause\_id, uint32\_t class\_id, uint8\_t is\_class\_positive, const uint8\_t *X)}
-\newline \textit{ Internal helper to determine and apply correct feedback (type 1 or type 2).} \\ \hline
+% \texttt{tm\_apply\_feedback(struct TsetlinMachine *tm, uint32\_t clause\_id, uint32\_t class\_id, uint8\_t is\_class\_positive, const uint8\_t *X)}
+% \newline \textit{ Internal helper to determine and apply correct feedback (type 1 or type 2).} \\ \hline
 
-\texttt{tm\_set\_calculate\_feedback(struct TsetlinMachine *tm, void (*calculate\_feedback)(struct TsetlinMachine *tm, const uint8\_t *X, const void *y))}
-\newline \textit{ Set a custom feedback calculation function.} \\ 
-\end{tabularx}
+% \texttt{tm\_set\_calculate\_feedback(struct TsetlinMachine *tm, void (*calculate\_feedback)(struct TsetlinMachine *tm, const uint8\_t *X, const void *y))}
+% \newline \textit{ Set a custom feedback calculation function.} \\ 
+% \end{tabularx}
 
 
 
 \subsection{SparseTsetlinMachine}
 A Tsetlin Machine variant utilizing sparse memory layout. Its usage is very much symmetrical to the vanilla \texttt{TsetlinMachine}.
 
-\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X}
-\textbf{Method} \newline \textit{Description} \\
-\hline
+% \begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X}
+% \textbf{Method} \newline \textit{Description} \\
+% \hline
 
-\texttt{stm\_create(uint32\_t num\_classes, uint32\_t threshold, uint32\_t num\_literals, uint32\_t num\_clauses, int8\_t max\_state, int8\_t min\_state, uint8\_t boost\_true\_positive\_feedback, uint32\_t y\_size, uint32\_t y\_element\_size, float s, uint32\_t seed)} \\
-\textit{Create and allocate a SparseTsetlinMachine instance.} \\
-\hline
+% \texttt{stm\_create(uint32\_t num\_classes, uint32\_t threshold, uint32\_t num\_literals, uint32\_t num\_clauses, int8\_t max\_state, int8\_t min\_state, uint8\_t boost\_true\_positive\_feedback, uint32\_t y\_size, uint32\_t y\_element\_size, float s, uint32\_t seed)} \\
+% \textit{Create and allocate a SparseTsetlinMachine instance.} \\
+% \hline
 
-\texttt{stm\_load\_dense(const char *filename, uint32\_t y\_size, uint32\_t y\_element\_size)} \\
-\textit{Load a sparse TsetlinMachine from a binary file.} \\
-\hline
+% \texttt{stm\_load\_dense(const char *filename, uint32\_t y\_size, uint32\_t y\_element\_size)} \\
+% \textit{Load a sparse TsetlinMachine from a binary file.} \\
+% \hline
 
-\texttt{stm\_save(const struct SparseTsetlinMachine *stm, const char *filename)} \\
-\textit{Save a sparse TsetlinMachine to a binary file.} \\
-\hline
+% \texttt{stm\_save(const struct SparseTsetlinMachine *stm, const char *filename)} \\
+% \textit{Save a sparse TsetlinMachine to a binary file.} \\
+% \hline
 
-\texttt{stm\_free(struct SparseTsetlinMachine *stm)} \\
-\textit{Free a SparseTsetlinMachine and all associated memory.} \\
-\hline
+% \texttt{stm\_free(struct SparseTsetlinMachine *stm)} \\
+% \textit{Free a SparseTsetlinMachine and all associated memory.} \\
+% \hline
 
-\texttt{stm\_train(struct SparseTsetlinMachine *stm, const uint8\_t *X, const void *y, uint32\_t rows, uint32\_t epochs)} \\
-\textit{Train a sparse TsetlinMachine on a dataset.} \\
-\hline
+% \texttt{stm\_train(struct SparseTsetlinMachine *stm, const uint8\_t *X, const void *y, uint32\_t rows, uint32\_t epochs)} \\
+% \textit{Train a sparse TsetlinMachine on a dataset.} \\
+% \hline
 
-\texttt{stm\_predict(struct SparseTsetlinMachine *stm, const uint8\_t *X, void *y\_pred, uint32\_t rows)} \\
-\textit{Perform inference with a sparse TsetlinMachine.} \\
-\hline
+% \texttt{stm\_predict(struct SparseTsetlinMachine *stm, const uint8\_t *X, void *y\_pred, uint32\_t rows)} \\
+% \textit{Perform inference with a sparse TsetlinMachine.} \\
+% \hline
 
-\texttt{stm\_evaluate(struct SparseTsetlinMachine *stm, const uint8\_t *X, const void *y, uint32\_t rows)} \\
-\textit{Evaluate sparse model accuracy on a dataset and print result.} \\ 
-\end{tabularx}
+% \texttt{stm\_evaluate(struct SparseTsetlinMachine *stm, const uint8\_t *X, const void *y, uint32\_t rows)} \\
+% \textit{Evaluate sparse model accuracy on a dataset and print result.} \\ 
+% \end{tabularx}
 
-\hspace{5pt}
-\subsubsection{Select detailed function descriptions}
+% \hspace{5pt}
+% \subsubsection{Select detailed function descriptions}
 
-\paragraph{\texttt{stm\_create()}}
-\begin{description}
-    \item[Description:]  Create and initialize a Sparse Tsetlin Machine instance. \\
-Allocates internal arrays and seeds the PRNG. Needs to be deallocated with \texttt{stm\_free}.
-    \item[Parameters:]\ %no clue why this works but don't remove this \
-    \begin{tabularx}{\textwidth}{XX}
-        \texttt{ num\_classes } &	Number of classes to predict. \\
-        \texttt{ threshold } &	Threshold for clause votes. \\
-        \texttt{ num\_literals } &	Number of literals (features) in the input data.\\
-        \texttt{ num\_clauses } &	Number of clauses in the Tsetlin Machine.\\
-        \texttt{ max\_state } &	Maximum automaton state value.\\
-        \texttt{ min\_state } &	Minimum automaton state value.\\
-        \texttt{ boost\_true\_positive\_feedback } &	Whether to boost true positive feedback (0/1).\\
-        \texttt{ y\_size } &	Size of the output vector (e.g., 1 for single-label classification).\\
-        \texttt{ y\_element\_size } &	Size of each output element (in bytes).\\
-        \texttt{ s } &	Sensitivity / learning parameter (> 1.0).\\
-        \texttt{ seed } &	Random seed for reproducibility. \\
-    \end{tabularx}
-    \item[Returns:] Pointer to the created TsetlinMachine, or NULL on allocation failure.
-\end{description}
+% \paragraph{\texttt{stm\_create()}}
+% \begin{description}
+% %     \item[Description:]  Create and initialize a Sparse Tsetlin Machine instance. \\
+% % Allocates internal arrays and seeds the PRNG. Needs to be deallocated with \texttt{stm\_free}.
+%     \item[Parameters:]\ %no clue why this works but don't remove this \
+%     \begin{tabularx}{\textwidth}{XX}
+%         \texttt{ num\_classes } &	Number of classes to predict. \\
+%         \texttt{ threshold } &	Threshold for clause votes. \\
+%         \texttt{ num\_literals } &	Number of literals (features) in the input data.\\
+%         \texttt{ num\_clauses } &	Number of clauses in the Tsetlin Machine.\\
+%         \texttt{ max\_state } &	Maximum automaton state value.\\
+%         \texttt{ min\_state } &	Minimum automaton state value.\\
+%         \texttt{ boost\_true\_positive\_feedback } &	Whether to boost true positive feedback (0/1).\\
+%         \texttt{ y\_size } &	Size of the output vector (e.g., 1 for single-label classification).\\
+%         \texttt{ y\_element\_size } &	Size of each output element (in bytes).\\
+%         \texttt{ s } &	Sensitivity / learning parameter (> 1.0).\\
+%         \texttt{ seed } &	Random seed for reproducibility. \\
+%     \end{tabularx}
+%     % \item[Returns:] Pointer to the created TsetlinMachine, or NULL on allocation failure.
+% \end{description}
 
-\hspace{5pt}
+% \hspace{5pt}
 \subsubsection{Advanced usage}
 Similarly, custom formats can also be freely implemented. All that is required is to write the implementation based on the functions below and then set them as callbacks with the corresponding \texttt{stm\_set\_[...]}
 
-\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X}
-\textbf{Method} \newline \textit{Description} \\
-\hline
-\texttt{stm\_y\_eq\_generic(const struct SparseTsetlinMachine *stm, const void *y, const void *y\_pred)} \\
-\textit{Generic equality comparator for sparse TsetlinMachine outputs.} \\
-\hline
+% \begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X}
+% \textbf{Method} \newline \textit{Description} \\
+% \hline
+% \texttt{stm\_y\_eq\_generic(const struct SparseTsetlinMachine *stm, const void *y, const void *y\_pred)} \\
+% \textit{Generic equality comparator for sparse TsetlinMachine outputs.} \\
+% \hline
 
-\texttt{stm\_oa\_class\_idx(const struct SparseTsetlinMachine *stm, const void *y\_pred)} \\
-\textit{Output activation returning the class index with highest vote (sparse).} \\
-\hline
+% \texttt{stm\_oa\_class\_idx(const struct SparseTsetlinMachine *stm, const void *y\_pred)} \\
+% \textit{Output activation returning the class index with highest vote (sparse).} \\
+% \hline
 
-\texttt{stm\_oa\_bin\_vector(const struct SparseTsetlinMachine *stm, const void *y\_pred)} \\
-\textit{Output activation producing per-class binary predictions (sparse).} \\
-\hline
+% \texttt{stm\_oa\_bin\_vector(const struct SparseTsetlinMachine *stm, const void *y\_pred)} \\
+% \textit{Output activation producing per-class binary predictions (sparse).} \\
+% \hline
 
-\texttt{stm\_set\_output\_activation(struct SparseTsetlinMachine *stm, void(*output\_activation)(const struct SparseTsetlinMachine *stm, const void *y\_pred))} \\
-\textit{Set a custom output activation function for sparse machine.} \\
-\hline
+% \texttt{stm\_set\_output\_activation(struct SparseTsetlinMachine *stm, void(*output\_activation)(const struct SparseTsetlinMachine *stm, const void *y\_pred))} \\
+% \textit{Set a custom output activation function for sparse machine.} \\
+% \hline
 
-\texttt{stm\_feedback\_class\_idx(struct SparseTsetlinMachine *stm, const uint8\_t *X, const void *y)} \\
-\textit{Calculate feedback when label is provided as a class index (sparse).} \\
-\hline
+% \texttt{stm\_feedback\_class\_idx(struct SparseTsetlinMachine *stm, const uint8\_t *X, const void *y)} \\
+% \textit{Calculate feedback when label is provided as a class index (sparse).} \\
+% \hline
 
-\texttt{stm\_feedback\_bin\_vector(struct SparseTsetlinMachine *stm, const uint8\_t *X, const void *y)} \\
-\textit{Calculate feedback when label is provided as a binary vector (sparse).} \\
-\hline
+% \texttt{stm\_feedback\_bin\_vector(struct SparseTsetlinMachine *stm, const uint8\_t *X, const void *y)} \\
+% \textit{Calculate feedback when label is provided as a binary vector (sparse).} \\
+% \hline
 
-\texttt{stm\_apply\_feedback(struct SparseTsetlinMachine *stm, uint32\_t clause\_id, uint32\_t class\_id, uint8\_t is\_class\_positive, const uint8\_t *X)} \\
-\textit{Decide and apply appropriate feedback for a clause/class pair (sparse).} \\
-\hline
+% \texttt{stm\_apply\_feedback(struct SparseTsetlinMachine *stm, uint32\_t clause\_id, uint32\_t class\_id, uint8\_t is\_class\_positive, const uint8\_t *X)} \\
+% \textit{Decide and apply appropriate feedback for a clause/class pair (sparse).} \\
+% \hline
 
-\texttt{stm\_set\_calculate\_feedback(struct SparseTsetlinMachine *stm, void(*calculate\_feedback)(struct SparseTsetlinMachine *stm, const uint8\_t *X, const void *y))} \\
-\textit{Set a custom feedback calculation function for the sparse machine.} \\
-\hline
+% \texttt{stm\_set\_calculate\_feedback(struct SparseTsetlinMachine *stm, void(*calculate\_feedback)(struct SparseTsetlinMachine *stm, const uint8\_t *X, const void *y))} \\
+% \textit{Set a custom feedback calculation function for the sparse machine.} \\
+% \hline
 
-\end{tabularx}
+% \end{tabularx}
 
 
 
@@ -1138,90 +1367,120 @@ Similarly, custom formats can also be freely implemented. All that is required i
 \subsection{StatelessTsetlinMachine}
 An inference-only Tsetlin Machine variant utilizing sparse memory layout optimized for small size and inference speed
 
-\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X}
-\textbf{Method} \newline \textit{Description} \\
-\hline
+% \begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X}
+% \textbf{Method} \newline \textit{Description} \\
+% \hline
 
-\texttt{sltm\_create(uint32\_t num\_classes, uint32\_t threshold, uint32\_t num\_literals, uint32\_t num\_clauses, int8\_t max\_state, int8\_t min\_state, uint8\_t boost\_true\_positive\_feedback, uint32\_t y\_size, uint32\_t y\_element\_size, float s)} \\
-\textit{Allocate and initialize a StatelessTsetlinMachine instance.} \\
-\hline
+% \texttt{sltm\_create(uint32\_t num\_classes, uint32\_t threshold, uint32\_t num\_literals, uint32\_t num\_clauses, int8\_t max\_state, int8\_t min\_state, uint8\_t boost\_true\_positive\_feedback, uint32\_t y\_size, uint32\_t y\_element\_size, float s)} \\
+% \textit{Allocate and initialize a StatelessTsetlinMachine instance.} \\
+% \hline
 
-\texttt{sltm\_load\_dense(const char *filename, uint32\_t y\_size, uint32\_t y\_element\_size)} \\
-\textit{Load a stateless machine by reading a dense TM binary and pruning.} \\
-\hline
+% \texttt{sltm\_load\_dense(const char *filename, uint32\_t y\_size, uint32\_t y\_element\_size)} \\
+% \textit{Load a stateless machine by reading a dense TM binary and pruning.} \\
+% \hline
 
-\texttt{sltm\_save(const struct StatelessTsetlinMachine *sltm, const char *filename)} \\
-\textit{Save a StatelessTsetlinMachine to a binary file.} \\
-\hline
+% \texttt{sltm\_save(const struct StatelessTsetlinMachine *sltm, const char *filename)} \\
+% \textit{Save a StatelessTsetlinMachine to a binary file.} \\
+% \hline
 
-\texttt{sltm\_free(struct StatelessTsetlinMachine *sltm)} \\
-\textit{Free a StatelessTsetlinMachine and its resources.} \\
-\hline
+% \texttt{sltm\_free(struct StatelessTsetlinMachine *sltm)} \\
+% \textit{Free a StatelessTsetlinMachine and its resources.} \\
+% \hline
 
-\texttt{sltm\_predict(struct StatelessTsetlinMachine *sltm, const uint8\_t *X, void *y\_pred, uint32\_t rows)} \\
-\textit{Run inference with a stateless machine.} \\
-\hline
+% \texttt{sltm\_predict(struct StatelessTsetlinMachine *sltm, const uint8\_t *X, void *y\_pred, uint32\_t rows)} \\
+% \textit{Run inference with a stateless machine.} \\
+% \hline
 
-\texttt{sltm\_evaluate(struct StatelessTsetlinMachine *sltm, const uint8\_t *X, const void *y, uint32\_t rows)} \\
-\textit{Evaluate predictions on a dataset and print accuracy (stateless).} \\
-\end{tabularx}
+% \texttt{sltm\_evaluate(struct StatelessTsetlinMachine *sltm, const uint8\_t *X, const void *y, uint32\_t rows)} \\
+% \textit{Evaluate predictions on a dataset and print accuracy (stateless).} \\
+% \end{tabularx}
 
-\hspace{5pt}
-\subsubsection{Select detailed function descriptions}
+% \hspace{5pt}
+% \subsubsection{Select detailed function descriptions}
 
-\paragraph{\texttt{stm\_create()}}
-\begin{description}
-    \item[Description:]  Create and initialize a Stateless Tsetlin Machine instance. \\
-Allocates internal arrays. Needs to be deallocated with \texttt{sltm\_free}.
-    \item[Parameters:]\ %no clue why this works but don't remove this \
-    \begin{tabularx}{\textwidth}{XX}
-        \texttt{ num\_classes } &	Number of classes to predict. \\
-        \texttt{ threshold } &	Threshold for clause votes. \\
-        \texttt{ num\_literals } &	Number of literals (features) in the input data.\\
-        \texttt{ num\_clauses } &	Number of clauses in the Tsetlin Machine.\\
-        \texttt{ max\_state } &	Maximum automaton state value.\\
-        \texttt{ min\_state } &	Minimum automaton state value.\\
-        \texttt{ boost\_true\_positive\_feedback } &	Whether to boost true positive feedback (0/1).\\
-        \texttt{ y\_size } &	Size of the output vector (e.g., 1 for single-label classification).\\
-        \texttt{ y\_element\_size } &	Size of each output element (in bytes).\\
-        \texttt{ s } &	Sensitivity / learning parameter (> 1.0).\\
-        \texttt{ seed } &	Random seed for reproducibility. \\
-    \end{tabularx}
-    \item[Returns:] Pointer to the created TsetlinMachine, or NULL on allocation failure.
-\end{description}
+% \paragraph{\texttt{stm\_create()}}
+% \begin{description}
+% %     \item[Description:]  Create and initialize a Stateless Tsetlin Machine instance. \\
+% % Allocates internal arrays. Needs to be deallocated with \texttt{sltm\_free}.
+%     \item[Parameters:]\ %no clue why this works but don't remove this \
+%     \begin{tabularx}{\textwidth}{XX}
+%         \texttt{ num\_classes } &	Number of classes to predict. \\
+%         \texttt{ threshold } &	Threshold for clause votes. \\
+%         \texttt{ num\_literals } &	Number of literals (features) in the input data.\\
+%         \texttt{ num\_clauses } &	Number of clauses in the Tsetlin Machine.\\
+%         \texttt{ max\_state } &	Maximum automaton state value.\\
+%         \texttt{ min\_state } &	Minimum automaton state value.\\
+%         \texttt{ boost\_true\_positive\_feedback } &	Whether to boost true positive feedback (0/1).\\
+%         \texttt{ y\_size } &	Size of the output vector (e.g., 1 for single-label classification).\\
+%         \texttt{ y\_element\_size } &	Size of each output element (in bytes).\\
+%         \texttt{ s } &	Sensitivity / learning parameter (> 1.0).\\
+%         \texttt{ seed } &	Random seed for reproducibility. \\
+%     \end{tabularx}
+%     % \item[Returns:] Pointer to the created TsetlinMachine, or NULL on allocation failure.
+% \end{description}
 
-\hspace{5pt}
+% \hspace{5pt}
 \subsubsection{Advanced usage}
 Similarly, custom formats can also be freely implemented. All that is required is to write the implementation based on the functions below and then set them as callbacks with the corresponding\texttt{sltm\_set\_[...]} 
 
-\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X}
-\textbf{Method} \newline \textit{Description} \\
-\hline
-\texttt{sltm\_y\_eq\_generic(const struct StatelessTsetlinMachine *sltm, const void *y, const void *y\_pred)} \\
-\textit{Generic comparator for StatelessTsetlinMachine outputs.} \\
-\hline
+% \begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X}
+% \textbf{Method} \newline \textit{Description} \\
+% \hline
+% \texttt{sltm\_y\_eq\_generic(const struct StatelessTsetlinMachine *sltm, const void *y, const void *y\_pred)} \\
+% \textit{Generic comparator for StatelessTsetlinMachine outputs.} \\
+% \hline
 
-\texttt{sltm\_oa\_class\_idx(const struct StatelessTsetlinMachine *sltm, const void *y\_pred)} \\
-\textit{Output activation returning the class index with highest vote.} \\
-\hline
+% \texttt{sltm\_oa\_class\_idx(const struct StatelessTsetlinMachine *sltm, const void *y\_pred)} \\
+% \textit{Output activation returning the class index with highest vote.} \\
+% \hline
 
-\texttt{sltm\_oa\_bin\_vector(const struct StatelessTsetlinMachine *sltm, const void *y\_pred)} \\
-\textit{Output activation producing a per-class binary vector using \texttt{mid\_state}.} \\
-\hline
+% \texttt{sltm\_oa\_bin\_vector(const struct StatelessTsetlinMachine *sltm, const void *y\_pred)} \\
+% \textit{Output activation producing a per-class binary vector using \texttt{mid\_state}.} \\
+% \hline
 
-\texttt{sltm\_set\_output\_activation(struct StatelessTsetlinMachine *sltm, void(*output\_activation)(const struct StatelessTsetlinMachine *sltm, const void *y\_pred))} \\
-\textit{Set a custom output activation function for the stateless machine.} \\
-\hline
+% \texttt{sltm\_set\_output\_activation(struct StatelessTsetlinMachine *sltm, void(*output\_activation)(const struct StatelessTsetlinMachine *sltm, const void *y\_pred))} \\
+% \textit{Set a custom output activation function for the stateless machine.} \\
+% \hline
 
-\end{tabularx}
+% \end{tabularx}
+
+
+\section{Build}
+\begin{verbatim}
+    cmake -B build
+    cmake --build build
+\end{verbatim}
+
+\subsection{Build requirements}
+\begin{itemize}
+    \item CMake 3.23+
+    \item GCC-13 Compiler recommended
+    \item uv Python manager (optional, for green\_tsetlin integration and jupyter notebooks examples)
+\end{itemize}
+
+\subsection{Build Options}
+\begin{itemize}
+    \item -DBUILD\_FLATCC=ON/OFF : Build FlatCC from third\_party
+    \item -DBUILD\_PYTHON=ON/OFF : Enable building Python bindings
+    \item -DBUILD\_EXAMPLES=ON/OFF : Enable building examples
+    \item -DBUILD\_TESTING=ON/OFF : Enable building third\_party tests
+\end{itemize}
 
 
 \section{Installation}
-TODO: ?
+\begin{verbatim}
+    cmake -B build -DCMAKE_INSTALL_PREFIX=install -DBUILD_SHARED_LIBS=ON
+    cmake --build build
+    cmake --install build --component tsetlin_machine_c
+\end{verbatim}
 
+\subsection{Install with Python}
+\begin{verbatim}
+    uv sync
+\end{verbatim}
 
 \section{Testing and examples}
-To run accuracy tests these commands can be ran:
+To run accuracy tests the following commands can be ran
 \begin{verbatim}
     rm -rf build
     cmake -B build
@@ -1229,11 +1488,11 @@ To run accuracy tests these commands can be ran:
     ./build/tests/test_runner
 \end{verbatim}
 
-TODO: examples?
+TODO how to run examples
 
 
 \section{Linking to a project}
-To build the library into a shared object these commands can be ran:
+To build the library into a shared object the following commands can be ran
 \begin{verbatim}
     rm -rf build install
     cmake -B build -DCMAKE_INSTALL_PREFIX=install -DBUILD_SHARED_LIBS=ON
@@ -1255,7 +1514,7 @@ Experiment results / evaluation
 \emph{Wskazanie wyników projektu (co konkretnie udało się uzyskać: oprogramowanie, dokumentacja, raporty z testów/wdrożenia, itd.), prezentacja wyników i ocena ich użyteczności (jak zostało to zweryfikowane --- np.\ wnioski klienta/użytkownika, zrealizowane testy wydajnościowe, itd.), istniejące ograniczenia i propozycje dalszych prac.}
 
 \section{Restrictions}
-Sparse broke lol
+Sparse broke
 
 \section{Further work}
 Due to time constraints and other circumstances, not the full scope of the thesis could be realized. Furthermore, many fascinating ideas were born, ones the authors may not be able to pursue themselves.
@@ -1265,7 +1524,7 @@ Due to time constraints and other circumstances, not the full scope of the thesi
 Due to how customizable \LibraryName is, a custom feedback function and output activation function can be written to facilitate a Tsetlin Machine to be used as a layer of a larger model - painlessly, without the need to rewrite the main logic of the execution engine.
 
 \subsection{Integer only implementation of Tsetlin Machine}
-Like 99\% if not 100\% of it is in RNG and that can be eeasily rewritten to being integer based.
+Like 99\% if not 100\% of it is in PRNG and that can be easily rewritten to being integer based.
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
