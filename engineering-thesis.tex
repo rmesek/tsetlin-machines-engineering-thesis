@@ -441,7 +441,7 @@ The final classification $\hat{y}$ is reached through a majority vote. The claus
 $$\hat{y} = u \left( \sum_{j=1}^{K/2}C_j^1(X) - \sum_{j=1}^{K/2}C_j^0(X) \right)$$
 where $u(v) = 1 \textbf{ if } v \ge 0 \textbf{ else } 0$. The summation allows the model to weigh positive against negative evidence found in the input $X$. The example classifier that captures the XOR-relation can be represented as $\hat{y} = u(x_1\overline{x}_2 + \overline{x}_1x_2 - x_1x_2 - \overline{x}_1\overline{x}_2)$~\cite{granmo2021tsetlinmachinegame}.
 
-Figure \ref{fig:tsetlinmachineconfiguration} depicts two clauses, one with positive polarity and one with negative polarity. They are both assigned teams of four Tsetlin Automata, controlling the inclusion of literals $L = \{x_1,x_2,\overline{x}_1,\overline{x}_2\}$. The leftmost Tsetlin Automaton in the figure, for example, decided to include literal $x_1$. Given the decisions of the four Tsetlin Automata of $C_1$, the clause has the form $x_1\overline{x}_2$. Similarly, clause $C_0$ obtains the form $x_1x_2$~\cite{granmo2021tsetlinmachinegame}.
+Figure \ref{fig:tsetlinmachineconfiguration} depicts two clauses, one with positive polarity and one with negative polarity. They are both assigned teams of four Tsetlin Automata, controlling the inclusion of literals $L = \{x_1,x_2,\overline{x}_1,\overline{x}_2\}$. The leftmost Tsetlin Automaton in the figure, for example, decided to include literal $x_1$. Given the decisions of the four Tsetlin Automata of $C^1$, the clause has the form $x_1\overline{x}_2$. Similarly, clause $C^0$ obtains the form $x_1x_2$~\cite{granmo2021tsetlinmachinegame}.
 
 
 \begin{figure}[!htbp]
