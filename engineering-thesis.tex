@@ -22,6 +22,7 @@
 \usepackage{tikz}
 \usetikzlibrary{positioning, arrows, fit, backgrounds}
 \usepackage{amsmath}
+\usepackage{paralist}
 
 \hypersetup{colorlinks,
   linkcolor=blue,
@@ -137,13 +138,13 @@ dr hab.\ inż.\ Tomasz Szydło, prof.\ AGH}
 \label{sec:goals-vision}
 
 % poniższą zawartość rodziału należy usunąć z finalnej wersji pracy.
-\emph{Charakterystyka problemu, motywacja projektu (w tym przegląd istniejących rozwiązań prowadząca do uzasadnienia celu prac), wizja produktu i analiza zagrożeń.}
+% \emph{Charakterystyka problemu, motywacja projektu (w tym przegląd istniejących rozwiązań prowadząca do uzasadnienia celu prac), wizja produktu i analiza zagrożeń.}
 
 \vspace{10pt}
-Machine learning architectures are becoming a popular topic of research as they continue to show promise in various use cases. Recent years have shown rapid developments in this field, aimed especially to improve model accuracy and scaling. Not all applications can benefit from these advancements however, as they typically suffer from issues such as low model explainability, high computation power requirements and high energy usage. This thesis explores how an implementation of the Tsetlin Machine ML architecture could bridge these gaps and allow for an efficient, lightweight execution engine that can train and infer even on edge devices. To allow transferring a model to and from the edge device, a lightweight model serialization format was developed.
+Machine learning architectures are becoming a popular topic of research as they continue to show promise in various use cases. Recent years have shown rapid developments in this field, aimed especially to improve model accuracy and scaling. Not all applications can benefit from these advancements however, as they typically suffer from issues such as low model explainability, high computation power requirements and high energy usage. This thesis explores how an implementation of the Tsetlin Machine machine learning architecture could bridge these gaps and allow for an efficient, lightweight execution engine that can train and infer even on edge devices. To allow transferring a model to and from the edge device, a lightweight model serialization format was developed.
 
 \vspace{10pt}
-Tsetlin Machine is a ... (summary of ch2)  
+The Tsetlin Machine is a logic-based, interpretable machine learning model that builds propositional formulas (conjunctive clauses of literals) utilizing large collectives of simple finite-state Tsetlin Automata which learn via reward/penalty feedback. It offers a transparent, lighter alternative to neural networks and is notable for simple, hardware-friendly primitives that can yield competitive accuracy while making learned rules easy to inspect.
 
 \vspace{10pt}
 The Tsetlin Machine execution engine, to be able to run on edge devices, is limited in a number of ways. Firstly, it has to be implemented in a low-level programming language - C was chosen for that purpose. Secondly, the choice of available libraries that can be utilized is severely limited. And finally, the implementation itself has to be optimized to avoid unnecessarily using too much resources.
@@ -152,7 +153,297 @@ The Tsetlin Machine execution engine, to be able to run on edge devices, is limi
 The Tsetlin Machine model serialization format is another major topic of this thesis. Due to the many limitations, popular ML model serialization formats like ONNX or Protocol Buffers couldn't be used. Either the library itself is too big and resource-intensive, or the resulting model file is too large or can't be memory-mapped. In this case, the only fitting option was found to be a minimalist C implementation of FlatBuffers.
 
 \newpage
-\section{Concept of the solution} % TODO: Move to the correct place and use human readable names with annotations instead of function names.
+\section{Competitive solutions}
+According to the authors' knowledge, \GreenTsetlinName is the only production-ready implementation of the Tsetlin Machine. It is primarily a Python library with a C++ backend. A trained model can then be exported into a C header file and used for inference.  
+This approach was found lacking in a number of ways;
+\begin{enumerate}
+    \item the exported model cannot be interpreted back to its previous form to perform modifications on it
+    \item in particular, it makes training and fine-tuning the model impossible
+    \item the model serialization is saved in a text format, which in this case allows inference without a separate interpreter, but otherwise means wasting a lot of storage space
+\end{enumerate}
+
+There are also numerous projects with far less mature implementations that were taken into consideration that didn't classify for this reason. \cite{granmo2018tsetlinmachine, granmo2018tsetlinmachinec, granmo2020pytsetlinmachinecuda}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\chapter{\ChapterTitleTheory}
+\label{sec:theoretical-background}
+This chapter introduces the Tsetlin Machine, a method for pattern recognition based on propositional logic and game theory. We briefly examine the ideas developed in the original research~\cite{granmo2021tsetlinmachinegame, glimsdal2021coalescedmultioutputtsetlinmachines} that were necessary for our work, explaining how the model is designed from the ground up. Finally, we discuss scenarios where this approach has the potential to be a viable alternative to neural networks. For a more extensive introduction to Tsetlin Machines, refer to~\cite{granmo2022tsetlinmachinebookchap1, granmo2022tsetlinmachinebookchap2}.
+
+\section{Tsetlin Machine Overview}
+The emergence of the Tsetlin Machine is rooted in the development of a lesser-known, yet fundamental and versatile learning mechanism called the Tsetlin Automaton, developed by M.L. Tsetlin in the early 1960s~\cite{granmo2021tsetlinmachinegame, tsetlin1961behaviour}. Further research on this topic proposes a novel technique for complex large scale classification constructed using Tsetlin Automata~\cite{granmo2021tsetlinmachinegame}.
+
+\paragraph{Pattern Recognition}
+The most important distinction of the Tsetlin Machine lies in how it addresses pattern recognition problems. While the accuracy of a machine learning technique is related to its capability to represent patterns, the Tsetlin Machine decomposes complex problems into self-contained sub-patterns~\cite{granmo2021tsetlinmachinegame}. Instead of using the complex arithmetic found in neural networks, this method utilizes Boolean algebra, which is the basis of how digital computers operate. As a result, the machine captures the structure of the data by expressing patterns as conjunctive clauses in propositional logic.
+
+\paragraph{Logic-Based Approach}
+The Tsetlin Machine processes input features as bits to construct propositional logic expressed as ``If-Then'' rules, which offers both computational simplicity and interpretability.
+In short, given an input vector of propositional variables $X = (x_1, \dots, x_n) \in \{0,1\}^n$, we add their negated counterparts $\overline{x}_k = 1 - x_k$ to build a set of literals $L = \{l_1 \dots, l_{2n}\}$. From these literals, we construct conjunctive clauses that determine the output vector $Y = (y_1, \dots, y_m) \in \{0,1\}^m$. For example, clause $C(X) = x_1 \land x_2 = x_1 x_2$ consists of literals $\{x_1, x_2\}$ and outputs $1$ if and only if $x_1 = x_2 = 1$~\cite{granmo2021tsetlinmachinegame}. The simple inference structure of the Tsetlin machine can be seen in Figure \ref{fig:tsetlinmachinestructure}.
+
+\begin{figure}[!htbp]
+    \centering
+    \includegraphics[width=.9\textwidth]{images/Overall_Architecture_Summation[1804.01508v15].pdf}
+    \caption[The Tsetlin Machine inference structure]{The Tsetlin Machine inference structure (source: \cite{granmo2021tsetlinmachinegame})}
+    \label{fig:tsetlinmachinestructure}
+\end{figure}
+
+\section{Tsetlin Automaton}
+The basic building block of a Tsetlin Machine is the Tsetlin Automaton 
+(Figure \ref{fig:tsetlinautomatongeneric}), recognized as one of the first solutions to the multi-armed bandit problem~\cite{granmo2021tsetlinmachinegame}. It is capable of learning the optimal action when operating in unknown stochastic environments and is considered the first Learning Automaton~\cite{narendra2012learning}.
+
+\paragraph{Decision Making}
+The Tsetlin Automaton performs actions $\alpha_z, z \in \{1, 2\}$ sequentially in an environment. Each action $\alpha_z$ triggers a reward or a penalty. The action is rewarded with probability $p_z$, otherwise it is penalized. The reward probabilities are unknown to the automaton and may change over time. Under these conditions, the goal is to identify the action with the highest probability of reward using as few attempts as possible~\cite{granmo2021tsetlinmachinegame}.
+
+\paragraph{State-Based Memory}
+The Tsetlin Automaton operates as a finite-state machine with $2N$ states, as illustrated in Figure \ref{fig:tsetlinautomatongeneric}. The current state determines the action: action $\alpha_1$ is performed in states $1$ to $N$, while action $\alpha_2$ is performed in states $N+1$ to $2N$. State transitions control how the automaton learns. One set of state transitions is activated upon receiving a reward (solid lines in the figure), and another set of state transitions is activated upon receiving a penalty (dotted lines in the figure). This mechanism is designed to reinforce successful (reward producing) actions~\cite{granmo2021tsetlinmachinegame}.
+
+\begin{figure}[!htbp]
+    \centering
+    \includegraphics[width=.9\textwidth]{images/Tsetlin_Automaton_Generic[1804.01508v15].pdf}
+    \caption[A Tsetlin Automaton for two-action environment]{A Tsetlin Automaton for two-action environment (source: \cite{granmo2021tsetlinmachinegame})}
+    \label{fig:tsetlinautomatongeneric}
+\end{figure}
+
+\section{Architecture and Problem Representation}
+With the Tsetlin Automaton introduced as the main learning mechanism, the Tsetlin Machine architecture arranges these automata into teams responsible for composing clauses. These teams collaborate to solve complex problems by optimizing pattern recognition accuracy. The generated clauses function as rules that vote for or against a specific class output while providing transparent logic to reach a final decision~\cite{granmo2021tsetlinmachinegame}. However, this approach requires specific input, where the data must be processed to produce features compatible with logic-based reasoning.
+
+\paragraph{Binarization of Data}
+Since the Tsetlin Machine operates using propositional logic, the input data is required to be represented as Boolean features. Nevertheless, this constraint can be mitigated with a simple pre-processing step that transforms the input into a suitable binary format. For categorical data, the universal one-got encoding approach will suffice. For example, in the digit recognition problem with $8 \times 8$ images ($64$ elements) and $16$ possible brightness levels, the sample can be flattened and expanded to a binary vector. The handling of continuous features presents a different challenge, commonly addressed by segmenting data into predefined intervals. A continuous variable, such as temperature, can be transformed into a set of Boolean ranges like $[15^\circ,20^\circ)$ or $[20^\circ,25^\circ)$, allowing the machine to simply match the value.
+
+
+\paragraph{Rule Construction}
+The mechanism for building a Tsetlin Machine involves organizing Tsetlin Automata into teams, where each team is responsible for constructing a single conjunctive clause (AND-rule). These rules follow a logical pattern:
+$$\textbf{if} \ \textit{condition} \ \textbf{then} \ \textit{class} \text{.}$$
+For every potential literal in the input set (both original features and their negations), an assigned automaton determines whether to ``Include'' or ``Exclude'' that literal based on its internal state~\cite{granmo2021tsetlinmachinegame}. By combining these decisions through the AND-operator, the team produces a logical rule. For the vehicle classification task described in~\cite{granmo2022tsetlinmachinebookchap1}, a resulting rule can be expressed as: 
+$$\textbf{if} \ \textit{Four Wheels} \ \textbf{and} \ \textit{Transports People} \ \textbf{then} \ \textit{Car} \text{.}$$
+
+\paragraph{Class Prediction by Voting}
+The Tsetlin Machine, as shown in Figure \ref{fig:tsetlinmachinestructure}, feeds an input vector $X = (x_1, \dots, x_n) \in \{0,1\}^n$ to several conjunctive clauses for evaluation. The number of clauses used is a user-defined parameter $N$. The clauses are assigned into two groups based on polarity: positive clauses ($C_j^1, \ j \in \{1,\dots,N/2\}$) vote in favor of the target class ($y=1$), negative clauses ($C_j^0, \ j \in \{1,\dots,N/2\}$) vote against it ($y=0$)~\cite{granmo2021tsetlinmachinegame}.
+
+While a standard clause learns to capture sub-patterns in $X$ and outputs the conjunction of its literals, the Tsetlin Machine uses a specific mechanism for empty clauses ($L_j = \emptyset$). These clauses without literals are not required for classification and can be pruned from the inference structure, but during learning, they remain active:
+$$C_j(X) = \begin{cases}
+1, & \textbf{if } L_j=\emptyset \text{ during learning},\\
+0, & \textbf{if } L_j=\emptyset \text{ during classification},\\
+\bigwedge_{l_k \in L_j}l_k, & \textbf{if } L_j=\emptyset \text{.}
+\end{cases}$$
+The final classification $\hat{y}$ is reached through a majority vote. The clause evaluations are combined into a final output through summation and unit step thresholding:
+$$\hat{y} = u \left( \sum_{j=1}^{N/2}C_j^1(X) - \sum_{j=1}^{N/2}C_j^0(X) \right)$$
+where $u(v) = 1 \textbf{ if } v \ge 0 \textbf{ else } 0$. The summation allows the model to weigh positive against negative evidence found in the input $X$. The example classifier that captures the XOR-relation can be represented as $\hat{y} = u(x_1\overline{x}_2 + \overline{x}_1x_2 - x_1x_2 - \overline{x}_1\overline{x}_2)$~\cite{granmo2021tsetlinmachinegame}.
+
+Figure \ref{fig:tsetlinmachineconfiguration} depicts two clauses, one with positive polarity and one with negative polarity. They are both assigned teams of four Tsetlin Automata, controlling the inclusion of literals $L = \{x_1,x_2,\overline{x}_1,\overline{x}_2\}$. The leftmost Tsetlin Automaton in the figure, for example, decided to include literal $x_1$. Given the decisions of the four Tsetlin Automata of $C^1$, the clause has the form $x_1\overline{x}_2$. Similarly, clause $C^0$ obtains the form $x_1x_2$~\cite{granmo2021tsetlinmachinegame}.
+
+
+\begin{figure}[!htbp]
+    \centering
+    \includegraphics[width=.9\textwidth]{images/Tsetlin_Machine_Example_Configuration_Full[1804.01508v15].pdf}
+    \caption[Two Tsetlin Automata teams]{Two Tsetlin Automata teams, each producing a conjunctive clause (source: \cite{granmo2021tsetlinmachinegame})}
+    \label{fig:tsetlinmachineconfiguration}
+\end{figure}
+
+\section{Learning Algorithm}
+The learning mechanism of the Tsetlin Machine functions through a game-theoretic approach, orchestrating Tsetlin Automata to maximize pattern recognition accuracy~\cite{granmo2021tsetlinmachinegame}. We follow the example found in~\cite{glimsdal2021coalescedmultioutputtsetlinmachines} to demonstrate this process.
+
+\paragraph{IMDb Review Sentiment Example}
+To demonstrate the learning process, we consider the task of classifying the sentiment of movie reviews from the IMDb dataset. This problem uses a Set of Words (SoW) representation, where every word in the vocabulary acts as an input feature. Consider the review ``The movie was good, and I had popcorn.''. This text is converted into a binary input vector $X$. The inputs for words present in the review (e.g. ``good'' and ``movie'') are set to True, while the inputs for any missing words are set to False.
+
+\paragraph{Memory}
+Consider the clause designed to detect positive sentiment targeting the pattern ``good'' AND ``movie''. To manage this rule, the machine uses a team of Tsetlin Automata, assigning one automaton to track each potential literal. Figure \ref{fig:memoryimdb} illustrates the memory states maintained by this team. Feedback from the learning process increases these states to remember the literal longer when a reinforcing truth value is observed, and without such observations, the values decrease, causing the clause to eventually forget the literal.
+
+\begin{figure}[!htbp]
+    \centering
+    \includegraphics[width=.9\textwidth]{images/Memory_IMDb[2108.07594v1].pdf}
+    \caption[Sticky memory for IMDb example]{Sticky memory for IMDb example with depth N for the clause: ``good'' AND ``movie'' (source: \cite{glimsdal2021coalescedmultioutputtsetlinmachines})}
+    \label{fig:memoryimdb}
+\end{figure}
+
+\begin{figure}[!htbp]
+    \begin{center}
+        \subfigure[Type Ia feedback triggered by input ``The movie was good, and I had popcorn.'']{%
+        \label{fig:memoryimdbtypeIa}
+        \includegraphics[width=.9\textwidth]{images/Memory_IMDb_Type_Ia[2108.07594v1].pdf}}%
+        \\
+        \subfigure[Type Ib feedback triggered by input ``Was good, and I had popcorn.'']{%
+        \label{fig:memoryimdbtypeIb}
+        \includegraphics[width=.9\textwidth]{images/Memory_IMDb_Type_Ib[2108.07594v1].pdf}}%
+        \\
+        \subfigure[Type II feedback applied to input ``The movie was bad, and I had popcorn.'']{%
+        \label{fig:memoryimdbtypeII}
+        \includegraphics[width=.9\textwidth]{images/Memory_IMDb_Type_II[2108.07594v1].pdf}}%
+    \end{center}
+    \caption[Comparison of feedback types for IMDb example]{Comparison of feedback types Ia, Ib, and II for IMDb example (source: \cite{glimsdal2021coalescedmultioutputtsetlinmachines})}
+    \label{fig:memoryimdbtypes}
+\end{figure}
+
+\paragraph{Memory Updating}
+Memory is updated on a specific input $X$ to the Tsetlin Machine. A user-defined parameter $s$ controls how quickly truth values are forgotten. In result, increasing $s$ makes the patterns finer (more specific), while decreasing $s$ makes them coarser (more general). The process of updating the memory of each clause is handled by these three operators~\cite{glimsdal2021coalescedmultioutputtsetlinmachines}:
+\begin{compactitem}
+    \item The $\textbf{memorize}(X,s)$ operator handles \textbf{Type Ia feedback} (Figure \ref{fig:memoryimdbtypeIa}). It strengthens the memory of an input $X$ by increasing integer values for truth values present in $X$. Simultaneously, truth values that conflict with the input have their integers decreased randomly with probability $\frac{1}{s}$.
+    \item The $\textbf{forget}(s)$ operator handles \textbf{Type Ib feedback} (Figure \ref{fig:memoryimdbtypeIb}). It performs forgetting by randomly decreasing the memory integer of all truth values with probability $\frac{1}{s}$. This gradually moves all literals towards the ``maximally forgotten'' state.
+    \item The $\textbf{invalidate}(X)$ operator handles \textbf{Type II feedback} (Figure \ref{fig:memoryimdbtypeII}). It adjusts the clause to reject the input $X$ by increasing the memory integer of all False truth values. For instance, if the word ``bad'' appears in a negative review that was incorrectly classified, the system increases the integer for \textbf{not} ``bad''.
+\end{compactitem}
+
+\paragraph{Learning Single Clauses}
+Prediction outcomes guide the learning of each Tsetlin Machine clause~\cite{glimsdal2021coalescedmultioutputtsetlinmachines}:
+\begin{compactitem}
+    \item \textbf{True Positive}: The clause correctly votes for its assigned output. In this case, the clause performs $\textbf{memorize}(X,s)$. This feedback makes the clause remember and refine the pattern it recognizes in $X$.
+    \item \textbf{False Negative}: The clause fails to vote for its assigned output. In this case, the clause performs $\textbf{forget}(s)$. This reinforcement coarsens infrequent patterns, making them frequent.
+    \item \textbf{False Positive}: The clause incorrectly votes for its assigned output. The clause then performs $\textbf{invalidate}(X)$. This feedback makes the clause more discriminative.
+    \item \textbf{True Negative}: The clause correctly refrains from voting for its assigned output. This outcome does not trigger any memory updates.
+\end{compactitem}
+
+\paragraph{Learning Multiple Clauses}
+The Tsetlin Machine achieves coordination by introducing another parameter, a voting margin $t$. This ensures that a sufficient number of clauses support each output without using more clauses than necessary. Learning multiple clauses works as follows~\cite{glimsdal2021coalescedmultioutputtsetlinmachines}:
+\begin{compactenum}
+    \item Obtain the next training example consisting of input truth values $X$ and the output truth value $y$.
+    \item Evaluate each clause on input $X$.
+    \item Calculate a voting sum $v$ for the clauses that evaluate to True:
+        \begin{compactenum}
+            \item Add up the votes in favor of $y$.
+            \item Subtract the votes in favor of $\textbf{not } y$
+            \item Clip the result $v$ to the range $[-t, t]$.
+        \end{compactenum}
+    \item Go through each clause and update it if $\textbf{Rand()} \leq \frac{t-v}{2t}$, where \textbf{Rand()} returns a random uniform value from $[0,1]$:
+        \begin{compactenum}
+            \item Perform $\textbf{memorize}(X,s)$ if the clause matches $X$ and belongs to output $y$ (True Positive).
+            \item Perform $\textbf{forget}(s)$ if the clause does not match $X$ and belongs to output $y$ (False Negative).
+            \item Perform $\textbf{invalidate}(X)$ if the clause matches $X$ and belongs to output $\textbf{not } y$ (False Positive).
+        \end{compactenum}
+\end{compactenum}
+
+\paragraph{XOR-gate Example}
+Figure \ref{fig:tsetlinmachinexorgate} illustrates the learning process for an XOR-gate training sample with input $(x_1=0,x_2=1)$ and target output $y=1$. Initially (Step $1$), the positive clauses $C_1$ and $C_3$ do not match the input because they contain conflicting literals (e.g. $\overline{x_2}$ in $C_3$ conflicts with $x_2=1$). This results in a false negative prediction,. which triggers Type Ib feedback. This feedback forces the clause to forget the conflicting literals. Once the clauses are generalized enough to match the input, Type Ia feedback reinforces inclusion of valid literals present in the input (e.g. $x_2$ in $C_3$). By Step $t$, these updates modified Clause $C_1$ to $\overline{x_1}x_2$ and $C_3$ to just $x_2$ allowing the machine to match the input and produce correct prediction $\hat{y}=1$.
+
+\begin{figure}[!htbp]
+    \centering
+    \includegraphics[width=.9\textwidth]{images/TM[arXiv-2212.13634v1].pdf}
+    \caption[Tsetlin Machine XOR-gate training]{Tsetlin Machine learning dynamics for an XOR-gate training sample, with input $(x_1 = 0, x_2 = 1)$ and output target $y = 1$ (source: \cite{sharma2022equivalenceweightedtsetlinmachine})}
+    \label{fig:tsetlinmachinexorgate}
+\end{figure}
+
+\section{Tsetlin Machine Variants}
+% \paragraph{Standard Dense Architecture}
+\paragraph{Coalesced Architecture}
+\paragraph{Sparse Architecture}
+% - removes automata that are not contributing
+\paragraph{Stateless Inference Model}
+% - saves memory when required only on predictions
+
+\section{Comparison with Neural Networks}
+
+% moje 2 grosze
+% https://arxiv.org/abs/2212.13634
+% TM używa w większości algebry całkowitoliczbowej nie floatów co może być bardzo atutem na niektórych platformach, szczególnie takich co procesor nie ma operacji na floatach w ogóle
+% problem 1 - no tyle że nie lol bo jednak używa floatów (czego dało by się pozbyć, patrz further work w ostatnim rozdziale)
+% problem 2 - z punktu hardwareowej optymalizacji, mimo że floaty są bardzo kosztowne, to ich algebra i bardzo dziwne sposoby optymalizacji są giga zoptymalizowane (temu że tyle kosztowały a całe ML na nich stoi) i to tak mocno że teraz to algebra na intach się nie opłaca
+
+\paragraph{Transparent Logic}
+% - Learned logic is human readable (If X and not Y then Z) compared to Black Box approach of neural networks
+\paragraph{Energy Efficiency}
+% - More optimizations possible when working with logic operations like AND/OR/NOT, compared to float operations on Neural Networks
+\paragraph{Performance with Training Data}
+% - (cite) TM often require less training data to reach high accuracy
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\chapter{\ChapterTitleScope}
+\label{sec:functional-scope}
+
+% poniższą zawartość rodziału należy usunąć z finalnej wersji pracy.
+% \emph{Kontekst użytkowania produktu (aktorzy, współpracujące systemy) oraz specyfikacja wymagań funkcjonalnych i niefunkcjonalnych.}
+
+This chapter outlines the considerations and requirements for the library. Describes the intended audience and details the key decisions made during development. These choices are further described in subsequent sections on Functional and Non-functional requirements.
+
+\section{Target audience}
+Due to the experimental nature of this work, the key design goal was to make the library both easy to use and easy to understand. This is necessary as we anticipate that users may need to adapt the library for integration into their specific applications.
+
+\paragraph{Embedded Developers}
+The library was designed with the limitations of embedded hardware in mind. Unlike many alternatives, it supports every step of the process on-device, while others implement predictions on-device only. Thanks to the designed model exchange format, users can choose to train models on faster hardware or use the \GreenTsetlinName library to later move them to the edge device. Additionally, the efficiency gains promised by Tsetlin Machines~\cite{granmo2021tsetlinmachinegame} are highly beneficial for these resource limited devices, where standard machine learning methods are often too expensive or complicated to run.
+
+\paragraph{Researchers}
+As Tsetlin Machines have only recently started getting more recognition we expect the researchers familiar with classic machine learning models to benefit from being able to implement them in their workflows. Making the library's interface familiar to them allows for rapid prototyping which differs our solution from others which require more domain knowledge. This in turn makes it easier to benchmark them in various potential use cases.
+
+\newpage
+\section{Functional requirements}
+
+\paragraph{On-device Training and Inference}
+Our solution was designed to support all steps of a Tsetlin Machine model directly on target hardware. Unlike other embedded machine learning frameworks that perform only inference on edge devices, this library enables the model to learn directly from newly gathered data. This is necessary for applications that adapt to local sensor data without a constant connection to the central server.
+It should however facilitate an inference only mode with a lighter model serialization format specifically for more resource constrained systems.
+
+\paragraph{Interoperability and Serialization}
+The library must implement functionality for saving and loading model states. This requires a standardized serialization format to ensure compatibility with the \GreenTsetlinName library. This compatibility is essential for the users to leverage high-performance workstations to pre-train models, export them, and then deploy them directly to the embedded devices. Furthermore, models trained or tuned on the edge must also be exportable for backup or analysis on faster hardware.
+
+\paragraph{Configurable Hyperparameters}
+Exposing Tsetlin Machine model hyperparameters is necessary for fitting the model to its application with varied limitations dictated by hardware or the input data itself. Researchers and developers must be able to easily fine-tune these parameters when designing their solution for each specific problem. This allows optimization of performance, memory footprint, or accuracy without modifying library code. 
+
+\paragraph{Correctness with the Theoretical Work}
+The implementation must behave as described in theoretical research~\cite{granmo2021tsetlinmachinegame}. It is required to accurately model the Tsetlin Automata logic and implement the specific learning rules (Type I and Type II feedback) defined in the original papers. This ensures that the software is a close representation of the method proposed in the theory and avoids unintended assumptions.
+
+
+\section{Non-functional requirements}
+
+\paragraph{Portability}
+The library must be designed for compatibility, avoiding dependencies on any specific hardware or operating system. The functionality of the external library should be defined during compilation if there is a risk that it may not work on the desired target. This strategy ensures that the code can be compiled with minimal, if any, modifications for a wide range of hardware architectures. The resulting portability, coupled with the adjustable model parameters, allows end users to create a solution that is both widely adoptable and future-proof.
+
+\paragraph{Performance and Memory Usage}
+Optimizations are significantly beneficial, as the library's performance impacts both the training step and, more importantly, the real-time predictions on target devices. Given that Tsetlin Machines heavily rely on binary logic and random number generators, optimizing these areas allows for better utilization of limited hardware resources. This optimization extends to memory management, since the memory is needed to store the model on the device, as well as the memory used during runtime, must also be considered.
+
+\paragraph{Simple API}
+The Applications Programming Interface (API) must be intuitive and well-documented. Its design should follow standard interfaces developed by major machine learning libraries, allowing users unfamiliar with Tsetlin Machine theory to quickly prototype concepts. This simple interface allows a developer to easily integrate the library into an existing project. Moreover, supporting quick prototyping in environments like Python Jupyter Notebooks alongside established models from libraries such as Scikit-learn speeds up development before deployment to embedded devices.
+
+\paragraph{Testing and Examples}
+As with any software project, testing enhances the development process and maintenance. Code examples provide a starting point for users unfamiliar with the project. Furthermore, simple installation and easy to run examples encourage potential users to quickly try the library. Finally, these tests help verify that the library runs correctly on new devices with different hardware limitations.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\chapter{\ChapterTitleRealizationAspects}
+\label{sec:realization-aspects}
+
+% poniższą zawartość rodziału należy usunąć z finalnej wersji pracy.
+% \emph{Przyjęte założenia, struktura i zasada działania systemu, wykorzystane rozwiązania technologiczne wraz z uzasadnieniem ich wyboru, istotne mechanizmy i zastosowane algorytmy.}
+
+This section describes the design choices of \LibraryName as well as the rationale behind them, and the overarching architecture of the solution. The actual Tsetlin Machine implementation is described in detail to make it intuitive. It describes used tools, solutions and algorithms. Additionally, it discusses several interesting problems that were encountered.
+
+\section{Design}
+Even though optimization was the primary objective, not every method could be utilized due to the target environments having very limited resources and hardware limitations. In particular, vectorization was completely out of the picture, even though \GreenTsetlinName has it enabled by default. GPU programming was obviously dismissed for the same reason - although notably, such an implementation is possible~\cite{granmo2020pytsetlinmachinecuda}.
+
+\subsection{Programming language}
+Since the thesis topic requires \LibraryName to be designed for embedded devices, there were only a few suitable options like C/C++, Rust or MicroPython. C was chosen as the most widely used language for embedded systems - it is efficient, lightweight and portable. It's popularity also means it has extensive third party library support. The authors' previous experience working with C/C++ also influenced this decision.  
+Exporting models from \GreenTsetlinName is done in Python, as it is a Python library.  
+\LibraryName also has Python bindings so that it can be used conveniently from Python.
+
+\subsection{Execution engine}
+Even though there exists a number of existing libraries implementing the Tsetlin Machine, \LibraryName was essentially created from the ground up without taking much inspiration or hints from them. It was required to be written primarily with optimization in mind so that it works as fast as possible while maintaining small size and portability on top of utilizing little power and memory. \\
+It was also decided \LibraryName should support multiple different Tsetlin Machine variants so their efficiency could be tested - Coalesced, Sparse and Stateless.
+
+\newpage
+\subsection{Model serialization library}
+Several libraries were compiled and compared as possible options to implement the model serialization format. Only C libraries were taken into consideration. See table ~\ref{tab:serial-lib-comp}
+% TODO: czemu to nie jest 4.1
+\begin{table}[h]
+\centering
+\begin{tabularx}{\textwidth}{
+  | >{\raggedright\arraybackslash}X 
+  | >{\raggedright\arraybackslash}X 
+  | >{\raggedright\arraybackslash}X 
+  | >{\raggedright\arraybackslash}X 
+  | >{\raggedright\arraybackslash}X |
+}
+\hline
+Format name & Comment & Schema complexity & Efficiency on edge device & Library size on edge device \\
+\hline
+Protocol Buffers & Simple and small model representation & Low & Fast but needs object parsing & Too big \\
+\hline
+ONNX & A standardized way to store models and operation graphs & High & Low - needs graph and tensor parsing & Much too big \\
+\hline
+FlatBuffers & "Protocol buffers lite" & Low & Very fast, zero-copy & Acceptable \\
+\hline
+\end{tabularx}
+\caption{Comparison of selected model serialization libraries}
+\label{tab:serial-lib-comp}
+\end{table}
+
+
+\subsection{Concept of the solution}
+TODO: describe figure ~\ref{fig:projectdiagram}
+
 
 \begin{figure}[!htbp]
 \centering
@@ -354,264 +645,7 @@ The Tsetlin Machine model serialization format is another major topic of this th
 \label{fig:projectdiagram}
 \end{figure}
 
-
 \newpage
-\section{Competitive solutions}
-According to the authors' knowledge, \GreenTsetlinName is the only production-ready implementation of the Tsetlin Machine. It is primarily a Python library with a C++ backend. A trained model can then be exported into a C header file and used for inference.  
-This approach was found lacking in a number of ways;
-\begin{enumerate}
-    \item the exported model cannot be interpreted back to its previous form to perform modifications on it
-    \item in particular, it makes training and fine-tuning the model impossible
-    \item the model serialization is saved in a text format, which in this case allows inference without a separate interpreter, but otherwise means wasting a lot of storage space
-\end{enumerate}
-
-There are also numerous projects with far less mature implementations that were taken into consideration that didn't classify for this reason. [TODO: citations]
-
-% Our solution aims to allow both inference and training, or on more resource constrained systems, just inference in (this is subject to debate) a more efficient format. 
-
-% \section{Risk analysis}
-% any?
-
-
-% Przykład cytowania literatury~\cite{wilson2009prediction-interday}. Kolejny przykład
-% cytowania kilku pozycji bibliograficznych~\cite{allen1999using-genetic, zitzler1999evolutionary-algorithms, pictet1995genetic-algorithms, wilhelmstotter2021jenetics, chmaj2015DistributedProcessingApplications}.
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\chapter{\ChapterTitleTheory}
-\label{sec:theoretical-background}
-This chapter introduces the Tsetlin Machine, a method for pattern recognition based on propositional logic and game theory. We briefly examine the ideas developed in the original research~\cite{granmo2021tsetlinmachinegame, glimsdal2021coalescedmultioutputtsetlinmachines} that were necessary for our work, explaining how the model is designed from the ground up. Finally, we discuss scenarios where this approach has the potential to be a viable alternative to neural networks. For a more extensive introduction to Tsetlin Machines, refer to~\cite{granmo2022tsetlinmachinebookchap1, granmo2022tsetlinmachinebookchap2}.
-
-\section{Tsetlin Machine Overview}
-The emergence of the Tsetlin Machine is rooted in the development of a lesser-known, yet fundamental and versatile learning mechanism called the Tsetlin Automaton, developed by M.L. Tsetlin in the early 1960s~\cite{granmo2021tsetlinmachinegame, tsetlin1961behaviour}. Further research on this topic proposes a novel technique for complex large scale classification constructed using Tsetlin Automata~\cite{granmo2021tsetlinmachinegame}.
-
-\paragraph{Pattern Recognition}
-The most important distinction of the Tsetlin Machine lies in how it addresses pattern recognition problems. While the accuracy of a machine learning technique is related to its capability to represent patterns, the Tsetlin Machine decomposes complex problems into self-contained sub-patterns~\cite{granmo2021tsetlinmachinegame}. Instead of using the complex arithmetic found in neural networks, this method utilizes Boolean algebra, which is the basis of how digital computers operate. As a result, the machine captures the structure of the data by expressing patterns as conjunctive clauses in propositional logic.
-
-\paragraph{Logic-Based Approach}
-The Tsetlin Machine processes input features as bits to construct propositional logic expressed as "If-Then" rules, which offers both computational simplicity and interpretability.
-In short, given an input vector of propositional variables $X = (x_1, \dots, x_n) \in \{0,1\}^n$, we add their negated counterparts $\overline{x}_k = 1 - x_k$ to build a set of literals $L = \{l_1 \dots, l_{2n}\}$. From these literals, we construct conjunctive clauses that determine the output vector $Y = (y_1, \dots, y_m) \in \{0,1\}^m$. For example, clause $C(X) = x_1 \land x_2 = x_1 x_2$ consists of literals $\{x_1, x_2\}$ and outputs $1$ if and only if $x_1 = x_2 = 1$~\cite{granmo2021tsetlinmachinegame}. The simple inference structure of the Tsetlin machine can be seen in Figure \ref{fig:tsetlinmachinestructure}.
-
-\begin{figure}[!htbp]
-    \centering
-    \includegraphics[width=.9\textwidth]{images/Overall_Architecture_Summation[1804.01508v15].pdf}
-    \caption[The Tsetlin Machine inference structure]{The Tsetlin Machine inference structure (source: \cite{granmo2021tsetlinmachinegame})}
-    \label{fig:tsetlinmachinestructure}
-\end{figure}
-
-\section{Tsetlin Automaton}
-The basic building block of a Tsetlin Machine is the Tsetlin Automaton 
-(Figure \ref{fig:tsetlinautomatongeneric}), recognized as one of the first solutions to the multi-armed bandit problem~\cite{granmo2021tsetlinmachinegame}. It is capable of learning the optimal action when operating in unknown stochastic environments and is considered the first Learning Automaton~\cite{narendra2012learning}.
-
-\paragraph{Decision Making}
-The Tsetlin Automaton performs actions $\alpha_z, z \in \{1, 2\}$ sequentially in an environment. Each action $\alpha_z$ triggers a reward or a penalty. The action is rewarded with probability $p_z$, otherwise it is penalized. The reward probabilities are unknown to the automaton and may change over time. Under these conditions, the goal is to identify the action with the highest probability of reward using as few attempts as possible~\cite{granmo2021tsetlinmachinegame}.
-
-\paragraph{State-Based Memory}
-The Tsetlin Automaton operates as a finite-state machine with $2N$ states, as illustrated in Figure \ref{fig:tsetlinautomatongeneric}. The current state determines the action: action $\alpha_1$ is performed in states $1$ to $N$, while action $\alpha_2$ is performed in states $N+1$ to $2N$. State transitions control how the automaton learns. One set of state transitions is activated upon receiving a reward (solid lines in the figure), and another set of state transitions is activated upon receiving a penalty (dotted lines in the figure). This mechanism is designed to reinforce successful (reward producing) actions~\cite{granmo2021tsetlinmachinegame}.
-
-\begin{figure}[!htbp]
-    \centering
-    \includegraphics[width=.9\textwidth]{images/Tsetlin_Automaton_Generic[1804.01508v15].pdf}
-    \caption[A Tsetlin Automaton for two-action environment]{A Tsetlin Automaton for two-action environment (source: \cite{granmo2021tsetlinmachinegame})}
-    \label{fig:tsetlinautomatongeneric}
-\end{figure}
-
-\section{Architecture and Problem Representation}
-With the Tsetlin Automaton introduced as the main learning mechanism, the Tsetlin Machine architecture arranges these automata into teams responsible for composing clauses. These teams collaborate to solve complex problems by optimizing pattern recognition accuracy. The generated clauses function as rules that vote for or against a specific class output while providing transparent logic to reach a final decision~\cite{granmo2021tsetlinmachinegame}. However, this approach requires specific input, where the data must be processed to produce features compatible with logic-based reasoning.
-
-\paragraph{Binarization of Data}
-Since the Tsetlin Machine operates using propositional logic, the input data is required to be represented as Boolean features. Nevertheless, this constraint can be mitigated with a simple pre-processing step that transforms the input into a suitable binary format. For categorical data, the universal one-got encoding approach will suffice. For example, in the digit recognition problem with $8 \times 8$ images ($64$ elements) and $16$ possible brightness levels, the sample can be flattened and expanded to a binary vector. The handling of continuous features presents a different challenge, commonly addressed by segmenting data into predefined intervals. A continuous variable, such as temperature, can be transformed into a set of Boolean ranges like $[15^\circ,20^\circ)$ or $[20^\circ,25^\circ)$, allowing the machine to simply match the value.
-
-
-\paragraph{Rule Construction}
-The mechanism for building a Tsetlin Machine involves organizing Tsetlin Automata into teams, where each team is responsible for constructing a single conjunctive clause (AND-rule). These rules follow a logical pattern:
-$$\textbf{if} \ \textit{condition} \ \textbf{then} \ \textit{class} \text{.}$$
-For every potential literal in the input set (both original features and their negations), an assigned automaton determines whether to "Include" or "Exclude" that literal based on its internal state~\cite{granmo2021tsetlinmachinegame}. By combining these decisions through the AND-operator, the team produces a logical rule. For the vehicle classification task described in~\cite{granmo2022tsetlinmachinebookchap1}, a resulting rule can be expressed as: 
-$$\textbf{if} \ \textit{Four Wheels} \ \textbf{and} \ \textit{Transports People} \ \textbf{then} \ \textit{Car} \text{.}$$
-
-\paragraph{Class Prediction by Voting}
-The Tsetlin Machine, as shown in Figure \ref{fig:tsetlinmachinestructure}, feeds an input vector $X = (x_1, \dots, x_n) \in \{0,1\}^n$ to several conjunctive clauses for evaluation. The number of clauses used is a user-defined parameter $K$. The clauses are assigned into two groups based on polarity: positive clauses ($C_j^1, \ j \in \{1,\dots,K/2\}$) vote in favor of the target class ($y=1$), negative clauses ($C_j^0, \ j \in \{1,\dots,K/2\}$) vote against it ($y=0$)~\cite{granmo2021tsetlinmachinegame}.
-
-While a standard clause learns to capture sub-patterns in $X$ and outputs the conjunction of its literals, the Tsetlin Machine uses a specific mechanism for empty clauses ($L_j = \emptyset$). These clauses without literals are not required for classification and can be pruned from the inference structure, but during learning, they remain active:
-$$C_j(X) = \begin{cases}
-1, & \textbf{if } L_j=\emptyset \text{ during learning},\\
-0, & \textbf{if } L_j=\emptyset \text{ during classification},\\
-\bigwedge_{l_k \in L_j}l_k, & \textbf{if } L_j=\emptyset \text{.}
-\end{cases}$$
-The final classification $\hat{y}$ is reached through a majority vote. The clause evaluations are combined into a final output through summation and unit step thresholding:
-$$\hat{y} = u \left( \sum_{j=1}^{K/2}C_j^1(X) - \sum_{j=1}^{K/2}C_j^0(X) \right)$$
-where $u(v) = 1 \textbf{ if } v \ge 0 \textbf{ else } 0$. The summation allows the model to weigh positive against negative evidence found in the input $X$. The example classifier that captures the XOR-relation can be represented as $\hat{y} = u(x_1\overline{x}_2 + \overline{x}_1x_2 - x_1x_2 - \overline{x}_1\overline{x}_2)$~\cite{granmo2021tsetlinmachinegame}.
-
-Figure \ref{fig:tsetlinmachineconfiguration} depicts two clauses, one with positive polarity and one with negative polarity. They are both assigned teams of four Tsetlin Automata, controlling the inclusion of literals $L = \{x_1,x_2,\overline{x}_1,\overline{x}_2\}$. The leftmost Tsetlin Automaton in the figure, for example, decided to include literal $x_1$. Given the decisions of the four Tsetlin Automata of $C^1$, the clause has the form $x_1\overline{x}_2$. Similarly, clause $C^0$ obtains the form $x_1x_2$~\cite{granmo2021tsetlinmachinegame}.
-
-
-\begin{figure}[!htbp]
-    \centering
-    \includegraphics[width=.9\textwidth]{images/Tsetlin_Machine_Example_Configuration_Full[1804.01508v15].pdf}
-    \caption[Two Tsetlin Automata teams]{Two Tsetlin Automata teams, each producing a conjunctive clause (source: \cite{granmo2021tsetlinmachinegame})}
-    \label{fig:tsetlinmachineconfiguration}
-\end{figure}
-
-\section{Learning Algorithm}
-\paragraph{Addressing False Negatives (Type I Feedback)}
-% - Recognize Feedback
-\paragraph{Addressing False Positives (Type II Feedback)}
-% - Erase Feedback
-
-\begin{figure}[!htbp]
-    \centering
-    \includegraphics[width=.9\textwidth]{images/Memory_IMDb[2108.07594v1].pdf}
-    \caption[Sticky memory for IMDb example]{Sticky memory for IMDb example with depth N for the clause: "good" AND "movie" (source: \cite{glimsdal2021coalescedmultioutputtsetlinmachines})}
-    \label{fig:memoryimdb}
-\end{figure}
-
-\begin{figure}[!htbp]
-    \begin{center}
-        \subfigure[Type Ia feedback triggered by input "The movie was good, and I had popcorn."]{%
-        \label{fig:memoryimdbtypeIa}
-        \includegraphics[width=.9\textwidth]{images/Memory_IMDb_Type_Ia[2108.07594v1].pdf}}%
-        \\
-        \subfigure[Type Ib feedback triggered by input "Was good, and I had popcorn."]{%
-        \label{fig:memoryimdbtypeIb}
-        \includegraphics[width=.9\textwidth]{images/Memory_IMDb_Type_Ib[2108.07594v1].pdf}}%
-        \\
-        \subfigure[Type II feedback applied to input "The movie was bad, and I had popcorn."]{%
-        \label{fig:memoryimdbtypeII}
-        \includegraphics[width=.9\textwidth]{images/Memory_IMDb_Type_II[2108.07594v1].pdf}}%
-    \end{center}
-    \caption[Comparison of feedback types for IMDb example]{Comparison of feedback types Ia, Ib, and II for IMDb example (source: \cite{glimsdal2021coalescedmultioutputtsetlinmachines})}
-    \label{fig:memoryimdbtypes}
-\end{figure}
-
-\section{Tsetlin Machine Variants}
-% \paragraph{Standard Dense Architecture}
-\paragraph{Coalesced Architecture}
-\paragraph{Sparse Architecture}
-% - removes automata that are not contributing
-\paragraph{Stateless Inference Model}
-% - saves memory when required only on predictions
-
-\section{Comparison with Neural Networks}
-
-% moje 2 grosze
-% https://arxiv.org/abs/2212.13634
-% TM używa w większości algebry całkowitoliczbowej nie floatów co może być bardzo atutem na niektórych platformach, szczególnie takich co procesor nie ma operacji na floatach w ogóle
-% problem 1 - no tyle że nie lol bo jednak używa floatów (czego dało by się pozbyć, patrz further work w ostatnim rozdziale)
-% problem 2 - z punktu hardwareowej optymalizacji, mimo że floaty są bardzo kosztowne, to ich algebra i bardzo dziwne sposoby optymalizacji są giga zoptymalizowane (temu że tyle kosztowały a całe ML na nich stoi) i to tak mocno że teraz to algebra na intach się nie opłaca
-
-\paragraph{Transparent Logic}
-% - Learned logic is human readable (If X and not Y then Z) compared to Black Box approach of neural networks
-\paragraph{Energy Efficiency}
-% - More optimizations possible when working with logic operations like AND/OR/NOT, compared to float operations on Neural Networks
-\paragraph{Performance with Training Data}
-% - (cite) TM often require less training data to reach high accuracy
-
-\begin{figure}[!htbp]
-    \centering
-    \includegraphics[width=.9\textwidth]{images/TM[arXiv-2212.13634v1].pdf}
-    \caption[Tsetlin Machine XOR-gate training]{Tsetlin Machine learning dynamics for an XOR-gate training sample, with input $(x_1 = 0, x_2 = 1)$ and output target $y = 1$ (source: \cite{sharma2022equivalenceweightedtsetlinmachine})}
-    \label{fig:tsetlinmachinexorgate}
-\end{figure}
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\chapter{\ChapterTitleScope}
-\label{sec:functional-scope}
-
-% poniższą zawartość rodziału należy usunąć z finalnej wersji pracy.
-% \emph{Kontekst użytkowania produktu (aktorzy, współpracujące systemy) oraz specyfikacja wymagań funkcjonalnych i niefunkcjonalnych.}
-
-This chapter outlines the considerations and requirements for the library. Describes the intended audience and details the key decisions made during development. These choices are further described in subsequent sections on Functional and Non-functional requirements.
-
-\section{Target audience}
-Due to the experimental nature of this work, the key design goal was to make the library both easy to use and easy to understand. This is necessary as we anticipate that users may need to adapt the library for integration into their specific applications.
-
-\paragraph{Embedded Developers}
-The library was designed with the limitations of embedded hardware in mind. Unlike many alternatives, it supports every step of the process on-device, while others implement predictions on-device only. Thanks to the designed model exchange format, users can choose to train models on faster hardware or use the \GreenTsetlinName library to later move them to the edge device. Additionally, the efficiency gains promised by Tsetlin Machines~\cite{granmo2021tsetlinmachinegame} are highly beneficial for these resource limited devices, where standard machine learning methods are often too expensive or complicated to run.
-
-\paragraph{Researchers}
-As Tsetlin Machines have only recently started getting more recognition we expect the researchers familiar with classic machine learning models to benefit from being able to implement them in their workflows. Making the library's interface familiar to them allows for rapid prototyping which differs our solution from others which require more domain knowledge. This in turn makes it easier to benchmark them in various potential use cases.
-
-
-\section{Functional requirements}
-
-\paragraph{On-device Training and Inference}
-Our solution was designed to support all steps of a Tsetlin Machine model directly on target hardware. Unlike other embedded machine learning frameworks that perform only inference on edge devices, this library enables the model to learn directly from newly gathered data. This is necessary for applications that adapt to local sensor data without a constant connection to the central server.
-
-\paragraph{Interoperability and Serialization}
-The library must implement functionality for saving and loading model states. This requires a standardized serialization format to ensure compatibility with the \GreenTsetlinName library. This compatibility is essential for the users to leverage high-performance workstations to pre-train models, export them, and then deploy them directly to the embedded devices. Furthermore, models trained or tuned on the edge must also be exportable for backup or analysis on faster hardware.
-
-\paragraph{Configurable Hyperparameters}
-Exposing Tsetlin Machine model hyperparameters is necessary for fitting the model to its application with varied limitations dictated by hardware or the input data itself. Researchers and developers must be able to easily fine-tune these parameters when designing their solution for each specific problem. This allows optimization of performance, memory footprint, or accuracy without modifying library code. 
-
-\paragraph{Correctness with the Theoretical Work}
-The implementation must behave as described in theoretical research~\cite{granmo2021tsetlinmachinegame}. It is required to accurately model the Tsetlin Automata logic and implement the specific learning rules (Type I and Type II feedback) defined in the original papers. This ensures that the software is a close representation of the method proposed in the theory and avoids unintended assumptions.
-
-
-\section{Non-functional requirements}
-
-\paragraph{Portability}
-The library must be designed for compatibility, avoiding dependencies on any specific hardware or operating system. The functionality of the external library should be defined during compilation if there is a risk that it may not work on the desired target. This strategy ensures that the code can be compiled with minimal, if any, modifications for a wide range of hardware architectures. The resulting portability, coupled with the adjustable model parameters, allows end users to create a solution that is both widely adoptable and future-proof.
-
-\paragraph{Performance and Memory Usage}
-Optimizations are significantly beneficial, as the library's performance impacts both the training step and, more importantly, the real-time predictions on target devices. Given that Tsetlin Machines heavily rely on binary logic and random number generators, optimizing these areas allows for better utilization of limited hardware resources. This optimization extends to memory management, since the memory is needed to store the model on the device, as well as the memory used during runtime, must also be considered.
-
-\paragraph{Simple API}
-The Applications Programming Interface (API) must be intuitive and well-documented. Its design should follow standard interfaces developed by major machine learning libraries, allowing users unfamiliar with Tsetlin Machine theory to quickly prototype concepts. This simple interface allows a developer to easily integrate the library into an existing project. Moreover, supporting quick prototyping in environments like Python Jupyter Notebooks alongside established models from libraries such as Scikit-learn speeds up development before deployment to embedded devices.
-
-\paragraph{Testing and Examples}
-As with any software project, testing enhances the development process and maintenance. Code examples provide a starting point for users unfamiliar with the project. Furthermore, simple installation and easy to run examples encourage potential users to quickly try the library. Finally, these tests help verify that the library runs correctly on new devices with different hardware limitations.
-
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\chapter{\ChapterTitleRealizationAspects}
-\label{sec:realization-aspects}
-
-% poniższą zawartość rodziału należy usunąć z finalnej wersji pracy.
-\emph{Przyjęte założenia, struktura i zasada działania systemu, wykorzystane rozwiązania technologiczne wraz z uzasadnieniem ich wyboru, istotne mechanizmy i zastosowane algorytmy.}
-
-This section describes the design choices of \LibraryName as well as the rationale behind them, and the overarching architecture of the solution. The actual Tsetlin Machine implementation is described in detail to make it intuitive. It describes used tools, solutions and algorithms. Additionally, it discusses several interesting problems that were encountered.
-
-\section{Design}
-Even though optimization was the primary objective, not every method could be utilized due to the target environments having very limited resources and hardware limitations. In particular, vectorization was completely out of the picture, even though \GreenTsetlinName has it enabled by default. GPU programming was obviously dismissed for the same reason - although notably, such an implementation is possible. % TODO: citation for cuda project
-
-\subsection{Programming language}
-Since the thesis topic requires \LibraryName to be designed for embedded devices, there were only a few suitable options like C/C++, Rust or MicroPython. C was chosen as the most widely used language for embedded systems - it is efficient, lightweight and portable. It's popularity also means it has extensive third party library support. The authors' previous experience working with C/C++ also influenced this decision.  
-Exporting models from \GreenTsetlinName is done in Python, as it is a Python library.  
-\LibraryName also has Python bindings so that it can be used conveniently from Python.
-
-\subsection{Execution engine}
-Even though there exists a number of existing libraries implementing the Tsetlin Machine, \LibraryName was essentially created from the ground up without taking much inspiration or hints from them. It was required to be written primarily with optimization in mind so that it works as fast as possible while maintaining small size and portability on top of utilizing little power and memory. \\
-It was also decided \LibraryName should support multiple different Tsetlin Machine variants so their efficiency could be tested - Coalesced, Sparse and Stateless.
-
-\newpage
-\subsection{Model serialization library}
-Several libraries were compiled and compared as possible options to implement the model serialization format. Only C libraries were taken into consideration. See table ~\ref{tab:serial-lib-comp}
-% TODO: czemu to nie jest 4.1
-\begin{table}[h]
-\centering
-\begin{tabularx}{\textwidth}{
-  | >{\raggedright\arraybackslash}X 
-  | >{\raggedright\arraybackslash}X 
-  | >{\raggedright\arraybackslash}X 
-  | >{\raggedright\arraybackslash}X 
-  | >{\raggedright\arraybackslash}X |
-}
-\hline
-Format name & Comment & Schema complexity & Efficiency on edge device & Library size on edge device \\
-\hline
-Protocol Buffers & Simple and small model representation & Low & Fast but needs object parsing & Too big \\
-\hline
-ONNX & A standardized way to store models and operation graphs & High & Low - needs graph and tensor parsing & Much too big \\
-\hline
-FlatBuffers & "Protocol buffers lite" & Low & Very fast, zero-copy & Acceptable \\
-\hline
-\end{tabularx}
-\caption{Comparison of selected model serialization libraries}
-\label{tab:serial-lib-comp}
-\end{table}
-
-
-\subsection{Concept of the solution}
-move here, describe
 
 
 \subsection{Tsetlin Automaton}
@@ -1007,40 +1041,58 @@ float prng_next_float(struct FastPRNG* prng) {
 \label{sec:work-organization}
 
 % poniższą zawartość rodziału należy usunąć z finalnej wersji pracy.
-\emph{Struktura zespołu (role poszczególnych osób), krótki opis i uzasadnienie przyjętej metodyki i/lub kolejności prac, planowane i zrealizowane etapy prac ze wskazaniem udziału poszczególnych członków zespołu, wykorzystane praktyki i narzędzia w zarządzaniu projektem.}
+% \emph{Struktura zespołu (role poszczególnych osób), krótki opis i uzasadnienie przyjętej metodyki i/lub kolejności prac, planowane i zrealizowane etapy prac ze wskazaniem udziału poszczególnych członków zespołu, wykorzystane praktyki i narzędzia w zarządzaniu projektem.}
 
-Mention development and research (to even start development for one)
+
+This thesis combines elements of both research and development. Aside from implementing a functional Tsetlin Machine execution engine, other goals were to test its effectiveness in different conditions and develop a lightweight model serialization format. It was also essential to choose the right tools for the job.
+
+\par Since the topic of this thesis isn't very well known, before starting development it was necessary to gain a deep understanding of the Tsetlin Machine architecture. The learning materials as well as documentation for existing solutions were found to be lacking, inspiring \LibraryName to provide better documentation for its users, as well as in-code comments for anyone seeking deeper understanding.
 
 \section{Team members and their roles}
 
-\paragraph{Igor Sikora} - C implementation of the Tsetlin Machine execution engine, correctness tests, optimizations
+The two team members worked on parts of the project based on their previous experience, specializations, and interests. The other person then reviewed it to the best of their ability and knowledge.
 
-\paragraph{Robert Mesek} - Python bindings and examples, benchmarks, CI/CD, integration with FlatBuffers
+\paragraph{Igor Sikora}
+\begin{itemize}
+    \item C implementation of the Tsetlin Machine execution engine
+    \item research into possible optimizations and their implementation
+    \item correctness tests
+    \item code and user documentation
+\end{itemize}
 
-\section{Work planning and order of tasks}
-the whole saga on dc
+\paragraph{Robert Mesek}
+\begin{itemize}
+    \item Python bindings of \LibraryName
+    \item integration with \GreenTsetlinName
+    \item benchmarks, efficiency tests
+    \item Jupyter Notebook examples
+    \item Continuous Integration with CMake
+    \item integration with FlatBuffers for model serialization and deserialization
+\end{itemize}
+
+Of course many aspects of the project had to be realized together, such as solving architectural issues and making sure the Tsetlin Machine execution engine implementation is correct with the theoretical work~\cite{granmo2021tsetlinmachinegame}.
 
 \section{Used tools}
 
-\paragraph{Git} gud
+\paragraph{git with GitHub}
+Git is the most popular version control system, in this case used together with GitHub as a hosting service. This setup made it much easier to keep track of changes, and made it possible to work simultaneously on multiple issues on separate branches. Using GitHub also helped with transparency, since every update was visible to the whole team, also making reviews straightforward.
 
-\paragraph{GitHub} - popular hosting service for git
+\paragraph{Discord}
+Discord served as the main platform for day-to-day communication. Different channels could were used to separate topics, which helped keep discussions on-track and organized instead of everything being mixed in one place. Text chat was the most common, but voice calls were also used when something needed to be explained in more detail, or simply during working sessions. Since Discord is free and everyone was already familiar with it, there were no technical hurdles in getting started, and the communication stayed active throughout the project.
 
-\paragraph{valgrind with callgrind} my beloved
+\paragraph{Email and MS Teams}
+Communication with the project supervisor relied on email and MS Teams. Email was mainly for more formal messages such as documenting milestones. MS Teams was used for scheduled meetings and sharing files that needed feedback. It was helpful to separate internal group communication from supervisor communication, since it kept the workflow cleaner and avoided unnecessary message clutter.
 
-\paragraph{Visual Studio Code} - versatile, lightweight, free
+\paragraph{Overleaf}
+Overleaf was the tool used for writing and editing the \LaTeX{} report. Using a shared online editor made collaboration much easier, making work in the same document possible without worrying about file versions. As it could be shared directly with the supervisor, no one had to wait for access to the latest version of the documents.
 
-\paragraph{Cmake} - like make but worse :p
+% \paragraph{valgrind with callgrind} my beloved
 
-\paragraph{Discord} - group communication; texting, voice and video calls, free, conversations separated between thematic channels and threads
+% \paragraph{Visual Studio Code} - versatile, lightweight, free
 
-\paragraph{MS Teams} - communication with project supervisor
+% \paragraph{Cmake} - like make but worse :p
 
-\paragraph{Email} - communication with project supervisor
-
-\paragraph{Overleaf} - free online \LaTeX editor
-
-\paragraph{arXiv} - searching for and viewing scientific papers on the Tsetlin Machines
+% \paragraph{arXiv} - searching for and viewing scientific papers on the Tsetlin Machines
 
 
 % \section{Used methodologies}
@@ -1502,7 +1554,9 @@ To build the library into a shared object the following commands can be ran
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\chapter{\ChapterTitleEvaluation} % TODO: Move this chapter to "Project results" and remove it.
+\chapter{\ChapterTitleEvaluation}
+% > Move this chapter to "Project results" and remove it.
+% nope, see meeting minutes. 4+ pages should be its own chapter
 \label{sec:evaluation}
 Experiment results / evaluation
 
