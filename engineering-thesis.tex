@@ -319,28 +319,61 @@ Figure \ref{fig:tsetlinmachinexorgate} illustrates the learning process for an X
     \label{fig:tsetlinmachinexorgate}
 \end{figure}
 
-\section{Tsetlin Machine Variants}
-% \paragraph{Standard Dense Architecture}
-\paragraph{Coalesced Architecture}
-\paragraph{Sparse Architecture}
-% - removes automata that are not contributing
-\paragraph{Stateless Inference Model}
-% - saves memory when required only on predictions
+\section{Tsetlin Machine Architecture Variants}
+Due to the modular design of the original Tsetlin Machine, there is an ongoing effort to further develop this method. Researchers have implemented new iterations to address and mitigate limitations discovered in the original design. In this section, we briefly discuss three significant architectural variations and what they attempt to accomplish.
+
+\paragraph{The Coalesced Tsetlin Machine}\label{para:cotm}
+The standard design of the Tsetlin Machine supports prediction for only a single binary output. Multi-output problems require a workaround where a separate machine is created for every output. This approach in which each machine works independently limits the ability to share patterns that may be relevant to multiple classes. The Coalesced Tsetlin Machine~\cite{glimsdal2021coalescedmultioutputtsetlinmachines} introduces a shared pool of clauses. This is accomplished by a weight matrix that connects every clause to every possible output. Instead of a rule belonging to just one class, it is assigned an integer weight: a positive weight votes in favor of a class, while a negative weight votes against it. Empirical results on benchmark datasets show that this approach obtains significantly higher accuracy in 50 to 1000-clause configurations, indicating an ability to reuse clauses and stronger robustness against imbalanced training data~\cite{glimsdal2021coalescedmultioutputtsetlinmachines}. Figure \ref{fig:tsetlinmachinecoalesced} shows an inference structure with three outputs, a newly introduced clause memory matrix and a clause weight matrix.
+
+\paragraph{The Sparse Tsetlin Machine}
+The standard Tsetlin Machine maintains the entire state space, storing a significant number of unnecessary values that consume memory and computational time. The Sparse Tsetlin Machine~\cite{glimsdal2024sparsetsetlinmachine} addresses this by implementing the Active Literals mechanism, which focuses resources only on actively contributing literals. To achieve this, the architecture utilizes the Compressed Sparse Row (CSR) format and discards negated features, assuming that any missing feature is implicitly negated. A lower-bound threshold is added to ensure the compactness of the model, where any literal state reduced below the limit is removed from the clause. This significantly reduces memory footprint and computational time while maintaining competitive classification performance~\cite{glimsdal2024sparsetsetlinmachine}. Figure \ref{fig:tsetlinmachinesparse} illustrates the feedback interaction between Active Literals and sparse clauses. During Type Ia feedback (reinforcing true positives), Active Literals identify and store meaningful literals, while Type II feedback (combating false positives) introduces these literals into the sparse clauses to invalidate incorrect matches.
+
+\paragraph{The Stateless (Inference Only) Tsetlin Machine}
+There is a major difference between how the Tsetlin Machine learns and how it makes predictions. During the learning phase, the machine relies on a detailed memory state to track pattern confidence, storing a state integer (ranging from $1$ to $2N$) for every potential literal. However, once training is completed, this detailed history is no longer needed to make predictions. For inference, the model only needs to know which specific literals to Include and which to Exclude, converting complex memory states into simple binary rules. By discarding learning memory and keeping only the final compiled rules, the model significantly reduces memory usage during deployment when on-device learning is not required. For example, in Figure \ref{fig:memoryimdb}, the inference model would discard the forgotten values and store only the final rule: ``good'' AND ``movie''.
+
+\begin{figure}[!htbp]
+    \centering
+    \includegraphics[width=.9\textwidth]{images/CoalescedMultiOutputTM[2108.07594v1].pdf}
+    \caption[The Coalesced Tsetlin Machine structure]{The Coalesced Tsetlin Machine structure with inference example (source: \cite{glimsdal2021coalescedmultioutputtsetlinmachines})}
+    \label{fig:tsetlinmachinecoalesced}
+\end{figure}
+
+\begin{figure}[!htbp]
+    \centering
+    \includegraphics[width=.9\textwidth]{images/sparse_al_populate[arXiv-2405.02375v2].pdf}
+    \caption[The Sparse Tsetlin Machine Active Literals]{The Sparse Tsetlin Machine using Active Literals (source: \cite{glimsdal2024sparsetsetlinmachine})}
+    \label{fig:tsetlinmachinesparse}
+\end{figure}
 
 \section{Comparison with Neural Networks}
+Neural Networks are currently the standard approach for AI applications, making them the common benchmark for new methods. For a direct theoretical comparison the research conducted in~\cite{sharma2022equivalenceweightedtsetlinmachine} introduced the Weighted Tsetlin Machine. This architecture assigns an integer weight to each clause based on its prediction accuracy, operating similarly to the co-executed Tsetlin Machine (Section \ref{para:cotm}) but without the clause sharing mechanism. With this modification, the Tsetlin machine behaves as a special case of a perceptron using logical clauses as binary inputs instead of raw features~\cite{sharma2022equivalenceweightedtsetlinmachine}.
 
-% moje 2 grosze
-% https://arxiv.org/abs/2212.13634
-% TM używa w większości algebry całkowitoliczbowej nie floatów co może być bardzo atutem na niektórych platformach, szczególnie takich co procesor nie ma operacji na floatach w ogóle
-% problem 1 - no tyle że nie lol bo jednak używa floatów (czego dało by się pozbyć, patrz further work w ostatnim rozdziale)
-% problem 2 - z punktu hardwareowej optymalizacji, mimo że floaty są bardzo kosztowne, to ich algebra i bardzo dziwne sposoby optymalizacji są giga zoptymalizowane (temu że tyle kosztowały a całe ML na nich stoi) i to tak mocno że teraz to algebra na intach się nie opłaca
+The difference in the decision boundaries on the Iris dataset is illustrated in Figure \ref{fig:decisionboundaryvis}, where each model was trained for $50$ epochs. The Tsetlin Machine (Figure \ref{fig:tsetlinmachinevis}) used 50 clauses and the Single Layer Neural Network (Figure \ref{fig:neuralnetworkvis}) utilized 50 neurons. The Tsetlin Machine builds its decision boundaries from the binary output of individual clauses ($C_i = \{0, 1\}$). It results in steps formed by filling contour lines rather than the smooth curves generated by neural networks. This difference changes how each model adapts to new data. In the Tsetlin Machine, a clause (or a set of clauses) can simply learn the new pattern and create a step in the decision boundary to include the new data point in the correct region~\cite{sharma2022equivalenceweightedtsetlinmachine}.
+
+\begin{figure}[!htbp]
+    \begin{center}
+        \subfigure[Tsetlin Machine]{%
+        \label{fig:tsetlinmachinevis}
+        \includegraphics[width=.3\textwidth]{images/tm_vis[arXiv-2212.13634v1].png}}%
+        \subfigure[Perceptron]{%
+        \label{fig:perceptronvis}
+        \includegraphics[width=.3\textwidth]{images/perceptron_vis[arXiv-2212.13634v1].png}}%
+        \subfigure[Single Layer NN]{%
+        \label{fig:neuralnetworkvis}
+        \includegraphics[width=.3\textwidth]{images/mlp_vis[arXiv-2212.13634v1].png}}%
+    \end{center}
+    \caption[Decision Boundary Visualization]{Decision boundary visualization on the Iris dataset (source: \cite{sharma2022equivalenceweightedtsetlinmachine})}
+    \label{fig:decisionboundaryvis}
+\end{figure}
 
 \paragraph{Transparent Logic}
-% - Learned logic is human readable (If X and not Y then Z) compared to Black Box approach of neural networks
-\paragraph{Energy Efficiency}
-% - More optimizations possible when working with logic operations like AND/OR/NOT, compared to float operations on Neural Networks
-\paragraph{Performance with Training Data}
-% - (cite) TM often require less training data to reach high accuracy
+Neural networks are often described as ``black boxes'' because their decision making logic is hidden and difficult for humans to interpret. This contrasts with the Tsetlin Machine, where interpretability comes naturally from its logic-based approach. The produced rules are human-readable clauses (e.g. \textit{if X and Y then Class A}), making it technically possible to even manually add or edit rules. This transparency allows users to examine the inner workings in applications where understanding the reasoning behind a prediction is mandatory.
+
+\paragraph{Computational Efficiency and Optimization}
+An important difference between the architectures lies in their underlying arithmetic. Neural networks typically rely on floating-point matrix multiplications that require substantial computational resources. In contrast, the Tsetlin Machine operates primarily using bitwise operators (AND, OR, NOT) and simple integer arithmetic. Theoretically, this offers efficiency advantages, enabling implementations on hardware lacking dedicated floating-point units. However, modern processors such as GPUs and TPUs are specifically engineered to accelerate matrix operations, since they are widespread in fields ranging from physics simulations to deep learning. As a result, the performance advantage of an integer-based approach is diminished on hardware that implements these optimizations.
+
+\paragraph{Performance with Limited Data}
+According to research presented in~\cite{granmo2021tsetlinmachinegame}, Tsetlin Machines generalize better from smaller datasets compared to neural networks. In benchmarks such as Noisy XOR problem, the Tsetlin Machine maintained much higher accuracy on smaller datasets, whereas neural networks required larger datasets to converge. This makes the Tsetlin Machine a suitable candidate for environments where data is limited or noisy.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \chapter{\ChapterTitleScope}
@@ -676,7 +709,7 @@ For this step specifically, a clause is active if either of two conditions is me
 
 \subsubsection{Sum votes}
 This step uses the information calculated in the previous point whether clauses are active or not. Active clauses vote for all possible classes with trained weights. Specifically, clause $i$ votes for class $j$ with trained weight $w_{i,j}$. $w_{i,j}$ can be positive or negative.\\
-As all active clauses vote, each class accumulates their votes. The sum of votes is then clipped to parameter $treshold$. It serves the same purpose as gradient clipping in other ML architectures, mainly for numerical stability. %TODO: citation
+As all active clauses vote, each class accumulates their votes. The sum of votes is then clipped to parameter $threshold$. It serves the same purpose as gradient clipping in other ML architectures, mainly for numerical stability. %TODO: citation
 
 \subsubsection{Calculate and apply feedback}
 As the sum of votes indicates whether a class should be chosen or not, that prediction can be compared to the actual datapoint label. Based on this information, a suitable feedback to be applied to Tsetlin Automata. \\
@@ -1565,20 +1598,29 @@ Experiment results / evaluation
 \label{sec:results}
 
 % poniższą zawartość rodziału należy usunąć z finalnej wersji pracy.
-\emph{Wskazanie wyników projektu (co konkretnie udało się uzyskać: oprogramowanie, dokumentacja, raporty z testów/wdrożenia, itd.), prezentacja wyników i ocena ich użyteczności (jak zostało to zweryfikowane --- np.\ wnioski klienta/użytkownika, zrealizowane testy wydajnościowe, itd.), istniejące ograniczenia i propozycje dalszych prac.}
+% \emph{Wskazanie wyników projektu (co konkretnie udało się uzyskać: oprogramowanie, dokumentacja, raporty z testów/wdrożenia, itd.), prezentacja wyników i ocena ich użyteczności (jak zostało to zweryfikowane --- np.\ wnioski klienta/użytkownika, zrealizowane testy wydajnościowe, itd.), istniejące ograniczenia i propozycje dalszych prac.}
+
+The previous chapters have described the goals of the project. This concluding chapter reflects on the objectives that were achieved successfully and identifies any missing parts. It also proposes further work, research and improvements to the project as well as Tsetlin Machines in general.
+
+\section{Summary}
+The project work resulted in a functional product. All base requirements were fulfilled; the Tsetlin Machine execution engine can be used to both infer and train in a limited resource environment, model data is stored in an efficient, easy to utilize format. Admittedly not all the specified features could be successfully implemented, in part due to lack of available knowledge sources and documentation on how to put the Tsetlin Machine theory into practice -- which gap this thesis also tries to bridge. Nevertheless the product is mostly production-ready, save for being able to compile it to a specific production architecture.
 
 \section{Restrictions}
-Sparse broke
+The Sparse Tsetlin Machine variant implementation, although able to train, achieves obviously worse results than the \GreenTsetlinName implementation. This is expected to be caused by a software bug, although the training logic seems to match, and the exact cause couldn't be identified.
 
 \section{Further work}
-Due to time constraints and other circumstances, not the full scope of the thesis could be realized. Furthermore, many fascinating ideas were born, ones the authors may not be able to pursue themselves.
+Due to time constraints and other circumstances, not the full scope of the thesis could be realized. During this time many fascinating ideas were born that would require more research.
 
-\subsection{Tsetlin Machine instead of Linear layer}
-... \\
-Due to how customizable \LibraryName is, a custom feedback function and output activation function can be written to facilitate a Tsetlin Machine to be used as a layer of a larger model - painlessly, without the need to rewrite the main logic of the execution engine.
+\subsection{Cross compilation}
+An immediate extension that would increase the utility and reach of this project is the introduction of a formal cross-compilation pipeline. Implementing cross-compilation would enable automated builds for multiple target architectures (e.g. ARM, RISC-V, x86\_64) and ABIs, improving portability and facilitating deployment on embedded and heterogeneous systems. Addressing this would broaden its applicable use cases.
+
+\subsection{Coalesced Tsetlin Machine and the Linear layer}
+Seeing the similarities between Tsetlin Machine and a Perceptron \cite{sharma2022equivalenceweightedtsetlinmachine}, further parallels could be drawn between a Coalesced Tsetlin Machine and a whole Linear layer and activation function of a Neural Network. More research is necessary to find out whether they could be used interchangeably. Likely results would vary a lot based on task complexity and data structure. Another idea to explore is whether Tsetlin Machines could be combined sequentially with creating a larger model, with or without other layer types.
+\par Due to how customizable \LibraryName is, a custom feedback function and output activation function can be written to facilitate a Tsetlin Machine to be used as a layer of a larger model - painlessly, without the need to rewrite the main logic of the execution engine.
 
 \subsection{Integer only implementation of Tsetlin Machine}
-Like 99\% if not 100\% of it is in PRNG and that can be easily rewritten to being integer based.
+Some processors and compute units don't natively provide a floating-point unit, especially on embedded systems and similar hardware. Tsetlin Machine design typically requires floating point operations, however authors believe it shouldn't be difficult to implement.
+\par All floating point operations in Tsetlin Machine design originate from the parameter \textit{s} -- learning sensitivity -- which handles how often specific feedback types should apply. This is traditionally done using floating point, however rewriting this behaviour to integer-only logic seems rather straightforward.
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
