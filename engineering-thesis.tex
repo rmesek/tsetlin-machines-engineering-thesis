@@ -112,7 +112,7 @@ backend=biber]{biblatex}
 \newcommand*{\GreenTsetlinName}{\emph{green\_tsetlin}~\cite{glimsdal2024greentsetlin} }
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\author{Robert Mesek, Igor Sikora, Michał Tomaszewski}
+\author{Robert Mesek, Igor Sikora}
 
 \titlePL{Silnik wykonawczy Maszyn Tsetlina dla urządzeń o ograniczonych zasobach}
 \titleEN{Tsetlin Machines execution engine for embedded devices}
@@ -162,7 +162,7 @@ This approach was found lacking in a number of ways;
     \item the model serialization is saved in a text format, which in this case allows inference without a separate interpreter, but otherwise means wasting a lot of storage space
 \end{enumerate}
 
-There are also numerous projects with far less mature implementations that were taken into consideration that didn't classify for this reason. \cite{granmo2018tsetlinmachine, granmo2018tsetlinmachinec, granmo2020pytsetlinmachinecuda}
+There are also numerous projects with far less mature implementations that were taken into consideration that did not classify for this reason. \cite{granmo2018tsetlinmachine, granmo2018tsetlinmachinec, granmo2020pytsetlinmachinecuda}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \chapter{\ChapterTitleTheory}
@@ -207,7 +207,7 @@ The Tsetlin Automaton operates as a finite-state machine with $2N$ states, as il
 With the Tsetlin Automaton introduced as the main learning mechanism, the Tsetlin Machine architecture arranges these automata into teams responsible for composing clauses. These teams collaborate to solve complex problems by optimizing pattern recognition accuracy. The generated clauses function as rules that vote for or against a specific class output while providing transparent logic to reach a final decision~\cite{granmo2021tsetlinmachinegame}. However, this approach requires specific input, where the data must be processed to produce features compatible with logic-based reasoning.
 
 \paragraph{Binarization of Data}
-Since the Tsetlin Machine operates using propositional logic, the input data is required to be represented as Boolean features. Nevertheless, this constraint can be mitigated with a simple pre-processing step that transforms the input into a suitable binary format. For categorical data, the universal one-got encoding approach will suffice. For example, in the digit recognition problem with $8 \times 8$ images ($64$ elements) and $16$ possible brightness levels, the sample can be flattened and expanded to a binary vector. The handling of continuous features presents a different challenge, commonly addressed by segmenting data into predefined intervals. A continuous variable, such as temperature, can be transformed into a set of Boolean ranges like $[15^\circ,20^\circ)$ or $[20^\circ,25^\circ)$, allowing the machine to simply match the value.
+Since the Tsetlin Machine operates using propositional logic, the input data is required to be represented as Boolean features. Nevertheless, this constraint can be mitigated with a simple pre-processing step that transforms the input into a suitable binary format. For categorical data, the universal one-hot encoding approach will suffice. For example, in the digit recognition problem with $8 \times 8$ images ($64$ elements) and $16$ possible brightness levels, the sample can be flattened and expanded to a binary vector. The handling of continuous features presents a different challenge, commonly addressed by segmenting data into predefined intervals. A continuous variable, such as temperature, can be transformed into a set of Boolean ranges like $[15^\circ,20^\circ)$ or $[20^\circ,25^\circ)$, allowing the machine to simply match the value.
 
 
 \paragraph{Rule Construction}
@@ -223,14 +223,13 @@ While a standard clause learns to capture sub-patterns in $X$ and outputs the co
 $$C_j(X) = \begin{cases}
 1, & \textbf{if } L_j=\emptyset \text{ during learning},\\
 0, & \textbf{if } L_j=\emptyset \text{ during classification},\\
-\bigwedge_{l_k \in L_j}l_k, & \textbf{if } L_j=\emptyset \text{.}
+\bigwedge_{l_k \in L_j}l_k, & \textbf{if } L_j\neq\emptyset \text{.}
 \end{cases}$$
 The final classification $\hat{y}$ is reached through a majority vote. The clause evaluations are combined into a final output through summation and unit step thresholding:
 $$\hat{y} = u \left( \sum_{j=1}^{N/2}C_j^1(X) - \sum_{j=1}^{N/2}C_j^0(X) \right)$$
 where $u(v) = 1 \textbf{ if } v \ge 0 \textbf{ else } 0$. The summation allows the model to weigh positive against negative evidence found in the input $X$. The example classifier that captures the XOR-relation can be represented as $\hat{y} = u(x_1\overline{x}_2 + \overline{x}_1x_2 - x_1x_2 - \overline{x}_1\overline{x}_2)$~\cite{granmo2021tsetlinmachinegame}.
 
-Figure \ref{fig:tsetlinmachineconfiguration} depicts two clauses, one with positive polarity and one with negative polarity. They are both assigned teams of four Tsetlin Automata, controlling the inclusion of literals $L = \{x_1,x_2,\overline{x}_1,\overline{x}_2\}$. The leftmost Tsetlin Automaton in the figure, for example, decided to include literal $x_1$. Given the decisions of the four Tsetlin Automata of $C^1$, the clause has the form $x_1\overline{x}_2$. Similarly, clause $C^0$ obtains the form $x_1x_2$~\cite{granmo2021tsetlinmachinegame}.
-
+Figure \ref{fig:tsetlinmachineconfiguration} illustrates the Tsetlin Machine configuration featuring two clauses: one with positive polarity and one with negative polarity. These clauses are determined by Tsetlin Automata, which select the literals to include from the set $L = \{x_1,x_2,\overline{x}_1,\overline{x}_2\}$. In this example, the positive clause results in the form $x_1\overline{x}_2$, while the negative clause forms $x_1x_2$.
 
 \begin{figure}[!htbp]
     \centering
@@ -293,20 +292,14 @@ Prediction outcomes guide the learning of each Tsetlin Machine clause~\cite{glim
 \paragraph{Learning Multiple Clauses}
 The Tsetlin Machine achieves coordination by introducing another parameter, a voting margin $t$. This ensures that a sufficient number of clauses support each output without using more clauses than necessary. Learning multiple clauses works as follows~\cite{glimsdal2021coalescedmultioutputtsetlinmachines}:
 \begin{compactenum}
-    \item Obtain the next training example consisting of input truth values $X$ and the output truth value $y$.
-    \item Evaluate each clause on input $X$.
-    \item Calculate a voting sum $v$ for the clauses that evaluate to True:
-        \begin{compactenum}
-            \item Add up the votes in favor of $y$.
-            \item Subtract the votes in favor of $\textbf{not } y$
-            \item Clip the result $v$ to the range $[-t, t]$.
-        \end{compactenum}
-    \item Go through each clause and update it if $\textbf{Rand()} \leq \frac{t-v}{2t}$, where \textbf{Rand()} returns a random uniform value from $[0,1]$:
-        \begin{compactenum}
-            \item Perform $\textbf{memorize}(X,s)$ if the clause matches $X$ and belongs to output $y$ (True Positive).
-            \item Perform $\textbf{forget}(s)$ if the clause does not match $X$ and belongs to output $y$ (False Negative).
-            \item Perform $\textbf{invalidate}(X)$ if the clause matches $X$ and belongs to output $\textbf{not } y$ (False Positive).
-        \end{compactenum}
+    \item \textbf{Input:} Consider a training sample of truth values $X$ and the target truth value $y$.
+    \item \textbf{Vote Aggregation:} Compute the net voting sum $v$ by aggregating the output of all clauses that evaluate to \textit{True} on input $X$. Votes in favor of the target class $y$ are positive, while votes in favor of $\textbf{not } y$ are negative. The final sum $v$ is clipped to the range $[-t, t]$.
+    \item \textbf{Stochastic Update:} A feedback update for each clause is triggered with probability $P_\text{update} = \frac{t-v}{2t}$. If triggered, the clause is modified as follows:
+    \begin{compactenum}
+        \item \textbf{True Positives (Type Ia feedback):} Perform $\textbf{memorize}(X,s)$ (the clause matches $X$ and outputs $y$)
+        \item \textbf{False Negatives (Type Ib feedback):} Perform $\textbf{forget}(s)$ (the clause does not match $X$ and outputs $y$)
+        \item \textbf{False Positive (Type II feedback):} Perform $\textbf{invalidate}(X)$ (the clause matches $X$ and outputs $\textbf{not } y$)
+    \end{compactenum}
 \end{compactenum}
 
 \paragraph{XOR-gate Example}
@@ -326,7 +319,7 @@ Due to the modular design of the original Tsetlin Machine, there is an ongoing e
 The standard design of the Tsetlin Machine supports prediction for only a single binary output. Multi-output problems require a workaround where a separate machine is created for every output. This approach in which each machine works independently limits the ability to share patterns that may be relevant to multiple classes. The Coalesced Tsetlin Machine~\cite{glimsdal2021coalescedmultioutputtsetlinmachines} introduces a shared pool of clauses. This is accomplished by a weight matrix that connects every clause to every possible output. Instead of a rule belonging to just one class, it is assigned an integer weight: a positive weight votes in favor of a class, while a negative weight votes against it. Empirical results on benchmark datasets show that this approach obtains significantly higher accuracy in 50 to 1000-clause configurations, indicating an ability to reuse clauses and stronger robustness against imbalanced training data~\cite{glimsdal2021coalescedmultioutputtsetlinmachines}. Figure \ref{fig:tsetlinmachinecoalesced} shows an inference structure with three outputs, a newly introduced clause memory matrix and a clause weight matrix.
 
 \paragraph{The Sparse Tsetlin Machine}
-The standard Tsetlin Machine maintains the entire state space, storing a significant number of unnecessary values that consume memory and computational time. The Sparse Tsetlin Machine~\cite{glimsdal2024sparsetsetlinmachine} addresses this by implementing the Active Literals mechanism, which focuses resources only on actively contributing literals. To achieve this, the architecture utilizes the Compressed Sparse Row (CSR) format and discards negated features, assuming that any missing feature is implicitly negated. A lower-bound threshold is added to ensure the compactness of the model, where any literal state reduced below the limit is removed from the clause. This significantly reduces memory footprint and computational time while maintaining competitive classification performance~\cite{glimsdal2024sparsetsetlinmachine}. Figure \ref{fig:tsetlinmachinesparse} illustrates the feedback interaction between Active Literals and sparse clauses. During Type Ia feedback (reinforcing true positives), Active Literals identify and store meaningful literals, while Type II feedback (combating false positives) introduces these literals into the sparse clauses to invalidate incorrect matches.
+The standard Tsetlin Machine maintains the entire state space, storing a significant number of unnecessary values that consume memory and computational time. The Sparse Tsetlin Machine~\cite{glimsdal2024sparsetsetlinmachine} addresses this by implementing the \textit{Active Literals} mechanism, which focuses resources only on actively contributing literals. To achieve this, the architecture utilizes the Compressed Sparse Row (CSR) format and discards negated features, assuming that any missing feature is implicitly negated. A lower-bound threshold is added to ensure the compactness of the model, where any literal state reduced below the limit is removed from the clause. This significantly reduces memory footprint and computational time while maintaining competitive classification performance~\cite{glimsdal2024sparsetsetlinmachine}. Figure \ref{fig:tsetlinmachinesparse} illustrates the feedback interaction between \textit{Active Literals} and sparse clauses. During Type Ia feedback (reinforcing true positives), \textit{Active Literals} identify and store meaningful literals, while Type II feedback (combating false positives) introduces these literals into the sparse clauses to invalidate incorrect matches.
 
 \paragraph{The Stateless (Inference Only) Tsetlin Machine}
 There is a major difference between how the Tsetlin Machine learns and how it makes predictions. During the learning phase, the machine relies on a detailed memory state to track pattern confidence, storing a state integer (ranging from $1$ to $2N$) for every potential literal. However, once training is completed, this detailed history is no longer needed to make predictions. For inference, the model only needs to know which specific literals to Include and which to Exclude, converting complex memory states into simple binary rules. By discarding learning memory and keeping only the final compiled rules, the model significantly reduces memory usage during deployment when on-device learning is not required. For example, in Figure \ref{fig:memoryimdb}, the inference model would discard the forgotten values and store only the final rule: ``good'' AND ``movie''.
@@ -375,6 +368,10 @@ An important difference between the architectures lies in their underlying arith
 \paragraph{Performance with Limited Data}
 According to research presented in~\cite{granmo2021tsetlinmachinegame}, Tsetlin Machines generalize better from smaller datasets compared to neural networks. In benchmarks such as Noisy XOR problem, the Tsetlin Machine maintained much higher accuracy on smaller datasets, whereas neural networks required larger datasets to converge. This makes the Tsetlin Machine a suitable candidate for environments where data is limited or noisy.
 
+\section{Summary}
+In conclusion, the Tsetlin Machine is a logic-based alternative for pattern recognition that utilizes Boolean algebra. It is built upon Tsetlin Automata, which are finite-state machines that learn optimal actions through rewards and penalties. These automata are arranged into teams to construct ``If-Then'' rules known as conjunctive clauses, which identify sub-patterns in data. Then these clauses are for or against a target class to reach a final decision. The model is trained using a game-theoretic algorithm that employs different types of feedback to memorize, forget, or invalidate patterns. Compared to traditional ``black box'' neural networks, the Tsetlin Machine benefits from transparent logic and efficiency, both with computational resources and training data. Finally, recent architectural variants such as Coalesced, Sparse, and Stateless Tsetlin Machines address limitations of the original design.
+
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \chapter{\ChapterTitleScope}
 \label{sec:functional-scope}
@@ -384,20 +381,20 @@ According to research presented in~\cite{granmo2021tsetlinmachinegame}, Tsetlin 
 
 This chapter outlines the considerations and requirements for the library. Describes the intended audience and details the key decisions made during development. These choices are further described in subsequent sections on Functional and Non-functional requirements.
 
-\section{Target audience}
+\section{Expected user groups}
 Due to the experimental nature of this work, the key design goal was to make the library both easy to use and easy to understand. This is necessary as we anticipate that users may need to adapt the library for integration into their specific applications.
 
 \paragraph{Embedded Developers}
 The library was designed with the limitations of embedded hardware in mind. Unlike many alternatives, it supports every step of the process on-device, while others implement predictions on-device only. Thanks to the designed model exchange format, users can choose to train models on faster hardware or use the \GreenTsetlinName library to later move them to the edge device. Additionally, the efficiency gains promised by Tsetlin Machines~\cite{granmo2021tsetlinmachinegame} are highly beneficial for these resource limited devices, where standard machine learning methods are often too expensive or complicated to run.
 
 \paragraph{Researchers}
-As Tsetlin Machines have only recently started getting more recognition we expect the researchers familiar with classic machine learning models to benefit from being able to implement them in their workflows. Making the library's interface familiar to them allows for rapid prototyping which differs our solution from others which require more domain knowledge. This in turn makes it easier to benchmark them in various potential use cases.
+As Tsetlin Machines have only recently started to gain recognition, we expect researchers familiar with classic machine learning models to benefit from integrating them into their workflows. By offering a familiar interface, our library enables rapid prototyping. This distinguishes our solution from others that require deeper domain knowledge, making it easier to benchmark the models in various use cases.
 
 \newpage
 \section{Functional requirements}
 
 \paragraph{On-device Training and Inference}
-Our solution was designed to support all steps of a Tsetlin Machine model directly on target hardware. Unlike other embedded machine learning frameworks that perform only inference on edge devices, this library enables the model to learn directly from newly gathered data. This is necessary for applications that adapt to local sensor data without a constant connection to the central server.
+Our solution was designed to support all steps of implementing a Tsetlin Machine model directly on target hardware. Unlike other embedded machine learning frameworks that perform only inference on edge devices, this library enables the model to learn directly from newly gathered data. This is necessary for applications that adapt to local sensor data without a constant connection to the central server.
 It should however facilitate an inference only mode with a lighter model serialization format specifically for more resource constrained systems.
 
 \paragraph{Interoperability and Serialization}
@@ -483,32 +480,38 @@ TODO: describe figure ~\ref{fig:projectdiagram}
 \begin{tikzpicture}
 \pgfdeclarelayer{background}
 \pgfsetlayers{background,main}
-
-% --- host components (Main Layer) ---
-\node [
-    draw,
-    rectangle,
-] (tsetlinmachine) {\texttt{TsetlinMachine}};
+\tikzset{refnode/.style={circle, draw, fill=white, inner sep=1pt, font=\scriptsize\bfseries}}
 
 \node [
     draw,
     rectangle,
+    align=center,
+] (tsetlinmachine) {Tsetlin Machine\\Model Definition};
+\node [refnode] at (tsetlinmachine.north east) {A};
+
+\node [
+    draw,
+    rectangle,
+    align=center,
     below=0.5cm of tsetlinmachine,
-] (trainer) {\texttt{Trainer}};
+] (trainer) {Training Process};
+\node [refnode] at (trainer.north east) {B};
 
 \node [
     draw,
     dotted,
     rectangle,
+    align=center,
     below=1cm of trainer,
-] (traindata) {\texttt{TRAIN DATA}};
+] (traindata) {Training\\Data};
 
 \node [
     draw,
     dotted,
     rectangle,
+    align=center,
     left=0.5cm of traindata,
-] (evaldata) {\texttt{EVAL DATA}};
+] (evaldata) {Evaluation\\Data};
 
 \begin{pgfonlayer}{background}
 \node [
@@ -517,44 +520,36 @@ TODO: describe figure ~\ref{fig:projectdiagram}
     rectangle,
     inner sep=0.5cm,
     fit=(tsetlinmachine) (trainer),
-    label=above:\texttt{green\_tsetlin},
+    label=above:External Library,
     fill=green!10,
 ] (greentsetlin) {};
 \end{pgfonlayer}
+\node [refnode] at (greentsetlin.north east) {C};
 
 \node [
     draw,
     rectangle,
+    align=center,
     right=1.5cm of tsetlinmachine,
-    yshift=-0.5cm,
-] (savetofbs) {\texttt{save\_to\_fbs}};
+    yshift=-0.25cm,
+] (savetofbs) {Export Model\\as FlatBuffers};
+\node [refnode] at (savetofbs.north east) {D};
 
 \node [
     draw,
     rectangle,
-    below=0.5cm of savetofbs,
-] (savetobin) {\texttt{save\_to\_bin}};
+    align=center,
+    below=1.25cm of savetofbs,
+] (savetobin) {Export Model\\as Binary};
+\node [refnode] at (savetobin.north east) {E};
 
 \node [
     draw,
     rectangle,
-    right=-0.5cm of savetofbs,
-    yshift=1cm,
-] (ctsetlinclassifier) {\texttt{CTsetlinClassifier}};
-
-\node [
-    draw,
-    rectangle,
-    above=1.5cm of ctsetlinclassifier,
-] (jupyternotebook) {\texttt{Jupyter Notebook Examples}};
-
-\node [
-    draw,
-    dotted,
-    rectangle,
-    below=5cm of savetobin,
-    xshift=2cm,
-] (modelstate) {\texttt{ENCODED MODEL STATE}};
+    align=center,
+    right=5.5cm of trainer,
+] (ctsetlinclassifier) {Scikit-learn\\Interface for\\the C Core};
+\node [refnode] at (ctsetlinclassifier.north east) {F};
 
 \begin{pgfonlayer}{background}
 \node [
@@ -562,13 +557,31 @@ TODO: describe figure ~\ref{fig:projectdiagram}
     dashed,
     rectangle,
     inner sep=0.5cm,
-    label=above:\texttt{tsetlin\_machine\_py},
+    label=above:Python Interface,
     fit=(savetofbs) (savetobin) (ctsetlinclassifier),
     fill=blue!10,
 ] (tsetlinmachinepy) {};
 \end{pgfonlayer}
+\node [refnode] at (tsetlinmachinepy.north east) {G};
 
-% --- host container ---
+\node [
+    draw,
+    rectangle,
+    align=center,
+    above=3cm of ctsetlinclassifier,
+] (jupyternotebook) {Jupyter Notebook\\Integration};
+\node [refnode] at (jupyternotebook.north east) {H};
+
+\node [
+    draw,
+    dotted,
+    rectangle,
+    align=center,
+    below=5cm of savetobin,
+    xshift=2cm,
+] (modelstate) {Serialized\\Model State};
+\node [refnode] at (modelstate.north east) {I};
+
 \node [
     draw,
     dashed,
@@ -578,50 +591,63 @@ TODO: describe figure ~\ref{fig:projectdiagram}
     label=above:\textbf{Host (PC)},
 ] (host) {};
 
-% --- embedded component ---
 \node [
     draw,
     rectangle,
-    left=2cm of modelstate,
-] (tmload) {\texttt{tm\_load}};
+    align=center,
+    left=2.25cm of modelstate,
+] (tmload) {Load\\Model State};
+\node [refnode] at (tmload.north east) {K};
 
 \node [
     draw,
     rectangle,
+    align=center,
     above=0.5cm of tmload,
-] (tmcreate) {\texttt{tm\_create}};
+] (tmcreate) {Tsetlin Machine\\Model Definition};
+\node [refnode] at (tmcreate.north east) {J};
 
 \node [
     draw,
     rectangle,
+    align=center,
     below=0.5cm of tmload,
-] (tmtrain) {\texttt{tm\_train}};
+] (tmtrain) {On-Device\\Training};
+\node [refnode] at (tmtrain.north east) {L};
 
 \node [
     draw,
     dotted,
     rectangle,
-    left=1.5cm of tmtrain,
-] (externaldata) {\texttt{EXTERNAL DATA}};
+    align=center,
+    left=1.75cm of tmtrain,
+] (externaldata) {External\\Data};
+\node [refnode] at (externaldata.north east) {P};
 
 \node [
     draw,
     rectangle,
+    align=center,
     below=0.5cm of tmtrain,
-] (tmsave) {\texttt{tm\_save}};
+] (tmsave) {Save\\Model State};
+\node [refnode] at (tmsave.north east) {M};
 
 \node [
     draw,
     rectangle,
+    align=center,
     below=0.5cm of tmsave,
-] (tmpredict) {\texttt{tm\_predict}};
+] (tmpredict) {Tsetlin Machine\\Model Inference};
+\node [refnode] at (tmpredict.north east) {N};
 
 \node [
     draw,
     dotted,
     rectangle,
-    left=1.5cm of tmpredict,
-] (modeloutput) {\texttt{MODEL OUTPUT}};
+    align=center,
+    left=1.25cm of tmpredict,
+] (modeloutput) {Prediction\\Results};
+\node [refnode] at (modeloutput.north east) {R};
 
 \begin{pgfonlayer}{background}
 \node [
@@ -629,13 +655,13 @@ TODO: describe figure ~\ref{fig:projectdiagram}
     dashed,
     rectangle,
     inner sep=0.5cm,
-    label=above:\texttt{tsetlin\_machine\_c},
+    label=above:Core Library in C,
     fit=(tmload) (tmtrain) (tmsave) (tmpredict) (tmcreate),
     fill=yellow!10,
 ] (tsetlinmachinec) {};
 \end{pgfonlayer}
+\node [refnode] at (tsetlinmachinec.north east) {O};
 
-% --- embedded container ---
 \node [
     draw,
     dashed,
@@ -645,21 +671,20 @@ TODO: describe figure ~\ref{fig:projectdiagram}
     label=above:\textbf{Embedded (On-Device)},
 ] (embedded) {};
 
-% --- connections ---
 \begin{scope}[->, very thick]
 \draw [->] (tsetlinmachine.south) -| (trainer.north);
 
 \draw [->] (traindata.north) -| (trainer.south);
 \draw [->] (evaldata.north) |- (trainer.west);
 
-\draw [->] (trainer.east) -| (savetofbs.south west);
-\draw [->] (trainer.east) -| (savetobin.north west);
+\draw [->] (trainer.east) -| (savetofbs.south);
+\draw [->] (trainer.east) -| (savetobin.north);
 
 \draw [->] (savetofbs.east) -| (modelstate.north);
 \draw [->] (savetobin.east) -| (modelstate.north);
 
-\draw [->] (ctsetlinclassifier.east) -| (jupyternotebook.south east);
-\draw [->, dashed] (tsetlinmachinec.south east) -| (ctsetlinclassifier.south east) node[near start, below] {\texttt{Python Bindings}};
+\draw [->] (ctsetlinclassifier.north) -| (jupyternotebook.south);
+\draw [->, dotted] (tsetlinmachinec.south east) -| (ctsetlinclassifier.south) node[near start, above] {Python Bindings};
 
 \draw [->] (modelstate.west) |- (tmload.east);
 \draw [->] (tmsave.east) -| (modelstate.south);
@@ -674,7 +699,7 @@ TODO: describe figure ~\ref{fig:projectdiagram}
 
 \end{tikzpicture}
 
-\caption[Project diagram]{Project diagram where \texttt{green\_tsetlin} is the external library with host and embedded parts separation.} % TODO: Add references to each block and briefly describe it; consider changing text to something more clear
+\caption[System architecture and data workflow]{System architecture and data workflow. Models can be pretrained using \GreenTsetlinName library (C). We provide a Python Interface (G) that handles model serialization and includes a Scikit-learn compatible wrapper. Our Core Tsetlin Machine Library (O), implemented in the C programming language, executes the model on the target device, supporting both inference and on-device training.}
 \label{fig:projectdiagram}
 \end{figure}
 
@@ -1592,6 +1617,12 @@ To build the library into a shared object the following commands can be ran
 % nope, see meeting minutes. 4+ pages should be its own chapter
 \label{sec:evaluation}
 Experiment results / evaluation
+\section{Noisy-XOR dataset}
+\section{Digits dataset}
+\section{Fashion MNIST dataset}
+\section{Impact of parameters on Noisy-XOR}
+\section{Noisy-XOR model on Raspberry Pi Pico}
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \chapter{\ChapterTitleResults}
