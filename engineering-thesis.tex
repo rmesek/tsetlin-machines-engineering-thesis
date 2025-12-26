@@ -470,16 +470,28 @@ FlatBuffers & "Protocol buffers lite" & Low & Very fast, zero-copy & Acceptable 
 \label{tab:serial-lib-comp}
 \end{table}
 
+\newpage
+\section{System Architecture and Data Workflow}
+The project's architecture and data flow are shown in Figure \ref{fig:projectdiagram}. The design is split between a \textbf{host (PC)} and an \textbf{embedded device}, allowing models to be developed on one platform and transferred to different hardware for deployment.
 
-\section{System Architecture and Data Workflow} % TODO: Edit this draft! (WIP)
-- Complete workflow is depicted in \ref{fig:projectdiagram}. \\
-- We implemented an interchange format which allows training models using third party library (C) (in our case \GreenTsetlinName library written in Python) which should allow to make us of already implemented functionalities or examples. \\
-- After the pretraining process we can choose to serialize the current model state into the format that suits the needs better. In the designed middle Python Interface (G) we have to options, we can choose the FlatBuffers format (D) which efficient, cross-platform serialization format using third-party library or binary format (E), which doesn't have external dependencies, but may require modifications specific to the desired target device. \\
-- When we have pre-trained and serialized model state (I) we can move onto the targeted device e.g. embedded system, where we use the core library written in C (O) designed with compatibility in mind. As we can see the usage of the external library is completely optional as we support creating models from the ground up on-device (J) as well. If that is not the case, we can choose to load pretrained model (K) and go straight to predictions (N) or train the model further on data as it comes (L).
-- We choose to also support exporting the models from device (M), when we want to inspect or backup what it learned while operating on-device. \\
-- Thanks to our core library being self sufficient in the Machine Learning workflow with Tsetlin Machines we choose to implement Python bindings, because nothing stops as from compiling the library for the host architecture. Using implemented Scikit-learn compatible interface for the core library (F), we can use our implementation with the ease similar to other ML models offered in Scikit-learn library, for example, quickly test ideas in Jupyter Notebooks, benchmarking our implementations against other models provided by the Scikit-learn library. \\
-- This project architecture with good and automatic project configurations allows for the quick and hassle-free development using high-level and industry standard languages like Python with the ability to then later move the model to the targeted device with more limited resources.
+\paragraph{Training and Exporting}
+The process starts by defining and training Tsetlin Machine models using an external library (\textbf{C}). In this project, we use the \GreenTsetlinName library. Once training is complete, our Python Interface (\textbf{G}) handles exporting the model. We support two different interchange formats:
+\begin{compactitem}
+    \item FlatBuffers~\cite{flatbuffers} (\textbf{D}) - An efficient, cross-platform serialization format utilizing a third-party library.
+    \item Custom Binary (\textbf{E}) - A dependency-free format that may require adjustments based on the target hardware.
+\end{compactitem}
 
+\paragraph{On-Device Execution}
+After the serialized model state (\textbf{I}) is saved, it can be moved to the embedded device. On the device, we use our core library (\textbf{O}), which supports every step of the machine learning workflow:
+\begin{compactitem}
+    \item It can load a pretrained model (\textbf{K}) to start making predictions (\textbf{N}) immediately.
+    \item It can be trained further on the device (\textbf{L}) using data gathered during operation (\textbf{P}).
+    \item It can save and export the updated model state (\textbf{M}) to back up or inspect what the device has learned.
+    \item It also supports creating new models (\textbf{J}) directly on the device if needed.
+\end{compactitem}
+
+\paragraph{Python Integration}
+Since the core library is self-sufficient, it can also be compiled for the host architecture. This allows us to provide a Python package with bindings to the same C code, so that it can run on a standard computer. This package includes a \textit{Scikit-learn}-like interface (\textbf{F}) and is easy to install, similar to other common machine learning tools. This enables rapid testing of ideas in \textit{Jupyter Notebooks} (\textbf{H}) and makes it possible to benchmark our implementation against standard models provided by Python libraries.
 
 \begin{figure}[!htbp]
 \centering
