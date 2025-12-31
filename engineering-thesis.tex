@@ -23,6 +23,9 @@
 \usetikzlibrary{positioning, arrows, fit, backgrounds}
 \usepackage{amsmath}
 \usepackage{paralist}
+\usepackage{makecell}
+\usepackage{booktabs}
+\usepackage{rotating}
 
 \hypersetup{colorlinks,
   linkcolor=blue,
@@ -42,6 +45,22 @@
 % \DeclareQuoteAlias[quotes]{polish}{polish}
 
 \usepackage[nottoc]{tocbibind}
+
+\usepackage{xcolor}
+\definecolor{cliGray}{gray}{0.95}
+\lstdefinestyle{cli}{
+  backgroundcolor=\color{cliGray},
+  frame=single,
+  rulecolor=\color{black},
+  basicstyle=\ttfamily\small,
+  columns=fullflexible,
+  keepspaces=true,
+  showstringspaces=false,
+  breaklines=true,
+  aboveskip=1em,
+  belowskip=1em,
+  numbers=none
+}
 
 \usepackage[
 style=numeric,
@@ -141,20 +160,23 @@ dr hab.\ inż.\ Tomasz Szydło, prof.\ AGH}
 % \emph{Charakterystyka problemu, motywacja projektu (w tym przegląd istniejących rozwiązań prowadząca do uzasadnienia celu prac), wizja produktu i analiza zagrożeń.}
 
 \vspace{10pt}
-Machine learning architectures are becoming a popular topic of research as they continue to show promise in various use cases. Recent years have shown rapid developments in this field, aimed especially to improve model accuracy and scaling. Not all applications can benefit from these advancements however, as they typically suffer from issues such as low model explainability, high computation power requirements and high energy usage. This thesis explores how an implementation of the Tsetlin Machine machine learning architecture could bridge these gaps and allow for an efficient, lightweight execution engine that can train and infer even on edge devices. To allow transferring a model to and from the edge device, a lightweight model serialization format was developed.
+Machine learning architectures are becoming a popular topic of research as they continue to show promise in various use cases. Recent years have shown rapid developments in this field, aimed especially to improve model accuracy and scaling. Not all applications can benefit from these advancements however, as they typically suffer from issues such as low model explainability, high computation power requirements and high energy usage. This project explores how an implementation of the Tsetlin Machine (TM) machine learning architecture could bridge these gaps and allow for an efficient, lightweight execution engine that can train and infer even on edge devices. To allow transferring a model to and from the edge device, a lightweight model serialization format was developed.
 
 \vspace{10pt}
-The Tsetlin Machine is a logic-based, interpretable machine learning model that builds propositional formulas (conjunctive clauses of literals) utilizing large collectives of simple finite-state Tsetlin Automata which learn via reward/penalty feedback. It offers a transparent, lighter alternative to neural networks and is notable for simple, hardware-friendly primitives that can yield competitive accuracy while making learned rules easy to inspect.
+The Tsetlin Machine is a logic-based, interpretable machine learning model that builds propositional formulas (conjunctive clauses of literals) utilizing large collectives of simple finite-state Tsetlin Automata which learn via reward/penalty feedback. It offers a transparent, lighter alternative to neural networks and is notable for simple, hardware-friendly primitives that can yield competitive accuracy while making learned rules easy to inspect. 
+
+\vspace{10pt}
+Due to these properties, it is the most fitting choice for resource-limited environments. To utilise this technology in this scenario two things are needed however; a Tsetlin Machine execution engine capable of operating with limited resources, together with a supported, lightweight model serialization format.
 
 \vspace{10pt}
 The Tsetlin Machine execution engine, to be able to run on edge devices, is limited in a number of ways. Firstly, it has to be implemented in a low-level programming language - C was chosen for that purpose. Secondly, the choice of available libraries that can be utilized is severely limited. And finally, the implementation itself has to be optimized to avoid unnecessarily using too much resources.
 
 \vspace{10pt}
-The Tsetlin Machine model serialization format is another major topic of this thesis. Due to the many limitations, popular ML model serialization formats like ONNX or Protocol Buffers couldn't be used. Either the library itself is too big and resource-intensive, or the resulting model file is too large or can't be memory-mapped. In this case, the only fitting option was found to be a minimalist C implementation of FlatBuffers.
+The Tsetlin Machine model serialization format is another major topic of this project. Due to the many limitations, popular ML model serialization formats like ONNX or Protocol Buffers couldn't be used. Either the library itself is too big and resource-intensive, or the resulting model file is too large or can't be memory-mapped. In this case, the only fitting option was found to be a minimalist C implementation of FlatBuffers.
 
 \newpage
 \section{Competitive solutions}
-According to the authors' knowledge, \GreenTsetlinName is the only production-ready implementation of the Tsetlin Machine. It is primarily a Python library with a C++ backend. A trained model can then be exported into a C header file and used for inference.  
+According to the authors' knowledge, \GreenTsetlinName is the only production-ready implementation of the TM. It is primarily a Python library with a C++ backend. A trained model can then be exported into a C header file and used for inference.  
 This approach was found lacking in a number of ways;
 \begin{enumerate}
     \item the exported model cannot be interpreted back to its previous form to perform modifications on it
@@ -164,30 +186,55 @@ This approach was found lacking in a number of ways;
 
 There are also numerous projects with far less mature implementations that were taken into consideration that did not classify for this reason. \cite{granmo2018tsetlinmachine, granmo2018tsetlinmachinec, granmo2020pytsetlinmachinecuda}
 
+\section{Power Usage in Machine Learning}
+
+\par Recent advances in machine learning have been accompanied by a significant increase in computational and energy demands. Large-scale models and complex training procedures often require substantial processing power, specialized hardware, and extended execution times, which directly translate into higher power consumption -- resulting in high costs, energy grid strain and environmental damages.\\
+
+\par While such approaches are justified for problems that require high model capacity or large-scale data processing, not all tasks require the use of computationally intensive methods. For certain problem classes, simpler models or lightweight algorithms can achieve comparable performance with considerably lower energy and resource requirements.\\
+
+\par Recognizing the trade-off between model complexity and power usage is therefore essential. Selecting an appropriately scaled solution can reduce energy consumption, improve efficiency and practical deployability without compromising the intended functionality.\\
+
+\section{Thesis structure}
+This thesis is organized into several chapters that collectively describe the theoretical foundations, design decisions, implementation, and evaluation of the proposed work. \\
+
+\par Chapter 2 -- the theoretical background relevant to this thesis. It introduces the fundamental concepts, models, and prior work required to understand the problem domain and motivates the chosen approach. \\
+
+\par Chapter 3 -- the functional scope of the system. It outlines the objectives, functional and non-functional requirements. \\
+
+\par Chapter 4 -- selected realization aspects. This chapter focuses on key design and implementation decisions, including important architectural choices and algorithms. \\
+
+\par Chapter 5 -- the organization of the work. It explains the task division and tooling, providing insight into how the project was structured and executed. \\
+
+\par Chapter 6 -- the user documentation, detailing how the Tsetlin Machine execution engine is configured, operated, and extended. This chapter is intended to support practical use of the developed solution. \\
+
+\par Chapter 7 -- the experimental setup and results. It describes the evaluation methodology, test scenarios, and measured outcomes used to assess performance and behavior. \\
+
+\par Chapter 8 -- the results of the work. It summarizes the contributions of the thesis and outlines potential directions for future research and development. \\
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \chapter{\ChapterTitleTheory}
 \label{sec:theoretical-background}
 This chapter introduces the Tsetlin Machine, a method for pattern recognition based on propositional logic and game theory. We briefly examine the ideas developed in the original research~\cite{granmo2021tsetlinmachinegame, glimsdal2021coalescedmultioutputtsetlinmachines} that were necessary for our work, explaining how the model is designed from the ground up. Finally, we discuss scenarios where this approach has the potential to be a viable alternative to neural networks. For a more extensive introduction to Tsetlin Machines, refer to~\cite{granmo2022tsetlinmachinebookchap1, granmo2022tsetlinmachinebookchap2}.
 
 \section{Tsetlin Machine Overview}
-The emergence of the Tsetlin Machine is rooted in the development of a lesser-known, yet fundamental and versatile learning mechanism called the Tsetlin Automaton, developed by M.L. Tsetlin in the early 1960s~\cite{granmo2021tsetlinmachinegame, tsetlin1961behaviour}. Further research on this topic proposes a novel technique for complex large scale classification constructed using Tsetlin Automata~\cite{granmo2021tsetlinmachinegame}.
+The emergence of the TM is rooted in the development of a lesser-known, yet fundamental and versatile learning mechanism called the Tsetlin Automaton, developed by M.L. Tsetlin in the early 1960s~\cite{granmo2021tsetlinmachinegame, tsetlin1961behaviour}. Further research on this topic proposes a novel technique for complex large scale classification constructed using Tsetlin Automata~\cite{granmo2021tsetlinmachinegame}.
 
 \paragraph{Pattern Recognition}
-The most important distinction of the Tsetlin Machine lies in how it addresses pattern recognition problems. While the accuracy of a machine learning technique is related to its capability to represent patterns, the Tsetlin Machine decomposes complex problems into self-contained sub-patterns~\cite{granmo2021tsetlinmachinegame}. Instead of using the complex arithmetic found in neural networks, this method utilizes Boolean algebra, which is the basis of how digital computers operate. As a result, the machine captures the structure of the data by expressing patterns as conjunctive clauses in propositional logic.
+The most important distinction of the TM lies in how it addresses pattern recognition problems. While the accuracy of a machine learning technique is related to its capability to represent patterns, the TM decomposes complex problems into self-contained sub-patterns~\cite{granmo2021tsetlinmachinegame}. Instead of using the complex arithmetic found in neural networks, this method utilizes Boolean algebra, which is the basis of how digital computers operate. As a result, the machine captures the structure of the data by expressing patterns as conjunctive clauses in propositional logic.
 
 \paragraph{Logic-Based Approach}
-The Tsetlin Machine processes input features as bits to construct propositional logic expressed as ``If-Then'' rules, which offers both computational simplicity and interpretability.
-In short, given an input vector of propositional variables $X = (x_1, \dots, x_n) \in \{0,1\}^n$, we add their negated counterparts $\overline{x}_k = 1 - x_k$ to build a set of literals $L = \{l_1 \dots, l_{2n}\}$. From these literals, we construct conjunctive clauses that determine the output vector $Y = (y_1, \dots, y_m) \in \{0,1\}^m$. For example, clause $C(X) = x_1 \land x_2 = x_1 x_2$ consists of literals $\{x_1, x_2\}$ and outputs $1$ if and only if $x_1 = x_2 = 1$~\cite{granmo2021tsetlinmachinegame}. The simple inference structure of the Tsetlin machine can be seen in Figure \ref{fig:tsetlinmachinestructure}.
+The TM processes input features as bits to construct propositional logic expressed as ``If-Then'' rules, which offers both computational simplicity and interpretability.
+In short, given an input vector of propositional variables $X = (x_1, \dots, x_n) \in \{0,1\}^n$, we add their negated counterparts $\overline{x}_k = 1 - x_k$ to build a set of literals $L = \{l_1 \dots, l_{2n}\}$. From these literals, we construct conjunctive clauses that determine the output vector $Y = (y_1, \dots, y_m) \in \{0,1\}^m$. For example, clause $C(X) = x_1 \land x_2 = x_1 x_2$ consists of literals $\{x_1, x_2\}$ and outputs $1$ if and only if $x_1 = x_2 = 1$~\cite{granmo2021tsetlinmachinegame}. The simple inference structure of the TM can be seen in Figure \ref{fig:tsetlinmachinestructure}.
 
 \begin{figure}[!htbp]
     \centering
     \includegraphics[width=.9\textwidth]{images/Overall_Architecture_Summation[1804.01508v15].pdf}
-    \caption[The Tsetlin Machine inference structure]{The Tsetlin Machine inference structure (source: \cite{granmo2021tsetlinmachinegame})}
+    \caption[The TM inference structure]{The TM inference structure (source: \cite{granmo2021tsetlinmachinegame})}
     \label{fig:tsetlinmachinestructure}
 \end{figure}
 
 \section{Tsetlin Automaton}
-The basic building block of a Tsetlin Machine is the Tsetlin Automaton 
+The basic building block of a TM is the Tsetlin Automaton 
 (Figure \ref{fig:tsetlinautomatongeneric}), recognized as one of the first solutions to the multi-armed bandit problem~\cite{granmo2021tsetlinmachinegame}. It is capable of learning the optimal action when operating in unknown stochastic environments and is considered the first Learning Automaton~\cite{narendra2012learning}.
 
 \paragraph{Decision Making}
@@ -204,22 +251,22 @@ The Tsetlin Automaton operates as a finite-state machine with $2N$ states, as il
 \end{figure}
 
 \section{Architecture and Problem Representation}
-With the Tsetlin Automaton introduced as the main learning mechanism, the Tsetlin Machine architecture arranges these automata into teams responsible for composing clauses. These teams collaborate to solve complex problems by optimizing pattern recognition accuracy. The generated clauses function as rules that vote for or against a specific class output while providing transparent logic to reach a final decision~\cite{granmo2021tsetlinmachinegame}. However, this approach requires specific input, where the data must be processed to produce features compatible with logic-based reasoning.
+With the Tsetlin Automaton introduced as the main learning mechanism, the TM architecture arranges these automata into teams responsible for composing clauses. These teams collaborate to solve complex problems by optimizing pattern recognition accuracy. The generated clauses function as rules that vote for or against a specific class output while providing transparent logic to reach a final decision~\cite{granmo2021tsetlinmachinegame}. However, this approach requires specific input, where the data must be processed to produce features compatible with logic-based reasoning.
 
 \paragraph{Binarization of Data}
-Since the Tsetlin Machine operates using propositional logic, the input data is required to be represented as Boolean features. Nevertheless, this constraint can be mitigated with a simple pre-processing step that transforms the input into a suitable binary format. For categorical data, the universal one-hot encoding approach will suffice. For example, in the digit recognition problem with $8 \times 8$ images ($64$ elements) and $16$ possible brightness levels, the sample can be flattened and expanded to a binary vector. The handling of continuous features presents a different challenge, commonly addressed by segmenting data into predefined intervals. A continuous variable, such as temperature, can be transformed into a set of Boolean ranges like $[15^\circ,20^\circ)$ or $[20^\circ,25^\circ)$, allowing the machine to simply match the value.
+Since the TM operates using propositional logic, the input data is required to be represented as Boolean features. Nevertheless, this constraint can be mitigated with a simple pre-processing step that transforms the input into a suitable binary format. For categorical data, the universal one-hot encoding approach will suffice. For example, in the digit recognition problem with $8 \times 8$ images ($64$ elements) and $16$ possible brightness levels, the sample can be flattened and expanded to a binary vector. The handling of continuous features presents a different challenge, commonly addressed by segmenting data into predefined intervals. A continuous variable, such as temperature, can be transformed into a set of Boolean ranges like $[15^\circ,20^\circ)$ or $[20^\circ,25^\circ)$, allowing the machine to simply match the value.
 
 
 \paragraph{Rule Construction}
-The mechanism for building a Tsetlin Machine involves organizing Tsetlin Automata into teams, where each team is responsible for constructing a single conjunctive clause (AND-rule). These rules follow a logical pattern:
+The mechanism for building a TM involves organizing Tsetlin Automata into teams, where each team is responsible for constructing a single conjunctive clause (AND-rule). These rules follow a logical pattern:
 $$\textbf{if} \ \textit{condition} \ \textbf{then} \ \textit{class} \text{.}$$
 For every potential literal in the input set (both original features and their negations), an assigned automaton determines whether to ``Include'' or ``Exclude'' that literal based on its internal state~\cite{granmo2021tsetlinmachinegame}. By combining these decisions through the AND-operator, the team produces a logical rule. For the vehicle classification task described in~\cite{granmo2022tsetlinmachinebookchap1}, a resulting rule can be expressed as: 
 $$\textbf{if} \ \textit{Four Wheels} \ \textbf{and} \ \textit{Transports People} \ \textbf{then} \ \textit{Car} \text{.}$$
 
 \paragraph{Class Prediction by Voting}
-The Tsetlin Machine, as shown in Figure \ref{fig:tsetlinmachinestructure}, feeds an input vector $X = (x_1, \dots, x_n) \in \{0,1\}^n$ to several conjunctive clauses for evaluation. The number of clauses used is a user-defined parameter $N$. The clauses are assigned into two groups based on polarity: positive clauses ($C_j^1, \ j \in \{1,\dots,N/2\}$) vote in favor of the target class ($y=1$), negative clauses ($C_j^0, \ j \in \{1,\dots,N/2\}$) vote against it ($y=0$)~\cite{granmo2021tsetlinmachinegame}.
+The TM, as shown in Figure \ref{fig:tsetlinmachinestructure}, feeds an input vector $X = (x_1, \dots, x_n) \in \{0,1\}^n$ to several conjunctive clauses for evaluation. The number of clauses used is a user-defined parameter $N$. The clauses are assigned into two groups based on polarity: positive clauses ($C_j^1, \ j \in \{1,\dots,N/2\}$) vote in favor of the target class ($y=1$), negative clauses ($C_j^0, \ j \in \{1,\dots,N/2\}$) vote against it ($y=0$)~\cite{granmo2021tsetlinmachinegame}.
 
-While a standard clause learns to capture sub-patterns in $X$ and outputs the conjunction of its literals, the Tsetlin Machine uses a specific mechanism for empty clauses ($L_j = \emptyset$). These clauses without literals are not required for classification and can be pruned from the inference structure, but during learning, they remain active:
+While a standard clause learns to capture sub-patterns in $X$ and outputs the conjunction of its literals, the TM uses a specific mechanism for empty clauses ($L_j = \emptyset$). These clauses without literals are not required for classification and can be pruned from the inference structure, but during learning, they remain active:
 $$C_j(X) = \begin{cases}
 1, & \textbf{if } L_j=\emptyset \text{ during learning},\\
 0, & \textbf{if } L_j=\emptyset \text{ during classification},\\
@@ -229,7 +276,7 @@ The final classification $\hat{y}$ is reached through a majority vote. The claus
 $$\hat{y} = u \left( \sum_{j=1}^{N/2}C_j^1(X) - \sum_{j=1}^{N/2}C_j^0(X) \right)$$
 where $u(v) = 1 \textbf{ if } v \ge 0 \textbf{ else } 0$. The summation allows the model to weigh positive against negative evidence found in the input $X$. The example classifier that captures the XOR-relation can be represented as $\hat{y} = u(x_1\overline{x}_2 + \overline{x}_1x_2 - x_1x_2 - \overline{x}_1\overline{x}_2)$~\cite{granmo2021tsetlinmachinegame}.
 
-Figure \ref{fig:tsetlinmachineconfiguration} illustrates the Tsetlin Machine configuration featuring two clauses: one with positive polarity and one with negative polarity. These clauses are determined by Tsetlin Automata, which select the literals to include from the set $L = \{x_1,x_2,\overline{x}_1,\overline{x}_2\}$. In this example, the positive clause results in the form $x_1\overline{x}_2$, while the negative clause forms $x_1x_2$.
+Figure \ref{fig:tsetlinmachineconfiguration} illustrates the TM configuration featuring two clauses: one with positive polarity and one with negative polarity. These clauses are determined by Tsetlin Automata, which select the literals to include from the set $L = \{x_1,x_2,\overline{x}_1,\overline{x}_2\}$. In this example, the positive clause results in the form $x_1\overline{x}_2$, while the negative clause forms $x_1x_2$.
 
 \begin{figure}[!htbp]
     \centering
@@ -239,7 +286,7 @@ Figure \ref{fig:tsetlinmachineconfiguration} illustrates the Tsetlin Machine con
 \end{figure}
 
 \section{Learning Algorithm}
-The learning mechanism of the Tsetlin Machine functions through a game-theoretic approach, orchestrating Tsetlin Automata to maximize pattern recognition accuracy~\cite{granmo2021tsetlinmachinegame}. We follow the example found in~\cite{glimsdal2021coalescedmultioutputtsetlinmachines} to demonstrate this process.
+The learning mechanism of the TM functions through a game-theoretic approach, orchestrating Tsetlin Automata to maximize pattern recognition accuracy~\cite{granmo2021tsetlinmachinegame}. We follow the example found in~\cite{glimsdal2021coalescedmultioutputtsetlinmachines} to demonstrate this process.
 
 \paragraph{IMDb Review Sentiment Example}
 To demonstrate the learning process, we consider the task of classifying the sentiment of movie reviews from the IMDb dataset. This problem uses a Set of Words (SoW) representation, where every word in the vocabulary acts as an input feature. Consider the review ``The movie was good, and I had popcorn.''. This text is converted into a binary input vector $X$. The inputs for words present in the review (e.g. ``good'' and ``movie'') are set to True, while the inputs for any missing words are set to False.
@@ -273,7 +320,7 @@ Consider the clause designed to detect positive sentiment targeting the pattern 
 \end{figure}
 
 \paragraph{Memory Updating}
-Memory is updated on a specific input $X$ to the Tsetlin Machine. A user-defined parameter $s$ controls how quickly truth values are forgotten. In result, increasing $s$ makes the patterns finer (more specific), while decreasing $s$ makes them coarser (more general). The process of updating the memory of each clause is handled by these three operators~\cite{glimsdal2021coalescedmultioutputtsetlinmachines}:
+Memory is updated on a specific input $X$ to the TM. A user-defined parameter $s$ controls how quickly truth values are forgotten. In result, increasing $s$ makes the patterns finer (more specific), while decreasing $s$ makes them coarser (more general). The process of updating the memory of each clause is handled by these three operators~\cite{glimsdal2021coalescedmultioutputtsetlinmachines}:
 \begin{compactitem}
     \item The $\textbf{memorize}(X,s)$ operator handles \textbf{Type Ia feedback} (Figure \ref{fig:memoryimdbtypeIa}). It strengthens the memory of an input $X$ by increasing integer values for truth values present in $X$. Simultaneously, truth values that conflict with the input have their integers decreased randomly with probability $\frac{1}{s}$.
     \item The $\textbf{forget}(s)$ operator handles \textbf{Type Ib feedback} (Figure \ref{fig:memoryimdbtypeIb}). It performs forgetting by randomly decreasing the memory integer of all truth values with probability $\frac{1}{s}$. This gradually moves all literals towards the ``maximally forgotten'' state.
@@ -281,7 +328,7 @@ Memory is updated on a specific input $X$ to the Tsetlin Machine. A user-defined
 \end{compactitem}
 
 \paragraph{Learning Single Clauses}
-Prediction outcomes guide the learning of each Tsetlin Machine clause~\cite{glimsdal2021coalescedmultioutputtsetlinmachines}:
+Prediction outcomes guide the learning of each TM clause~\cite{glimsdal2021coalescedmultioutputtsetlinmachines}:
 \begin{compactitem}
     \item \textbf{True Positive}: The clause correctly votes for its assigned output. In this case, the clause performs $\textbf{memorize}(X,s)$. This feedback makes the clause remember and refine the pattern it recognizes in $X$.
     \item \textbf{False Negative}: The clause fails to vote for its assigned output. In this case, the clause performs $\textbf{forget}(s)$. This reinforcement coarsens infrequent patterns, making them frequent.
@@ -290,7 +337,7 @@ Prediction outcomes guide the learning of each Tsetlin Machine clause~\cite{glim
 \end{compactitem}
 
 \paragraph{Learning Multiple Clauses}
-The Tsetlin Machine achieves coordination by introducing another parameter, a voting margin $t$. This ensures that a sufficient number of clauses support each output without using more clauses than necessary. Learning multiple clauses works as follows~\cite{glimsdal2021coalescedmultioutputtsetlinmachines}:
+The TM achieves coordination by introducing another parameter, a voting margin $t$. This ensures that a sufficient number of clauses support each output without using more clauses than necessary. Learning multiple clauses works as follows~\cite{glimsdal2021coalescedmultioutputtsetlinmachines}:
 \begin{compactenum}
     \item \textbf{Input:} Consider a training sample of truth values $X$ and the target truth value $y$.
     \item \textbf{Vote Aggregation:} Compute the net voting sum $v$ by aggregating the output of all clauses that evaluate to \textit{True} on input $X$. Votes in favor of the target class $y$ are positive, while votes in favor of $\textbf{not } y$ are negative. The final sum $v$ is clipped to the range $[-t, t]$.
@@ -308,44 +355,44 @@ Figure \ref{fig:tsetlinmachinexorgate} illustrates the learning process for an X
 \begin{figure}[!htbp]
     \centering
     \includegraphics[width=.9\textwidth]{images/TM[arXiv-2212.13634v1].pdf}
-    \caption[Tsetlin Machine XOR-gate training]{Tsetlin Machine learning dynamics for an XOR-gate training sample, with input $(x_1 = 0, x_2 = 1)$ and output target $y = 1$ (source: \cite{sharma2022equivalenceweightedtsetlinmachine})}
+    \caption[TM XOR-gate training]{TM learning dynamics for an XOR-gate training sample, with input $(x_1 = 0, x_2 = 1)$ and output target $y = 1$ (source: \cite{sharma2022equivalenceweightedtsetlinmachine})}
     \label{fig:tsetlinmachinexorgate}
 \end{figure}
 
 \section{Tsetlin Machine Architecture Variants}
-Due to the modular design of the original Tsetlin Machine, there is an ongoing effort to further develop this method. Researchers have implemented new iterations to address and mitigate limitations discovered in the original design. In this section, we briefly discuss three significant architectural variations and what they attempt to accomplish.
+Due to the modular design of the original TM, there is an ongoing effort to further develop this method. Researchers have implemented new iterations to address and mitigate limitations discovered in the original design. In this section, we briefly discuss three significant architectural variations and what they attempt to accomplish.
 
 \paragraph{The Coalesced Tsetlin Machine}\label{para:cotm}
-The standard design of the Tsetlin Machine supports prediction for only a single binary output. Multi-output problems require a workaround where a separate machine is created for every output. This approach in which each machine works independently limits the ability to share patterns that may be relevant to multiple classes. The Coalesced Tsetlin Machine~\cite{glimsdal2021coalescedmultioutputtsetlinmachines} introduces a shared pool of clauses. This is accomplished by a weight matrix that connects every clause to every possible output. Instead of a rule belonging to just one class, it is assigned an integer weight: a positive weight votes in favor of a class, while a negative weight votes against it. Empirical results on benchmark datasets show that this approach obtains significantly higher accuracy in 50 to 1000-clause configurations, indicating an ability to reuse clauses and stronger robustness against imbalanced training data~\cite{glimsdal2021coalescedmultioutputtsetlinmachines}. Figure \ref{fig:tsetlinmachinecoalesced} shows an inference structure with three outputs, a newly introduced clause memory matrix and a clause weight matrix.
+The standard design of the TM supports prediction for only a single binary output. Multi-output problems require a workaround where a separate machine is created for every output. This approach in which each machine works independently limits the ability to share patterns that may be relevant to multiple classes. The Coalesced TM~\cite{glimsdal2021coalescedmultioutputtsetlinmachines} introduces a shared pool of clauses. This is accomplished by a weight matrix that connects every clause to every possible output. Instead of a rule belonging to just one class, it is assigned an integer weight: a positive weight votes in favor of a class, while a negative weight votes against it. Empirical results on benchmark datasets show that this approach obtains significantly higher accuracy in 50 to 1000-clause configurations, indicating an ability to reuse clauses and stronger robustness against imbalanced training data~\cite{glimsdal2021coalescedmultioutputtsetlinmachines}. Figure \ref{fig:tsetlinmachinecoalesced} shows an inference structure with three outputs, a newly introduced clause memory matrix and a clause weight matrix.
 
 \paragraph{The Sparse Tsetlin Machine}
-The standard Tsetlin Machine maintains the entire state space, storing a significant number of unnecessary values that consume memory and computational time. The Sparse Tsetlin Machine~\cite{glimsdal2024sparsetsetlinmachine} addresses this by implementing the \textit{Active Literals} mechanism, which focuses resources only on actively contributing literals. To achieve this, the architecture utilizes the Compressed Sparse Row (CSR) format and discards negated features, assuming that any missing feature is implicitly negated. A lower-bound threshold is added to ensure the compactness of the model, where any literal state reduced below the limit is removed from the clause. This significantly reduces memory footprint and computational time while maintaining competitive classification performance~\cite{glimsdal2024sparsetsetlinmachine}. Figure \ref{fig:tsetlinmachinesparse} illustrates the feedback interaction between \textit{Active Literals} and sparse clauses. During Type Ia feedback (reinforcing true positives), \textit{Active Literals} identify and store meaningful literals, while Type II feedback (combating false positives) introduces these literals into the sparse clauses to invalidate incorrect matches.
+The standard TM maintains the entire state space, storing a significant number of unnecessary values that consume memory and computational time. The Sparse TM~\cite{glimsdal2024sparsetsetlinmachine} addresses this by implementing the \textit{Active Literals} mechanism, which focuses resources only on actively contributing literals. To achieve this, the architecture utilizes the Compressed Sparse Row (CSR) format and discards negated features, assuming that any missing feature is implicitly negated. A lower-bound threshold is added to ensure the compactness of the model, where any literal state reduced below the limit is removed from the clause. This significantly reduces memory footprint and computational time while maintaining competitive classification performance~\cite{glimsdal2024sparsetsetlinmachine}. Figure \ref{fig:tsetlinmachinesparse} illustrates the feedback interaction between \textit{Active Literals} and sparse clauses. During Type Ia feedback (reinforcing true positives), \textit{Active Literals} identify and store meaningful literals, while Type II feedback (combating false positives) introduces these literals into the sparse clauses to invalidate incorrect matches.
 
 \paragraph{The Stateless (Inference Only) Tsetlin Machine}
-There is a major difference between how the Tsetlin Machine learns and how it makes predictions. During the learning phase, the machine relies on a detailed memory state to track pattern confidence, storing a state integer (ranging from $1$ to $2N$) for every potential literal. However, once training is completed, this detailed history is no longer needed to make predictions. For inference, the model only needs to know which specific literals to Include and which to Exclude, converting complex memory states into simple binary rules. By discarding learning memory and keeping only the final compiled rules, the model significantly reduces memory usage during deployment when on-device learning is not required. For example, in Figure \ref{fig:memoryimdb}, the inference model would discard the forgotten values and store only the final rule: ``good'' AND ``movie''.
+There is a major difference between how the TM learns and how it makes predictions. During the learning phase, the machine relies on a detailed memory state to track pattern confidence, storing a state integer (ranging from $1$ to $2N$) for every potential literal. However, once training is completed, this detailed history is no longer needed to make predictions. For inference, the model only needs to know which specific literals to Include and which to Exclude, converting complex memory states into simple binary rules. By discarding learning memory and keeping only the final compiled rules, the model significantly reduces memory usage during deployment when on-device learning is not required. For example, in Figure \ref{fig:memoryimdb}, the inference model would discard the forgotten values and store only the final rule: ``good'' AND ``movie''.
 
 \begin{figure}[!htbp]
     \centering
     \includegraphics[width=.9\textwidth]{images/CoalescedMultiOutputTM[2108.07594v1].pdf}
-    \caption[The Coalesced Tsetlin Machine structure]{The Coalesced Tsetlin Machine structure with inference example (source: \cite{glimsdal2021coalescedmultioutputtsetlinmachines})}
+    \caption[The Coalesced TM structure]{The Coalesced TM structure with inference example (source: \cite{glimsdal2021coalescedmultioutputtsetlinmachines})}
     \label{fig:tsetlinmachinecoalesced}
 \end{figure}
 
 \begin{figure}[!htbp]
     \centering
     \includegraphics[width=.9\textwidth]{images/sparse_al_populate[arXiv-2405.02375v2].pdf}
-    \caption[The Sparse Tsetlin Machine Active Literals]{The Sparse Tsetlin Machine using Active Literals (source: \cite{glimsdal2024sparsetsetlinmachine})}
+    \caption[The Sparse TM Active Literals]{The Sparse TM using Active Literals (source: \cite{glimsdal2024sparsetsetlinmachine})}
     \label{fig:tsetlinmachinesparse}
 \end{figure}
 
 \section{Comparison with Neural Networks}
-Neural Networks are currently the standard approach for AI applications, making them the common benchmark for new methods. For a direct theoretical comparison the research conducted in~\cite{sharma2022equivalenceweightedtsetlinmachine} introduced the Weighted Tsetlin Machine. This architecture assigns an integer weight to each clause based on its prediction accuracy, operating similarly to the Coalesced Tsetlin Machine (Section \ref{para:cotm}) but without the clause sharing mechanism. With this modification, the Tsetlin machine behaves as a special case of a perceptron using logical clauses as binary inputs instead of raw features~\cite{sharma2022equivalenceweightedtsetlinmachine}.
+Neural Networks are currently the standard approach for AI applications, making them the common benchmark for new methods. For a direct theoretical comparison, the research conducted in~\cite{sharma2022equivalenceweightedtsetlinmachine} introduced the Weighted TM. This architecture assigns an integer weight to each clause based on its prediction accuracy, operating similarly to the Coalesced TM (Section \ref{para:cotm}) but without the clause sharing mechanism. With this modification, the TM behaves as a special case of a perceptron using logical clauses as binary inputs instead of raw features~\cite{sharma2022equivalenceweightedtsetlinmachine}.
 
-The difference in the decision boundaries on the Iris dataset is illustrated in Figure \ref{fig:decisionboundaryvis}, where each model was trained for $50$ epochs. The Tsetlin Machine (Figure \ref{fig:tsetlinmachinevis}) used 50 clauses and the Single Layer Neural Network (Figure \ref{fig:neuralnetworkvis}) utilized 50 neurons. The Tsetlin Machine builds its decision boundaries from the binary output of individual clauses ($C_i = \{0, 1\}$). It results in steps formed by filling contour lines rather than the smooth curves generated by neural networks. This difference changes how each model adapts to new data. In the Tsetlin Machine, a clause (or a set of clauses) can simply learn the new pattern and create a step in the decision boundary to include the new data point in the correct region~\cite{sharma2022equivalenceweightedtsetlinmachine}.
+The difference in the decision boundaries on the Iris dataset is illustrated in Figure \ref{fig:decisionboundaryvis}, where each model was trained for $50$ epochs. The TM (Figure \ref{fig:tsetlinmachinevis}) used 50 clauses and the Single Layer Neural Network (Figure \ref{fig:neuralnetworkvis}) utilized 50 neurons. The TM builds its decision boundaries from the binary output of individual clauses ($C_i = \{0, 1\}$). It results in steps formed by filling contour lines rather than the smooth curves generated by neural networks. This difference changes how each model adapts to new data. In the TM, a clause (or a set of clauses) can simply learn the new pattern and create a step in the decision boundary to include the new data point in the correct region~\cite{sharma2022equivalenceweightedtsetlinmachine}.
 
 \begin{figure}[!htbp]
     \begin{center}
-        \subfigure[Tsetlin Machine]{%
+        \subfigure[TM]{%
         \label{fig:tsetlinmachinevis}
         \includegraphics[width=.3\textwidth]{images/tm_vis[arXiv-2212.13634v1].png}}%
         \subfigure[Perceptron]{%
@@ -360,13 +407,13 @@ The difference in the decision boundaries on the Iris dataset is illustrated in 
 \end{figure}
 
 \paragraph{Transparent Logic}
-Neural networks are often described as ``black boxes'' because their decision making logic is hidden and difficult for humans to interpret. This contrasts with the Tsetlin Machine, where interpretability comes naturally from its logic-based approach. The produced rules are human-readable clauses (e.g. \textit{if X and Y then Class A}), making it technically possible to even manually add or edit rules. This transparency allows users to examine the inner workings in applications where understanding the reasoning behind a prediction is mandatory.
+Neural networks are often described as ``black boxes'' because their decision making logic is hidden and difficult for humans to interpret. This contrasts with the TM, where interpretability comes naturally from its logic-based approach. The produced rules are human-readable clauses (e.g. \textit{if X and Y then Class A}), making it technically possible to even manually add or edit rules. This transparency allows users to examine the inner workings in applications where understanding the reasoning behind a prediction is mandatory.
 
 \paragraph{Computational Efficiency and Optimization}
-An important difference between the architectures lies in their underlying arithmetic. Neural networks typically rely on floating-point matrix multiplications that require substantial computational resources. In contrast, the Tsetlin Machine operates primarily using bitwise operators (AND, OR, NOT) and simple integer arithmetic. Theoretically, this offers efficiency advantages, enabling implementations on hardware lacking dedicated floating-point units. However, modern processors such as GPUs and TPUs are specifically engineered to accelerate matrix operations, since they are widespread in fields ranging from physics simulations to deep learning. As a result, the performance advantage of an integer-based approach is diminished on hardware that implements these optimizations.
+An important difference between the architectures lies in their underlying arithmetic. Neural networks typically rely on floating-point matrix multiplications that require substantial computational resources. In contrast, the TM operates primarily using bitwise operators (AND, OR, NOT) and simple integer arithmetic. Theoretically, this offers efficiency advantages, enabling implementations on hardware lacking dedicated floating-point units. However, modern processors such as GPUs and TPUs are specifically engineered to accelerate matrix operations, since they are widespread in fields ranging from physics simulations to deep learning. As a result, the performance advantage of an integer-based approach is diminished on hardware that implements these optimizations.
 
 \paragraph{Performance with Limited Data}
-According to research presented in~\cite{granmo2021tsetlinmachinegame}, Tsetlin Machines generalize better from smaller datasets compared to neural networks. In benchmarks such as Noisy XOR problem, the Tsetlin Machine maintained much higher accuracy on smaller datasets, whereas neural networks required larger datasets to converge. This makes the Tsetlin Machine a suitable candidate for environments where data is limited or noisy.
+According to research presented in~\cite{granmo2021tsetlinmachinegame}, TMs generalize better with smaller datasets compared to neural networks. In benchmarks such as the Noisy XOR problem, the TM maintained much higher accuracy on smaller datasets, whereas neural networks required larger datasets to converge. This makes the TM a suitable candidate for environments where data is limited or noisy.
 
 \section{Summary}
 In conclusion, the Tsetlin Machine is a logic-based alternative for pattern recognition that utilizes Boolean algebra. It is built upon Tsetlin Automata, which are finite-state machines that learn optimal actions through rewards and penalties. These automata are arranged into teams to construct ``If-Then'' rules known as conjunctive clauses, which identify sub-patterns in data. Then these clauses are for or against a target class to reach a final decision. The model is trained using a game-theoretic algorithm that employs different types of feedback to memorize, forget, or invalidate patterns. Compared to traditional ``black box'' neural networks, the Tsetlin Machine benefits from transparent logic and efficiency, both with computational resources and training data. Finally, recent architectural variants such as Coalesced, Sparse, and Stateless Tsetlin Machines address limitations of the original design.
@@ -385,23 +432,23 @@ This chapter outlines the considerations and requirements for the library. Descr
 Due to the experimental nature of this work, the key design goal was to make the library both easy to use and easy to understand. This is necessary as we anticipate that users may need to adapt the library for integration into their specific applications.
 
 \paragraph{Embedded Developers}
-The library was designed with the limitations of embedded hardware in mind. Unlike many alternatives, it supports every step of the process on-device, while others implement predictions on-device only. Thanks to the designed model exchange format, users can choose to train models on faster hardware or use the \GreenTsetlinName library to later move them to the edge device. Additionally, the efficiency gains promised by Tsetlin Machines~\cite{granmo2021tsetlinmachinegame} are highly beneficial for these resource limited devices, where standard machine learning methods are often too expensive or complicated to run.
+The library was designed with the limitations of embedded hardware in mind. Unlike many alternatives, it supports every step of the process on-device, while others implement predictions on-device only. Thanks to the designed model exchange format, users can choose to train models on faster hardware or use the \GreenTsetlinName library to later move them to the edge device. Additionally, the efficiency gains promised by TMs~\cite{granmo2021tsetlinmachinegame} are highly beneficial for these resource limited devices, where standard machine learning methods are often too expensive or complicated to run.
 
 \paragraph{Researchers}
-As Tsetlin Machines have only recently started to gain recognition, we expect researchers familiar with classic machine learning models to benefit from integrating them into their workflows. By offering a familiar interface, our library enables rapid prototyping. This distinguishes our solution from others that require deeper domain knowledge, making it easier to benchmark the models in various use cases.
+As TMs have only recently started to gain recognition, we expect researchers familiar with classic machine learning models to benefit from integrating them into their workflows. By offering a familiar interface, our library enables rapid prototyping. This distinguishes our solution from others that require deeper domain knowledge, making it easier to benchmark the models in various use cases.
 
 \newpage
 \section{Functional requirements}
 
 \paragraph{On-device Training and Inference}
-Our solution was designed to support all steps of implementing a Tsetlin Machine model directly on target hardware. Unlike other embedded machine learning frameworks that perform only inference on edge devices, this library enables the model to learn directly from newly gathered data. This is necessary for applications that adapt to local sensor data without a constant connection to the central server.
+Our solution was designed to support both TM training and inference directly on target hardware. Unlike other embedded machine learning frameworks that perform only inference on edge devices, this library enables the model to learn directly from newly gathered data. This is necessary for applications that adapt to local sensor data without a constant connection to the central server.
 It should however facilitate an inference only mode with a lighter model serialization format specifically for more resource constrained systems.
 
 \paragraph{Interoperability and Serialization}
 The library must implement functionality for saving and loading model states. This requires a standardized serialization format to ensure compatibility with the \GreenTsetlinName library. This compatibility is essential for the users to leverage high-performance workstations to pre-train models, export them, and then deploy them directly to the embedded devices. Furthermore, models trained or tuned on the edge must also be exportable for backup or analysis on faster hardware.
 
 \paragraph{Configurable Hyperparameters}
-Exposing Tsetlin Machine model hyperparameters is necessary for fitting the model to its application with varied limitations dictated by hardware or the input data itself. Researchers and developers must be able to easily fine-tune these parameters when designing their solution for each specific problem. This allows optimization of performance, memory footprint, or accuracy without modifying library code. 
+Exposing TM model hyperparameters is necessary for fitting the model to its application with varied limitations dictated by hardware or the input data itself. Researchers and developers must be able to easily fine-tune these parameters when designing their solution for each specific problem. This allows optimization of performance, memory footprint, or accuracy without modifying library code. 
 
 \paragraph{Correctness with the Theoretical Work}
 The implementation must behave as described in theoretical research~\cite{granmo2021tsetlinmachinegame}. It is required to accurately model the Tsetlin Automata logic and implement the specific learning rules (Type I and Type II feedback) defined in the original papers. This ensures that the software is a close representation of the method proposed in the theory and avoids unintended assumptions.
@@ -413,10 +460,10 @@ The implementation must behave as described in theoretical research~\cite{granmo
 The library must be designed for compatibility, avoiding dependencies on any specific hardware or operating system. The functionality of the external library should be defined during compilation if there is a risk that it may not work on the desired target. This strategy ensures that the code can be compiled with minimal, if any, modifications for a wide range of hardware architectures. The resulting portability, coupled with the adjustable model parameters, allows end users to create a solution that is both widely adoptable and future-proof.
 
 \paragraph{Performance and Memory Usage}
-Optimizations are significantly beneficial, as the library's performance impacts both the training step and, more importantly, the real-time predictions on target devices. Given that Tsetlin Machines heavily rely on binary logic and random number generators, optimizing these areas allows for better utilization of limited hardware resources. This optimization extends to memory management, since the memory is needed to store the model on the device, as well as the memory used during runtime, must also be considered.
+Optimizations are significantly beneficial, as the library's performance impacts both the training step and, more importantly, the real-time predictions on target devices. Given that TMs heavily rely on binary logic and random number generators, optimizing these areas allows for better utilization of limited hardware resources. This optimization extends to memory management, since the memory is needed to store the model on the device, as well as the memory used during runtime, must also be considered.
 
 \paragraph{Simple API}
-The Applications Programming Interface (API) must be intuitive and well-documented. Its design should follow standard interfaces developed by major machine learning libraries, allowing users unfamiliar with Tsetlin Machine theory to quickly prototype concepts. This simple interface allows a developer to easily integrate the library into an existing project. Moreover, supporting quick prototyping in environments like Python Jupyter Notebooks alongside established models from libraries such as Scikit-learn speeds up development before deployment to embedded devices.
+The Applications Programming Interface (API) must be intuitive and well-documented. Its design should follow standard interfaces developed by major machine learning libraries, allowing users unfamiliar with TM theory to quickly prototype concepts. This simple interface allows a developer to easily integrate the library into an existing project. Moreover, supporting quick prototyping in environments like Python Jupyter Notebooks alongside established models from libraries such as Scikit-learn speeds up development before deployment to embedded devices.
 
 \paragraph{Testing and Examples}
 As with any software project, testing enhances the development process and maintenance. Code examples provide a starting point for users unfamiliar with the project. Furthermore, simple installation and easy to run examples encourage potential users to quickly try the library. Finally, these tests help verify that the library runs correctly on new devices with different hardware limitations.
@@ -429,7 +476,8 @@ As with any software project, testing enhances the development process and maint
 % poniższą zawartość rodziału należy usunąć z finalnej wersji pracy.
 % \emph{Przyjęte założenia, struktura i zasada działania systemu, wykorzystane rozwiązania technologiczne wraz z uzasadnieniem ich wyboru, istotne mechanizmy i zastosowane algorytmy.}
 
-This section describes the design choices of \LibraryName as well as the rationale behind them, and the overarching architecture of the solution. The actual Tsetlin Machine implementation is described in detail to make it intuitive. It describes used tools, solutions and algorithms. Additionally, it discusses several interesting problems that were encountered.
+This section describes the design choices of \LibraryName as well as the rationale behind them, and the overarching architecture of the solution. The actual TM implementation is described in detail to make it intuitive. It describes used tools, solutions and algorithms. Additionally, it discusses several interesting problems that were encountered.
+
 
 \section{Design}
 Even though optimization was the primary objective, not every method could be utilized due to the target environments having very limited resources and hardware limitations. In particular, vectorization was completely out of the picture, even though \GreenTsetlinName has it enabled by default. GPU programming was obviously dismissed for the same reason - although notably, such an implementation is possible~\cite{granmo2020pytsetlinmachinecuda}.
@@ -440,8 +488,8 @@ Exporting models from \GreenTsetlinName is done in Python, as it is a Python lib
 \LibraryName also has Python bindings so that it can be used conveniently from Python.
 
 \subsection{Execution engine}
-Even though there exists a number of existing libraries implementing the Tsetlin Machine, \LibraryName was essentially created from the ground up without taking much inspiration or hints from them. It was required to be written primarily with optimization in mind so that it works as fast as possible while maintaining small size and portability on top of utilizing little power and memory. \\
-It was also decided \LibraryName should support multiple different Tsetlin Machine variants so their efficiency could be tested - Coalesced, Sparse and Stateless.
+Even though there exists a number of existing libraries implementing the TM, \LibraryName was essentially created from the ground up without taking much inspiration or hints from them. It was required to be written primarily with optimization in mind so that it works as fast as possible while maintaining small size and portability on top of utilizing little power and memory. \\
+It was also decided \LibraryName should support multiple different TM variants so their efficiency could be tested - Coalesced, Sparse and Stateless.
 
 \newpage
 \subsection{Model serialization library}
@@ -472,10 +520,11 @@ FlatBuffers & "Protocol buffers lite" & Low & Very fast, zero-copy & Acceptable 
 
 \newpage
 \section{System Architecture and Data Workflow}
+\label{sec:system-architecture}
 The project's architecture and data flow are shown in Figure \ref{fig:projectdiagram}. The design is split between a \textbf{host (PC)} and an \textbf{embedded device}, allowing models to be developed on one platform and transferred to different hardware for deployment.
 
 \paragraph{Training and Exporting}
-The process starts by defining and training Tsetlin Machine models using an external library (\textbf{C}). In this project, we use the \GreenTsetlinName library. Once training is complete, our Python Interface (\textbf{G}) handles exporting the model. We support two different interchange formats:
+The process starts by defining and training TM models using an external library (\textbf{C}). In this project, we use the \GreenTsetlinName library. Once training is complete, our Python Interface (\textbf{G}) handles exporting the model. We support two different interchange formats:
 \begin{compactitem}
     \item FlatBuffers~\cite{flatbuffers} (\textbf{D}) - An efficient, cross-platform serialization format utilizing a third-party library.
     \item Custom Binary (\textbf{E}) - A dependency-free format that may require adjustments based on the target hardware.
@@ -504,7 +553,7 @@ Since the core library is self-sufficient, it can also be compiled for the host 
     draw,
     rectangle,
     align=center,
-] (tsetlinmachine) {Tsetlin Machine\\Model Definition};
+] (tsetlinmachine) {TM\\Model Definition};
 \node [refnode] at (tsetlinmachine.north east) {A};
 
 \node [
@@ -622,7 +671,7 @@ Since the core library is self-sufficient, it can also be compiled for the host 
     rectangle,
     align=center,
     above=0.5cm of tmload,
-] (tmcreate) {Tsetlin Machine\\Model Definition};
+] (tmcreate) {TM\\Model Definition};
 \node [refnode] at (tmcreate.north east) {J};
 
 \node [
@@ -655,7 +704,7 @@ Since the core library is self-sufficient, it can also be compiled for the host 
     rectangle,
     align=center,
     below=0.5cm of tmsave,
-] (tmpredict) {Tsetlin Machine\\Model Inference};
+] (tmpredict) {TM\\Model Inference};
 \node [refnode] at (tmpredict.north east) {N};
 
 \node [
@@ -717,19 +766,19 @@ Since the core library is self-sufficient, it can also be compiled for the host 
 
 \end{tikzpicture}
 
-\caption[System architecture and data workflow]{System architecture and data workflow. Models can be pretrained using \GreenTsetlinName library (C). We provide a Python Interface (G) that handles model serialization and includes a Scikit-learn compatible wrapper. Our Core Tsetlin Machine Library (O), implemented in the C programming language, executes the model on the target device, supporting both inference and on-device training.}
+\caption[System architecture and data workflow]{System architecture and data workflow. Models can be pretrained using \GreenTsetlinName library (C). We provide a Python Interface (G) that handles model serialization and includes a Scikit-learn compatible wrapper. Our Core TM Library (O), implemented in the C programming language, executes the model on the target device, supporting both inference and on-device training.}
 \label{fig:projectdiagram}
 \end{figure}
 
 \newpage
 
 \section{Tsetlin Automaton}
-A Tsetlin Automaton is the smallest part of a Tsetlin Machine, and it is what clauses consist of. Implementation-wise it is represented by a singular, 8-bit integer, meaning its values can range from -127 to 127 by default. The range can be made smaller by setting model parameters $max\_state$ and $min\_state$ \\
+A Tsetlin Automaton is the smallest part of a TM, and it is what clauses consist of. Implementation-wise it is represented by a singular, 8-bit integer, meaning its values can range from -127 to 127 by default. The range can be made smaller by setting model parameters $max\_state$ and $min\_state$ \\
 Further on in this thesis, the term that a Tsetlin Automaton is active, means its internal integer value is greater or equal than halfway between $max\_state$ and $min\_state$; $value \ge \frac{max\_state + min\_state}{2}$  \\
 One input bit on position $i$ has two corresponding Tsetlin Automata at positions in clause $2 \times i$ and $2 \times i + 1$. The first one -- positive -- decides whether the input bit -- $x_i$ -- should be included in the clause, and the other -- negative -- whether its negation -- $\neg x_i$ -- should be included.
 
-\section{Coalesced Tsetlin Machine}
-Coalesced Tsetlin Machine is the variant most closely resembling the original Tsetlin Machine out of those implemented by \LibraryName. The implementation closely follows the paper.~\cite{glimsdal2021coalescedmultioutputtsetlinmachines}
+\section{Coalesced TM}
+Coalesced TM is the variant most closely resembling the original TM out of those implemented by \LibraryName. The implementation closely follows the paper.~\cite{glimsdal2021coalescedmultioutputtsetlinmachines}
 
 \subsection{Training}
 The training loop consists of three distinct steps repeated for each datapoint.
@@ -763,7 +812,7 @@ For the positive class, the chance is inversely proportional to the clipped sum 
 For the negative class, the chance is proportional to the clipped sum of votes it received. This means the model applies feedback more often the more sure it is the class is incorrect. \\
 
 \paragraph{Customization}
-What is unique to \LibraryName, it allows both predictions and output to be customized to be virtually anything. \\
+What is unique to \LibraryName, it allows both predictions and output to be customized to be any type of data. \\
 A custom feedback function can be set for the model, to override how positive and negative classes are chosen. The default uses normal classification, where the output and prediction is an integer identifying a class. \\
 Another predefined function allows multi-class classification, where output and prediction is an 8-bit integer array where the length is the number of classes, where value 1 signifies a class with a given identifier being chosen, value 0 - not chosen. \\
 \vspace{7pt}
@@ -861,7 +910,7 @@ A clause is represented as a simple array of Tsetlin Automata states. For the sa
     \node at (-2.5,0) {Corresponding literal:};
     \node at (-2.5,-0.7) {TA state:};
 \end{tikzpicture}
-\caption{Clause data layout of Coalesced Tsetlin Machine}
+\caption{Clause data layout of Coalesced TM}
 \label{fig:dense-data-layout}
 \end{figure}
 
@@ -886,7 +935,7 @@ The model state is represented as:
 \end{itemize}
 This is described in FlatBuffers format in the listing~\ref{lst:dense-schema}
 
-\begin{lstlisting}[caption={[Coalesced Tsetlin Machine FlatBuffers serialization format]Coalesced Tsetlin Machine FlatBuffers serialization format},label=lst:dense-schema]
+\begin{lstlisting}[caption={[Coalesced TM FlatBuffers serialization format]Coalesced TM FlatBuffers serialization format},label=lst:dense-schema]
 table Parameters {
   threshold:  uint;  // tsetlin automaton threshold
   n_literals: uint;  // total number of literals
@@ -919,11 +968,11 @@ root_type Model;
 \end{lstlisting}
 
 
-\section{Sparse Tsetlin Machine}
-A Sparse Tsetlin Machine~\cite{glimsdal2024sparsetsetlinmachine} aims to efficiently process sparse data. It uses the same core principles and mechanics as the Coalesced Tsetlin Machine, its main difference being the underlying data layout.
+\section{Sparse TM}
+A Sparse TM~\cite{glimsdal2024sparsetsetlinmachine} aims to efficiently process sparse data. It uses the same core principles and mechanics as the Coalesced TM, its main difference being the underlying data layout. It also introduces \textit{Active Literals} -- it functions as a list of literals considered to be added to sparse state. Notably, both sparse state and \textit{Active Literals} need to have a limited size or the model is slower and larger than Coalesced TM, and learns poorly -- something not mentioned in the paper~\cite{glimsdal2024sparsetsetlinmachine}.
 
 \subsection{Data layout}
-Unlike the Coalesced Tsetlin Machine, the Sparse Tsetlin Machine doesn't store all Tsetlin Automata. Simply put, it only keeps the Tsetlin Automata, which state is above a certain threshold. By doing so, in principle it doesn't need to waste space and computation power for Tsetlin Automata it deems unlikely to become active for a given clause. The simplified structure is shown in figure ~\ref{fig:sparse-data-layout}
+Unlike the Coalesced TM, the Sparse TM doesn't store all Tsetlin Automata. Simply put, it only keeps the Tsetlin Automata, which state is above a certain threshold. By doing so, in principle it doesn't need to waste space and computation power for Tsetlin Automata it deems unlikely to become active for a given clause. The simplified structure is shown in figure ~\ref{fig:sparse-data-layout}
 \par Since not all Tsetlin Automata are present in a clause a linked list is used as the underlying data structure. Identifying indices cannot be inferred from the data structure and need to be stored in nodes.
 
 \begin{figure}[!htbp]
@@ -984,16 +1033,19 @@ Unlike the Coalesced Tsetlin Machine, the Sparse Tsetlin Machine doesn't store a
     \node at (-2.5,-1.4) {TA state:};
     \node at (-2.5,-2.1) {Pointer:};
 \end{tikzpicture}
-\caption{Clause data layout of Sparse Tsetlin Machine}
+\caption{Clause data layout of Sparse TM}
 \label{fig:sparse-data-layout}
 \end{figure}
 
+\subsection{Training}
+Aside from obvious changes from Coalesced TM needed to accommodate the different data structure, the feedback mechanism has some modifications. Namely, a new Tsetlin Automaton can be introduced to a clause only in type Ia of feedback, only when the corresponding literal currently belongs to Active Literals of a class which triggered this feedback. A literal can be added to \textit{Active Literals} in feedback type II. \textit{Active Literals} are not being explicitly removed, but the oldest is replaced when adding a new one.
+
 
 \section{Stateless}
-A Stateless Tsetlin Machine is a slimmed down version of Sparse Tsetlin Machine that doesn't allow any model training, at the same time further reducing model size to the smallest and fastest possible for inference. It should only be created from a trained model of a different Tsetlin Machine variant.
+A Stateless TM is a slimmed down version of Sparse TM that doesn't allow any model training, at the same time further reducing model size to the smallest and fastest possible for inference. It should only be created from a trained model of a different TM variant.
 
 \subsection{Data layout}
-Stateless Tsetlin Machine, as name suggests, doesn't store Tsetlin Automaton states at all. Here a degenerated version of Tsetlin Automaton is active if it is present at all. The simplified structure is shown in figure ~\ref{fig:stateless-data-layout}
+Stateless TM, as name suggests, doesn't store Tsetlin Automaton states at all. Here a degenerated version of Tsetlin Automaton is active if it is present at all. The simplified structure is shown in figure ~\ref{fig:stateless-data-layout}
 
 
 \begin{figure}[!htbp]
@@ -1043,19 +1095,19 @@ Stateless Tsetlin Machine, as name suggests, doesn't store Tsetlin Automaton sta
     \node at (-2.5,-0.7) {Index:};
     \node at (-2.5,-1.4) {Pointer:};
 \end{tikzpicture}
-\caption{Clause data layout of Sparse Tsetlin Machine}
+\caption{Clause data layout of Sparse TM}
 \label{fig:stateless-data-layout}
 \end{figure}
 
 \section{Optimizations}
-Seeing as speed, size, portability as well as limiting the usage of power and memory were all key requirements, optimizations were the main focus of this thesis. In this section a few of the more interesting examples are listed.
+Seeing as speed, size, portability as well as limiting the usage of power and memory were all key requirements, optimizations were the main focus of this project. In this section a few of the more interesting examples are listed.
 
 \subsection{Pseudo random number generation}
 Analyzing the efficiency of a development version with valgrind and callgrind, it was obvious that most training time was spent on calls to \textit{rand()} - pseudo random number generation. \\
 While it isn't costly to call once, the cost quickly accumulates over millions of calls.
 
 \subsubsection{Analysis}
-\textit{rand()} is costly because it aims for a uniform spread, as evenly as possible. \LibraryName doesn't care that much as the deviation spreads across millions of calls - but it does very much care for speed and lower power usage. The pseudo random number generation for this purpose doesn't need to by cryptographically secure either -- \textit{rand()} isn't anyways. \\
+\textit{rand()} is costly because it aims for a uniform spread, as evenly as possible. \LibraryName intentionally adopts a design that relaxes this uniformity, accepting minor statistical deviations that average out over millions of calls -- in order to prioritize execution speed and reduced power consumption. The pseudo random number generation for this purpose doesn't need to be cryptographically secure either -- \textit{rand()} isn't anyways. \\
 A quick look at \GreenTsetlinName revealed that it suffered from the same problem. Its solution was to use a wyhash64 algorithm. Using just an 64-bit integer addition, two 128-bit integer multiplications and few bitwise operations as well as a double multiplication, it is overall a much cheaper solution.\\
 Listing ~\ref{lst:wyhash64} shows the \GreenTsetlinName implementation of wyhash64.
 \begin{lstlisting}[language=C,caption={[\GreenTsetlinName implementation of wyhash64]\GreenTsetlinName implementation of wyhash64},label=lst:wyhash64]
@@ -1074,7 +1126,7 @@ double next_u()
 \end{lstlisting}
 
 \subsubsection{Solution}
-Wyhash64 is a much cheaper solution, but it's still not cheap. 128-bit integer multiplications and double multiplication cost many precious CPU cycles which means time and power. \\
+Wyhash64 represents a significantly lower-cost solution compared to the alternative; however, its computational and energy costs remain non-negligible. 128-bit integer multiplications and double multiplication cost many precious CPU cycles which means time and power. \\
 Listing ~\ref{lst:fast-prng} shows the \LibraryName implementation of xorshift32. \\
 All that's really needed is a few bit shifts and XOR operations. It uses so few CPU cycles it's basically free. It might also be the case one of the authors likes low-level optimization an unhealthy amount. 
 
@@ -1109,6 +1161,11 @@ float prng_next_float(struct FastPRNG* prng) {
 \end{lstlisting}
 
 
+\section{Summary}
+In conclusion, \LibraryName is a C library designed for resource-limited systems, using FlatBuffers format for model serialization. It can be used conveniently from Python on the host device, both inference and training is available from C on the edge device, and models can be transferred between them -- as shown in the System Architecture\ref{sec:system-architecture} section. \\
+This chapter furthermore touches on the actual, low-level implementation of TM types. Notable optimizations are also explained here.
+
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \chapter{\ChapterTitleWorkOrganization}
 \label{sec:work-organization}
@@ -1117,9 +1174,9 @@ float prng_next_float(struct FastPRNG* prng) {
 % \emph{Struktura zespołu (role poszczególnych osób), krótki opis i uzasadnienie przyjętej metodyki i/lub kolejności prac, planowane i zrealizowane etapy prac ze wskazaniem udziału poszczególnych członków zespołu, wykorzystane praktyki i narzędzia w zarządzaniu projektem.}
 
 
-This thesis combines elements of both research and development. Aside from implementing a functional Tsetlin Machine execution engine, other goals were to test its effectiveness in different conditions and develop a lightweight model serialization format. It was also essential to choose the right tools for the job.
+This project combines elements of both research and development. Aside from implementing a functional TM execution engine, other goals were to test its effectiveness in different conditions and develop a lightweight model serialization format. It was also essential to choose the right tools for the task.
 
-\par Since the topic of this thesis isn't very well known, before starting development it was necessary to gain a deep understanding of the Tsetlin Machine architecture. The learning materials as well as documentation for existing solutions were found to be lacking, inspiring \LibraryName to provide better documentation for its users, as well as in-code comments for anyone seeking deeper understanding.
+\par Since the topic of this thesis isn't very well known, before starting development it was necessary to gain a deep understanding of the TM architecture. The learning materials as well as documentation for existing solutions were found to be lacking, inspiring \LibraryName to provide better documentation for its users, as well as in-code comments for anyone seeking deeper understanding.
 
 \section{Team members and their roles}
 
@@ -1127,7 +1184,7 @@ The two team members worked on parts of the project based on their previous expe
 
 \paragraph{Igor Sikora}
 \begin{itemize}
-    \item C implementation of the Tsetlin Machine execution engine
+    \item C implementation of the TM execution engine
     \item research into possible optimizations and their implementation
     \item correctness tests
     \item code and user documentation
@@ -1139,11 +1196,11 @@ The two team members worked on parts of the project based on their previous expe
     \item integration with \GreenTsetlinName
     \item benchmarks, efficiency tests
     \item Jupyter Notebook examples
-    \item Continuous Integration with CMake
+    \item build system with CMake
     \item integration with FlatBuffers for model serialization and deserialization
 \end{itemize}
 
-Of course many aspects of the project had to be realized together, such as solving architectural issues and making sure the Tsetlin Machine execution engine implementation is correct with the theoretical work~\cite{granmo2021tsetlinmachinegame}.
+Of course many aspects of the project had to be realized together, such as solving architectural issues and making sure the TM execution engine implementation is correct with the theoretical work~\cite{granmo2021tsetlinmachinegame}.
 
 \section{Used tools}
 
@@ -1165,7 +1222,7 @@ Overleaf was the tool used for writing and editing the \LaTeX{} report. Using a 
 
 % \paragraph{Cmake} - like make but worse :p
 
-% \paragraph{arXiv} - searching for and viewing scientific papers on the Tsetlin Machines
+% \paragraph{arXiv} - searching for and viewing scientific papers on the TMs
 
 
 % \section{Used methodologies}
@@ -1174,73 +1231,116 @@ Overleaf was the tool used for writing and editing the \LaTeX{} report. Using a 
 \chapter{\ChapterTitleDocumentation}
 \label{sec:documentation-usage}
 
-The \LibraryName library is a low-level C implementation of the Tsetlin Machine. It is optimized for speed and size, making it suitable for environments with limited resources. It comes with a model serialization format designed to minimize model size and a way to convert existing \GreenTsetlinName models to this format. It is also possible to use \LibraryName conveniently from Python with the same syntax as many popular Machine Learning libraries thanks to its python bindings.
+The \LibraryName library is a low-level C implementation of the TM. It is optimized for speed and size, making it suitable for environments with limited resources. It comes with a model serialization format designed to minimize model size and a way to convert existing \GreenTsetlinName models to this format. It is also possible to use \LibraryName conveniently from Python with the same syntax as many popular Machine Learning libraries thanks to its python bindings.
 
-\section{Quick start - C}
+% \section{Quick start - C}
 
-Listing ~\ref{lst:example-c} shows the basic usage of \LibraryName in C for both training and inference.
-\begin{lstlisting}[language=C,caption={[Example C usage for both training and inference]Example C usage for both training and inference},label=lst:example-c]
-#include <stdint.h>
-#include <stdlib.h>
-#include "tsetlin_machine.h"
-// ...
+% Listing ~\ref{lst:example-c} shows the basic usage of \LibraryName in C for both training and inference.
+% \begin{lstlisting}[language=C,caption={[Example C usage for both training and inference]Example C usage for both training and inference},label=lst:example-c]
+% #include <stdint.h>
+% #include <stdlib.h>
+% #include "tsetlin_machine.h"
+% // ...
 
-srand(42);
+% srand(42);
 
-// Set TsetlinMachine parameters
-uint32_t num_classes = 10;
-uint32_t threshold = 1200;
-uint32_t num_literals = 784;
-uint32_t num_clauses = 1000;
-int8_t max_state = 127;
-int8_t min_state = -127;
-uint8_t boost_true_positive_feedback = 1;
-uint32_t y_size = 1;
-uint32_t y_element_size = sizeof(int32_t);
-float s = 20.0f;
-uint32_t seed = 42;
+% // Set TsetlinMachine parameters
+% uint32_t num_classes = 10;
+% uint32_t threshold = 1200;
+% uint32_t num_literals = 784;
+% uint32_t num_clauses = 1000;
+% int8_t max_state = 127;
+% int8_t min_state = -127;
+% uint8_t boost_true_positive_feedback = 1;
+% uint32_t y_size = 1;
+% uint32_t y_element_size = sizeof(int32_t);
+% float s = 20.0f;
+% uint32_t seed = 42;
 
-struct TsetlinMachine *tm = tm_create(num_classes, threshold, num_literals, num_clauses,
-    max_state, min_state, boost_true_positive_feedback, y_size, y_element_size, s, seed);
-if (tm == NULL) {
-    perror("tm_load failed");
-    return 1;
-}
+% struct TsetlinMachine *tm = tm_create(num_classes, threshold, num_literals, num_clauses,
+%     max_state, min_state, boost_true_positive_feedback, y_size, y_element_size, s, seed);
+% if (tm == NULL) {
+%     perror("tm_load failed");
+%     return 1;
+% }
 
-// Load in data
-uint32_t rows = 70000;
-uint32_t cols = 784;
-uint8_t *x_data = malloc(rows * cols * sizeof(uint8_t));
-int32_t *y_data = malloc(rows * sizeof(int32_t));
-if (x_data == NULL || y_data == NULL) {
-    fprintf(stderr, "Failed to allocate memory for x_data or y_data\n");
-    return 1;
-}
-printf("Loading MNIST data\n");
-load_mnist_data(x_data, y_data);  // helper function to load data
+% // Load in data
+% uint32_t rows = 70000;
+% uint32_t cols = 784;
+% uint8_t *x_data = malloc(rows * cols * sizeof(uint8_t));
+% int32_t *y_data = malloc(rows * sizeof(int32_t));
+% if (x_data == NULL || y_data == NULL) {
+%     fprintf(stderr, "Failed to allocate memory for x_data or y_data\n");
+%     return 1;
+% }
+% printf("Loading MNIST data\n");
+% load_mnist_data(x_data, y_data);  // helper function to load data
 
-uint8_t *x_train = x_data;
-int32_t *y_train = y_data;
-uint8_t *x_test = x_data + 60000 * cols;
-int32_t *y_test = y_data + 60000;
+% uint8_t *x_train = x_data;
+% int32_t *y_train = y_data;
+% uint8_t *x_test = x_data + 60000 * cols;
+% int32_t *y_test = y_data + 60000;
 
-// Train model on 1000 train rows for 1 epoch
-tm_train(tm, x_train, y_train, 1000, 1);
+% // Train model on 1000 train rows for 1 epoch
+% tm_train(tm, x_train, y_train, 1000, 1);
 
-// Evaluate models on 1000 test rows
-tm_evaluate(tm, x_test, y_test, 1000);
+% // Evaluate models on 1000 test rows
+% tm_evaluate(tm, x_test, y_test, 1000);
 
-// Clean up
-tm_free(tm);
-free(x_data);
-free(y_data);
+% // Clean up
+% tm_free(tm);
+% free(x_data);
+% free(y_data);
 
-\end{lstlisting}
+% \end{lstlisting}
 
-\section{Quick start - Python}
+% \section{Quick start - Python}
 
-Listing ~\ref{lst:example-py} shows the basic usage of \LibraryName in Python for both training and inference.
-\begin{lstlisting}[language=Python,caption={[Example Python usage for both training and inference]Example Python usage for both training and inference},label=lst:example-py]
+% Listing ~\ref{lst:example-py} shows the basic usage of \LibraryName in Python for both training and inference.
+% \begin{lstlisting}[language=Python,caption={[Example Python usage for both training and inference]Example Python usage for both training and inference},label=lst:example-py]
+% import numpy as np
+% import pandas as pd
+% from sklearn.model_selection import train_test_split
+% from sklearn.datasets import load_digits
+% from sklearn.preprocessing import OneHotEncoder
+% from sklearn.metrics import accuracy_score
+% from tsetlin_machine_py.c_tsetlin_clf import CTsetlinClassifier
+
+% # Generate the dataset with specified parameters
+% digits = load_digits()
+% X_data, y_data = digits.data, digits.target
+
+% # Convert the dataset to binary classification
+% X_data = OneHotEncoder(sparse_output=False).fit_transform(X_data)
+
+% # Split the dataset into training and testing sets
+% X_train_np, X_test_np, y_train, y_test = train_test_split(
+%     X_data, y_data, test_size=0.2, stratify=y_data, random_state=42
+% )
+
+% # Convert NumPy arrays to Pandas DataFrames
+% feature_names = [f"feature_{i}" for i in range(X_data.shape[1])]
+% X_train = pd.DataFrame(X_train_np, columns=feature_names)
+% X_test = pd.DataFrame(X_test_np, columns=feature_names)
+
+% # Fit the model
+% c_tsetlin_clf = CTsetlinClassifier(random_state=42)
+% c_tsetlin_clf.fit(X_train, y_train)
+
+% # Predict on the test set
+% y_test_pred = model.predict(X_test)
+
+% # Calculate Accuracy
+% test_accuracy = accuracy_score(y_test, y_test_pred)
+% print(test_accuracy)
+
+% \end{lstlisting}
+
+\section{Case study}
+For a quick start with \LibraryName, a usage example is provided -- where initial training is conducted in Python, then model is transferred over to edge device where it can be used for inference and incremental training.
+
+Listing ~\ref{lst:example-py-data} shows data preparation steps.
+\begin{lstlisting}[language=Python,caption={[Example Python data preparation steps]Example Python data preparation steps},label=lst:example-py-data]
 import numpy as np
 import pandas as pd
 from sklearn.model_selection import train_test_split
@@ -1265,19 +1365,110 @@ X_train_np, X_test_np, y_train, y_test = train_test_split(
 feature_names = [f"feature_{i}" for i in range(X_data.shape[1])]
 X_train = pd.DataFrame(X_train_np, columns=feature_names)
 X_test = pd.DataFrame(X_test_np, columns=feature_names)
+\end{lstlisting}
 
+Listing ~\ref{lst:example-py-fit} shows the fitting of the model. The model is initialized with default parameters.
+\begin{lstlisting}[language=Python,caption={[Example Python model fitting]Example Python model fitting},label=lst:example-py-fit]
 # Fit the model
-c_tsetlin_clf = CTsetlinClassifier(random_state=42)
-c_tsetlin_clf.fit(X_train, y_train)
+model = CTsetlinClassifier(random_state=42)
+model.fit(X_train, y_train)
+\end{lstlisting}
 
+Listing ~\ref{lst:example-py-eval} shows the evaluation of the model, as an optional step.
+\begin{lstlisting}[language=Python,caption={[Example Python model evaluation]Example Python model evaluation},label=lst:example-py-eval]
 # Predict on the test set
 y_test_pred = model.predict(X_test)
 
 # Calculate Accuracy
 test_accuracy = accuracy_score(y_test, y_test_pred)
 print(test_accuracy)
-
 \end{lstlisting}
+
+Listing ~\ref{lst:example-py-save} shows the export of the model to FlatBuffers format.
+\begin{lstlisting}[language=Python,caption={[Example Python model export to FlatBuffers format]Example Python model export to FlatBuffers format},label=lst:example-py-save]
+# Save the model to FlatBuffers format
+model.save_model("path/to/file")
+\end{lstlisting}
+
+Listing ~\ref{lst:example-c-load} shows the import of the model in C.
+\begin{lstlisting}[language=C,caption={[Example C model import]Example C model import},label=lst:example-c-load]
+#include <stdint.h>
+#include <stdlib.h>
+#include "tsetlin_machine.h"
+
+uint32_t y_size = 1;
+uint32_t y_element_size = sizeof(int32_t);
+
+// Load in model
+struct TsetlinMachine *tm = tm_load_fbs("path/to/file", y_size, y_element_size);
+\end{lstlisting}
+
+Listing ~\ref{lst:example-c-data} outlines the general steps to load data in C.
+\begin{lstlisting}[language=C,caption={[Example C data loading]Example C data loading},label=lst:example-c-data]
+// Load in data
+uint32_t rows = 70000;
+uint32_t cols = 784;
+uint8_t *x_data = malloc(rows * cols * sizeof(uint8_t));
+int32_t *y_data = malloc(rows * sizeof(int32_t));
+if (x_data == NULL || y_data == NULL) {
+    fprintf(stderr, "Failed to allocate memory for x_data or y_data\n");
+    return 1;
+}
+printf("Loading MNIST data\n");
+load_mnist_data(x_data, y_data);  // helper function to load data
+
+uint8_t *x_train = x_data;
+int32_t *y_train = y_data;
+uint8_t *x_test = x_data + 60000 * cols;
+int32_t *y_test = y_data + 60000;
+\end{lstlisting}
+
+Listing ~\ref{lst:example-c-fit} shows the fitting of the model in C. The same method can be used to incrementally train the model, for example on each new datapoint.
+\begin{lstlisting}[language=C,caption={[Example C model fitting]Example C model fitting},label=lst:example-c-fit]
+// Train model on 1000 train rows for 1 epoch
+tm_train(tm, x_train, y_train, 1000, 1);
+\end{lstlisting}
+
+Listing ~\ref{lst:example-c-eval} shows the evaluation of the model in C, as an optional step.
+\begin{lstlisting}[language=C,caption={[Example C model evaluation]Example C model evaluation},label=lst:example-c-eval]
+// Evaluate model on 1000 test rows
+tm_evaluate(tm, x_test, y_test, 1000);
+\end{lstlisting}
+
+In C used structures have to be manually deallocated. Listing ~\ref{lst:example-c-free} shows this step.
+\begin{lstlisting}[language=C,caption={[Example C deallocation]Example C deallocation},label=lst:example-c-free]
+// Clean up
+tm_free(tm);
+free(x_data);
+free(y_data);
+\end{lstlisting}
+
+
+Alternatively, a model instance can be created directly from C, instead of loading an existing model. Listing ~\ref{lst:example-c-init} shows such an example.
+\begin{lstlisting}[language=C,caption={[Example C model initialization]Example C model initialization},label=lst:example-c-init]
+srand(42);
+// Set TsetlinMachine parameters
+uint32_t num_classes = 10;
+uint32_t threshold = 1200;
+uint32_t num_literals = 784;
+uint32_t num_clauses = 1000;
+int8_t max_state = 127;
+int8_t min_state = -127;
+uint8_t boost_true_positive_feedback = 1;
+uint32_t y_size = 1;
+uint32_t y_element_size = sizeof(int32_t);
+float s = 20.0f;
+uint32_t seed = 42;
+
+struct TsetlinMachine *tm = tm_create(num_classes, threshold, num_literals, num_clauses,
+    max_state, min_state, boost_true_positive_feedback, y_size, y_element_size, s, seed);
+if (tm == NULL) {
+    perror("tm_load failed");
+    return 1;
+}
+\end{lstlisting}
+
+
 
 \section{API}
 The three main components of the \LibraryName library are the \emph{TsetlinMachine}, \emph{SparseTsetlinMachine}, and \emph{StatelessTsetlinMachine} classes.
@@ -1290,7 +1481,7 @@ The three main components of the \LibraryName library are the \emph{TsetlinMachi
 \end{itemize}
 
 \subsection{TsetlinMachine}
-The basic Tsetlin Machine variant
+The basic TM variant
 
 % \subsubsection{Public API (quick reference)}
 
@@ -1299,7 +1490,7 @@ The basic Tsetlin Machine variant
 % \hline
 
 % \texttt{tm\_create(uint32\_t num\_classes, uint32\_t threshold, uint32\_t num\_literals, uint32\_t num\_clauses, int8\_t max\_state, int8\_t min\_state, uint8\_t boost\_true\_positive\_feedback, uint32\_t y\_size, uint32\_t y\_element\_size, float s, uint32\_t seed)} 
-% \newline \textit{Create and initialize a Tsetlin Machine instance.} \\ \hline
+% \newline \textit{Create and initialize a TM instance.} \\ \hline
 
 % \texttt{tm\_load(const char *filename, uint32\_t y\_size, uint32\_t y\_element\_size)} 
 % \newline \textit{ Load a TsetlinMachine from a binary file produced by \texttt{tm\_save}.} \\ \hline
@@ -1325,14 +1516,14 @@ The basic Tsetlin Machine variant
 
 % \paragraph{\texttt{tm\_create()}}
 \begin{description}
-%     \item[Description:]  Create and initialize a Tsetlin Machine instance. \\
+%     \item[Description:]  Create and initialize a TM instance. \\
 % Allocates internal arrays and seeds the PRNG. Needs to be deallocated with \texttt{tm\_free}
     \item[Parameters:]\ %no clue why this works but don't remove this \
     \begin{tabularx}{\textwidth}{XX}
         \texttt{ num\_classes } &	Number of classes to predict. \\
         \texttt{ threshold } &	Threshold for clause votes. \\
         \texttt{ num\_literals } &	Number of literals (features) in the input data.\\
-        \texttt{ num\_clauses } &	Number of clauses in the Tsetlin Machine.\\
+        \texttt{ num\_clauses } &	Number of clauses in the TM.\\
         \texttt{ max\_state } &	Maximum automaton state value.\\
         \texttt{ min\_state } &	Minimum automaton state value.\\
         \texttt{ boost\_true\_positive\_feedback } &	Whether to boost true positive feedback (0/1).\\
@@ -1387,7 +1578,7 @@ Custom formats can also be freely implemented. All that is required is to write 
 
 
 \subsection{SparseTsetlinMachine}
-A Tsetlin Machine variant utilizing sparse memory layout. Its usage is very much symmetrical to the vanilla \texttt{TsetlinMachine}.
+A TM variant utilizing sparse memory layout. Its usage is very much symmetrical to the vanilla \texttt{TsetlinMachine}.
 
 % \begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X}
 % \textbf{Method} \newline \textit{Description} \\
@@ -1426,14 +1617,14 @@ A Tsetlin Machine variant utilizing sparse memory layout. Its usage is very much
 
 % \paragraph{\texttt{stm\_create()}}
 % \begin{description}
-% %     \item[Description:]  Create and initialize a Sparse Tsetlin Machine instance. \\
+% %     \item[Description:]  Create and initialize a Sparse TM instance. \\
 % % Allocates internal arrays and seeds the PRNG. Needs to be deallocated with \texttt{stm\_free}.
 %     \item[Parameters:]\ %no clue why this works but don't remove this \
 %     \begin{tabularx}{\textwidth}{XX}
 %         \texttt{ num\_classes } &	Number of classes to predict. \\
 %         \texttt{ threshold } &	Threshold for clause votes. \\
 %         \texttt{ num\_literals } &	Number of literals (features) in the input data.\\
-%         \texttt{ num\_clauses } &	Number of clauses in the Tsetlin Machine.\\
+%         \texttt{ num\_clauses } &	Number of clauses in the TM.\\
 %         \texttt{ max\_state } &	Maximum automaton state value.\\
 %         \texttt{ min\_state } &	Minimum automaton state value.\\
 %         \texttt{ boost\_true\_positive\_feedback } &	Whether to boost true positive feedback (0/1).\\
@@ -1490,7 +1681,7 @@ Similarly, custom formats can also be freely implemented. All that is required i
 
 
 \subsection{StatelessTsetlinMachine}
-An inference-only Tsetlin Machine variant utilizing sparse memory layout optimized for small size and inference speed
+An inference-only TM variant utilizing sparse memory layout optimized for small size and inference speed
 
 % \begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X}
 % \textbf{Method} \newline \textit{Description} \\
@@ -1525,14 +1716,14 @@ An inference-only Tsetlin Machine variant utilizing sparse memory layout optimiz
 
 % \paragraph{\texttt{stm\_create()}}
 % \begin{description}
-% %     \item[Description:]  Create and initialize a Stateless Tsetlin Machine instance. \\
+% %     \item[Description:]  Create and initialize a Stateless TM instance. \\
 % % Allocates internal arrays. Needs to be deallocated with \texttt{sltm\_free}.
 %     \item[Parameters:]\ %no clue why this works but don't remove this \
 %     \begin{tabularx}{\textwidth}{XX}
 %         \texttt{ num\_classes } &	Number of classes to predict. \\
 %         \texttt{ threshold } &	Threshold for clause votes. \\
 %         \texttt{ num\_literals } &	Number of literals (features) in the input data.\\
-%         \texttt{ num\_clauses } &	Number of clauses in the Tsetlin Machine.\\
+%         \texttt{ num\_clauses } &	Number of clauses in the TM.\\
 %         \texttt{ max\_state } &	Maximum automaton state value.\\
 %         \texttt{ min\_state } &	Minimum automaton state value.\\
 %         \texttt{ boost\_true\_positive\_feedback } &	Whether to boost true positive feedback (0/1).\\
@@ -1571,10 +1762,11 @@ Similarly, custom formats can also be freely implemented. All that is required i
 
 
 \section{Build}
-\begin{verbatim}
-    cmake -B build
-    cmake --build build
-\end{verbatim}
+The build is automated with CMake.
+\begin{lstlisting}[style=cli]
+cmake -B build
+cmake --build build
+\end{lstlisting}
 
 \subsection{Build requirements}
 \begin{itemize}
@@ -1585,58 +1777,408 @@ Similarly, custom formats can also be freely implemented. All that is required i
 
 \subsection{Build Options}
 \begin{itemize}
-    \item -DBUILD\_FLATCC=ON/OFF : Build FlatCC from third\_party
-    \item -DBUILD\_PYTHON=ON/OFF : Enable building Python bindings
-    \item -DBUILD\_EXAMPLES=ON/OFF : Enable building examples
-    \item -DBUILD\_TESTING=ON/OFF : Enable building third\_party tests
+    \item \texttt{-DBUILD\_FLATCC=ON/OFF} : Build FlatCC from third\_party
+    \item \texttt{-DBUILD\_PYTHON=ON/OFF} : Enable building Python bindings
+    \item \texttt{-DBUILD\_EXAMPLES=ON/OFF} : Enable building examples
+    \item \texttt{-DBUILD\_TESTING=ON/OFF} : Enable building third\_party tests
 \end{itemize}
 
 
 \section{Installation}
-\begin{verbatim}
-    cmake -B build -DCMAKE_INSTALL_PREFIX=install -DBUILD_SHARED_LIBS=ON
-    cmake --build build
-    cmake --install build --component tsetlin_machine_c
-\end{verbatim}
+To build the library into a shared object the following commands can be run.
+\begin{lstlisting}[style=cli]
+cmake -B build -DCMAKE_INSTALL_PREFIX=install -DBUILD_SHARED_LIBS=ON
+cmake --build build
+cmake --install build --component tsetlin_machine_c
+\end{lstlisting}
 
 \subsection{Install with Python}
-\begin{verbatim}
-    uv sync
-\end{verbatim}
+\begin{lstlisting}[style=cli]
+uv sync
+\end{lstlisting}
 
 \section{Testing and examples}
-To run accuracy tests the following commands can be ran
-\begin{verbatim}
-    rm -rf build
-    cmake -B build
-    cmake --build build
-    ./build/tests/test_runner
-\end{verbatim}
+To run accuracy tests, the following commands can be run.
+\begin{lstlisting}[style=cli]
+cmake -B build
+cmake --build build
+./build/tests/test_runner
+\end{lstlisting}
 
-TODO how to run examples
-
-
-\section{Linking to a project}
-To build the library into a shared object the following commands can be ran
-\begin{verbatim}
-    rm -rf build install
-    cmake -B build -DCMAKE_INSTALL_PREFIX=install -DBUILD_SHARED_LIBS=ON
-    cmake --build build
-    cmake --install build --component tsetlin_machine_c
-\end{verbatim}
+Examples can be run as so:  
+\begin{lstlisting}[style=cli]
+uv sync
+uv run python examples/mnist/python/get_data.py
+./build/examples/mnist/mnist_training
+uv sync --extra green-tsetlin
+uv run python examples/mnist/python/get_pretrained.py
+./build/examples/mnist/mnist_pretrained_inference
+./build/examples/mnist/mnist_model_size
+\end{lstlisting}
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\chapter{\ChapterTitleEvaluation}
 % > Move this chapter to "Project results" and remove it.
 % nope, see meeting minutes. 4+ pages should be its own chapter
+\chapter{Evaluation}
 \label{sec:evaluation}
-Experiment results / evaluation
+% - versions: `scikit-learn 1.6.1`, `6.6.87.2-microsoft-standard-WSL2`, `Python 3.13.9`, `Windows 11 25H2`, `x86_64 AMD Ryzen 9 7900X`, `Raspberry Pi Pico SDK V2.2.0`
+% - need to compare our implementation with the third-party libraries i.e. \GreenTsetlinName and popular ML models from Scikit-learn~\cite{scikit-learn}
+% - we choose datasets according to the other research papers (e.g. Noisy-XOR from~\cite{granmo2021tsetlinmachinegame})
+% - we used Python Scikit-learn library in Jupyter Notebooks thanks to implemented Python Bindings
+% - we performed basic benchmarks measuring "Training Accuracy", "Test Accuracy", "Training Time (s)", "Prediction Train Time (s)", "Prediction Test Time (s)", "Model Size (bytes)" (this one is roughly estimated based on data-structure size for TM based models and exported model size using python pickle for others, so it should be compared with caution). 
+% - important observation is that \GreenTsetlinName library tries to make some undocumented operations/optimizations on model parameters making it impossible to be sure what is the exact structure of underlying TM
+% - we tested how parameters can impact results of our TM implementation
+% - we run simple benchmark without external libraries on example embedded hardware Raspberry Pi Pico~\cite{pico-sdk}
+This chapter evaluates the performance of our TM implementation. We focus on standard datasets used in original research~\cite{granmo2021tsetlinmachinegame} (e.g., the Noisy-XOR problem) to make our results comparable with other studies. Additionally, as a baseline, we roughly compared the results with other existing machine learning tools.
+
+\paragraph{Environment}
+We used two different environments, to cover two different use cases:
+\begin{compactitem}
+    \item Host (PC): Windows 11 25H2 (WSL2 6.6.87.2) on x86\_64 AMD Ryzen 9 7900X running Python 3.13.9 and Scikit-learn 1.6.1~\cite{scikit-learn}
+    \item Embedded: Raspberry Pi Pico with Pi Pico SDK V2.2.0~\cite{pico-sdk}
+\end{compactitem}
+
+\paragraph{Metrics}
+The host uses our Python bindings to run benchmarks from Jupyter Notebooks. This approach allowed us to easily compare our implementation directly against standard Scikit-learn models and, with some work, the \GreenTsetlinName library. We tracked these metrics to get an estimated performance: \textbf{Accuracy on Training Dataset}, \textbf{Accuracy on Testing Dataset}, \textbf{Training Time}, \textbf{Prediction Time on Training Dataset}, \textbf{Prediction Time on Testing Dataset}, \textbf{Estimated Model Size} (estimation is based on the internal data structure for TM models and Python ''pickle`` exports for other models, so they should be compared with caution).
+
+\paragraph{Embedded Hardware}
+In order to better test the behavior of our implementation, we tested how specific hyperparameters impact our results and how it changes based on epochs and batch number. As the final test, we run a minimal example of Noisy-XOR on Raspberry Pi Pico using the core C library, proving it can handle machine learning tasks on very limited embedded hardware.
+
 \section{Noisy-XOR dataset}
+% - most common dataset used in the original paper~\cite{granmo2021tsetlinmachinegame}
+% - DATASET: describe the problem and the data format
+% - INPUT: explain preprocessing and the input format to the models
+% - HYPERPARAMS: explain what parameters were used for each model
+% - RESULTS: describe and compare results including the limitations of benchmarking this way
+In the evaluation of our implementation, we first used the Noisy-XOR problem, which is common benchmark for Tsetlin Machines introduced in~\cite{granmo2021tsetlinmachinegame}. This problem is often challenging for many ML learning models because XOR relation is non-linearly separable and becomes difficulty when noise is added.
+
+\paragraph{Dataset and Problem Representation}
+The dataset consists of randomly generated $1000$ samples and $16$ features. The true target label was determined by the XOR sum of only the first two features (e.g. $x: [0,1,0,\dots,0], y: 1$), while the remaining features were random noise. To simulate real-world conditions, the $10\%$ noise level was introduced, where the target bit was flipped. 
+
+\paragraph{Preprocessing and Input Format}
+The final dataset was divided into training ($80\%$) and testing dataset ($20\%$) with proportions of approximately $53\%$ for $\text{Class } 0$ and $47\%$ for $\text{Class } 1$. Since Tsetlin Machines operate using Boolean algebra and the generated data was already binary, no additional preprocessing was necessary and raw bits were passed to the models directly. 
+
+\paragraph{Model Hyperparameters}
+For our C Tsetlin Classifier as a baseline, we found sensible default parameters that emerged during the development process, and we tried to keep the base models with the defaults and only tune some of them performing GridSearchCV. The parameters used are shown in Table~\ref{tab:noisy-xor-params} and we can observe that for this problem having only 16 binary features GridSearchCV found that using 64 clauses is enough.
+
+\begin{table}[!htbp]
+\centering
+\caption[Noisy-XOR Hyperparameters]{Hyperparameters and GridSearchCV search spaces for the Noisy-XOR dataset. The table lists only parameters that differ from model defaults; for GridSearchCV the best-performing configuration is indicated in \textbf{bold}.}
+\begin{tabularx}{\columnwidth}{@{}l X@{}} \toprule
+    \textbf{Model} & \textbf{Modified Parameters} \\ \midrule \midrule
+    \texttt{Logistic Regression} & \texttt{max\_iter=1000} \\ \midrule
+    \texttt{Decision Tree} & \texttt{---} \\ \midrule
+    \texttt{Random Forest} & \texttt{---} \\ \midrule
+    \texttt{MLP Classifier} & \texttt{max\_iter=1000, solver="lbfgs"} \\ \midrule
+    \texttt{SVC} & \texttt{---} \\ \midrule
+    \texttt{Linear SVC} & \texttt{dual="auto"} \\ \midrule
+    \texttt{K-Nearest Neighbors} & \texttt{---} \\ \midrule
+    \texttt{Gaussian Naive Bayes} & \texttt{---} \\ \midrule
+    \texttt{Gradient Boosting} & \texttt{---} \\ \midrule
+    \texttt{LightGBM} & \texttt{---} \\ \midrule
+    \texttt{GridSearch Random Forest} & \texttt{n\_estimators: [\textbf{50}, 100, 200], max\_depth: [\textbf{None}, 10, 20, 30], min\_samples\_split: [2, 5, \textbf{10}]} \\ \midrule
+    \texttt{GridSearch MLP Classifier} & \texttt{hidden\_layer\_sizes: [(50,), \textbf{(100,)}, (50, 50)], activation: [\textbf{"relu"}, "tanh"], alpha: [0.0001, 0.001, \textbf{0.01}]} \\ \midrule \midrule
+    \texttt{Green Tsetlin Classifier} & \texttt{---} \\ \midrule
+    \texttt{C Tsetlin Classifier} & \texttt{---} \\ \midrule
+    \texttt{GridSearch C Tsetlin} & \texttt{boost\_true\_positive\_feedback: [\textbf{False}, True], num\_clauses: [\textbf{64}, 125, 500]} \\ \bottomrule
+\end{tabularx}
+\label{tab:noisy-xor-params}
+\end{table}
+
+\paragraph{Results and Comparison}
+% -  difficulty comparing performance of C and various Scikit-learn implementations (especially model size)
+% TODO: green_tsetlin library uses several undocumented optimizations and parameter changes.
+The results shown in Table~\ref{tab:noisy-xor-results} show that our \texttt{C Tsetlin Classifier} is competitive, matching accuracy of established machine learning models. It is close to the \texttt{Green Tsetlin Classifier}. Important observation is that due to added noise, we except the model to cap at $0.9$ accuracy on training dataset, unless it over-fits (which is present in some models e.g. \texttt{Random Forest} and \texttt{MLP Classifier}). On the testing dataset it scores the best results tying with \texttt{SVC} and \texttt{Green Tsetlin Classifier}. Other observation shows that version found via GridSearch is much smaller and faster performing that using the default parameters, highlighting the need to tune parameters where possible. It is important to not rely to much on performance and memory results when comparing them to different models due to the implementation overhead and model size estimation. Other important observation that came out during this is that \GreenTsetlinName library used several undocumented optimizations not treating parameters exactly when building Tsetlin Machine under the hood.
+
+\begin{table}[!htbp]
+\centering
+\caption[Noisy-XOR Benchmark Results]{Benchmark results for the Noisy-XOR dataset. Model sizes are estimated based on internal data structures for Tsetlin-based models and via \texttt{pickle} exports for standard models, requiring caution when comparing directly.}
+\begin{tabularx}{\textwidth}{@{}l c c c c c r@{}} \toprule
+    \textbf{\makecell[l]{Model}} & \textbf{\makecell[l]{Train\\Acc.}} & \textbf{\makecell[l]{Test\\Acc.}} & \textbf{\makecell[l]{Train\\Time (s)}} & \textbf{\makecell[l]{Train Pred.\\Time (s)}} & \textbf{\makecell[l]{Test Pred.\\Time (s)}} & \textbf{\makecell[l]{Model\\Size (B)}} \\ \midrule \midrule
+    \texttt{\makecell[l]{Logistic\\Regression}} & \texttt{0.5487} & \texttt{0.4750} & \texttt{0.0025} & \texttt{0.0004} & \texttt{0.0003} & \texttt{1,122} \\ \midrule
+    \texttt{\makecell[l]{Decision\\Tree}} & \texttt{0.9962} & \texttt{0.7350} & \texttt{0.0017} & \texttt{0.0004} & \texttt{0.0003} & \texttt{33,536} \\ \midrule
+    \texttt{\makecell[l]{Random\\Forest}} & \texttt{0.9962} & \texttt{0.8700} & \texttt{0.0757} & \texttt{0.0065} & \texttt{0.0035} & \texttt{4,127,036} \\ \midrule
+    \texttt{\makecell[l]{MLP Classifier}} & \texttt{0.9962} & \texttt{0.8150} & \texttt{0.1054} & \texttt{0.0008} & \texttt{0.0010} & \texttt{35,897} \\ \midrule
+    \texttt{\makecell[l]{SVC}} & \texttt{0.8950} & \texttt{0.9300} & \texttt{0.0148} & \texttt{0.0145} & \texttt{0.0042} & \texttt{104,823} \\ \midrule
+    \texttt{\makecell[l]{Linear SVC}} & \texttt{0.5450} & \texttt{0.4750} & \texttt{0.0015} & \texttt{0.0004} & \texttt{0.0004} & \texttt{1,006} \\ \midrule
+    \texttt{\makecell[l]{K-Nearest\\Neighbors}} & \texttt{0.8250} & \texttt{0.7650} & \texttt{0.0005} & \texttt{0.0259} & \texttt{0.0049} & \texttt{20,179} \\ \midrule
+    \texttt{\makecell[l]{Gaussian\\Naive Bayes}} & \texttt{0.5513} & \texttt{0.4700} & \texttt{0.0008} & \texttt{0.0004} & \texttt{0.0003} & \texttt{1,373} \\ \midrule
+    \texttt{\makecell[l]{Gradient\\Boosting}} & \texttt{0.8962} & \texttt{0.9150} & \texttt{0.0743} & \texttt{0.0015} & \texttt{0.0009} & \texttt{139,263} \\ \midrule
+    \texttt{\makecell[l]{LightGBM}} & \texttt{0.9850} & \texttt{0.8950} & \texttt{0.0456} & \texttt{0.0014} & \texttt{0.0007} & \texttt{350,233} \\ \midrule
+    \texttt{\makecell[l]{GridSearch\\Random Forest}} & \texttt{0.9200} & \texttt{0.9150} & \texttt{2.5263} & \texttt{0.0026} & \texttt{0.0014} & \texttt{622,791} \\ \midrule
+    \texttt{\makecell[l]{GridSearch\\MLP Classifier}} & \texttt{0.9962} & \texttt{0.8500} & \texttt{2.1048} & \texttt{0.0007} & \texttt{0.0003} & \texttt{39,978} \\ \midrule \midrule
+    \texttt{\makecell[l]{Green\\Tsetlin\\Classifier}} & \texttt{0.8938} & \texttt{0.9300} & \texttt{0.2596} & \texttt{0.0056} & \texttt{0.0012} & \texttt{38,008} \\ \midrule
+    \texttt{\makecell[l]{C Tsetlin\\Classifier}} & \texttt{0.8900} & \texttt{0.9300} & \texttt{0.3217} & \texttt{0.0144} & \texttt{0.0040} & \texttt{43,008} \\ \midrule
+    \texttt{\makecell[l]{GridSearch\\C Tsetlin\\Classifier}} & \texttt{0.8925} & \texttt{0.9300} & \texttt{0.2765} & \texttt{0.0019} & \texttt{0.0007} & \texttt{2,760} \\ \bottomrule
+\end{tabularx}
+\label{tab:noisy-xor-results}
+\end{table}
+
+
 \section{Digits dataset}
+% - digit recognition is a common test task in ML
+
+\paragraph{Dataset and Problem Representation}
+% - This dataset is made up of 1797 8x8 images. Each image, like the one shown below, is of a hand-written digit. In order to utilize an 8x8 figure like this, we’d have to first transform it into a feature vector with length 64.
+% - Figure~\ref{fig:digits-vis}
+
+\begin{figure}[!htbp]
+    \centering
+    \includegraphics[width=.9\textwidth]{images/digits-vis.png}
+    \caption[TODO]{TODO} % TODO: Write caption
+    \label{fig:digits-vis}
+\end{figure}
+
+\paragraph{Preprocessing and Input Format}
+% - y: [0 1 2 3 4 5 6 7 8 9]
+% - X: (1797, 64), [ 0.  1.  ... 16.] -(OneHotEncoder)-> X: (1797, 890), [0. 1.]
+% - 80/20 % split
+
+\paragraph{Model Hyperparameters}
+% - similar to Noisy-XOR subchapter
+% - Table~\ref{tab:digits-params}
+
+\begin{table}[!htbp]
+\centering
+\caption[Digits Hyperparameters]{Hyperparameters and GridSearchCV search spaces for the Digits dataset. The table lists only parameters that differ from model defaults; for GridSearchCV the best-performing configuration is indicated in \textbf{bold}.}
+\begin{tabularx}{\columnwidth}{@{}l X@{}} \toprule
+    \textbf{Model} & \textbf{Modified Parameters} \\ \midrule \midrule
+    \texttt{Logistic Regression} & \texttt{max\_iter=1000} \\ \midrule
+    \texttt{Decision Tree} & \texttt{---} \\ \midrule
+    \texttt{Random Forest} & \texttt{---} \\ \midrule
+    \texttt{MLP Classifier} & \texttt{max\_iter=1000, solver="lbfgs"} \\ \midrule
+    \texttt{SVC} & \texttt{---} \\ \midrule
+    \texttt{Linear SVC} & \texttt{dual="auto"} \\ \midrule
+    \texttt{K-Nearest Neighbors} & \texttt{---} \\ \midrule
+    \texttt{Gaussian Naive Bayes} & \texttt{---} \\ \midrule
+    \texttt{Gradient Boosting} & \texttt{---} \\ \midrule
+    \texttt{LightGBM} & \texttt{---} \\ \midrule
+    \texttt{GridSearch Random Forest} & \texttt{n\_estimators: [50, 100, \textbf{200}], max\_depth: [None, 10, 20, \textbf{30}], min\_samples\_split: [\textbf{2}, 5, 10]} \\ \midrule
+    \texttt{GridSearch MLP Classifier} & \texttt{hidden\_layer\_sizes: [(50,), \textbf{(100,)}, (50, 50)], activation: ["relu", \textbf{"tanh"}], alpha: [0.0001, 0.001, \textbf{0.01}]} \\ \midrule \midrule
+    \texttt{Green Tsetlin Classifier} & \texttt{---}\\ \midrule
+    \texttt{Green Tsetlin Sparse} & \texttt{---}\\ \midrule
+    \texttt{C Tsetlin Classifier} & \texttt{---} \\ \midrule
+    \texttt{GridSearch C Tsetlin} & \texttt{boost\_true\_positive\_feedback: [\textbf{False}, True], num\_clauses: [500, 1000, \textbf{1500}]} \\ \bottomrule
+\end{tabularx}
+\label{tab:digits-params}
+\end{table}
+
+\paragraph{Results and Comparison}
+% - describe results
+% Table~\ref{tab:digits-results}
+
+\begin{table}[!htbp]
+\centering
+\caption[Digits Dataset Benchmark Results]{Benchmark results for the Digits dataset. Model sizes are estimated based on internal data structures for Tsetlin-based models and via \texttt{pickle} exports for standard models, requiring caution when comparing directly.}
+\begin{tabularx}{\textwidth}{@{}l c c c c c r@{}} \toprule
+    \textbf{\makecell[l]{Model}} & \textbf{\makecell[l]{Train\\Acc.}} & \textbf{\makecell[l]{Test\\Acc.}} & \textbf{\makecell[l]{Train\\Time (s)}} & \textbf{\makecell[l]{Train Pred.\\Time (s)}} & \textbf{\makecell[l]{Test Pred.\\Time (s)}} & \textbf{\makecell[l]{Model\\Size (B)}} \\ \midrule \midrule
+    \texttt{\makecell[l]{Logistic\\Regression}} & \texttt{1.0000} & \texttt{0.9528} & \texttt{0.9314} & \texttt{0.0039} & \texttt{0.0036} & \texttt{84,514} \\ \midrule
+    \texttt{\makecell[l]{Decision\\Tree}} & \texttt{1.0000} & \texttt{0.7833} & \texttt{0.0451} & \texttt{0.0049} & \texttt{0.0021} & \texttt{59,928} \\ \midrule
+    \texttt{\makecell[l]{Random\\Forest}} & \texttt{1.0000} & \texttt{0.9444} & \texttt{0.1791} & \texttt{0.0140} & \texttt{0.0061} & \texttt{9,855,780} \\ \midrule
+    \texttt{\makecell[l]{MLP Classifier}} & \texttt{1.0000} & \texttt{0.9306} & \texttt{5.2221} & \texttt{0.0256} & \texttt{0.0229} & \texttt{1,461,199} \\ \midrule
+    \texttt{\makecell[l]{SVC}} & \texttt{0.9965} & \texttt{0.9583} & \texttt{0.2799} & \texttt{0.4019} & \texttt{0.1145} & \texttt{9,585,426} \\ \midrule
+    \texttt{\makecell[l]{Linear SVC}} & \texttt{1.0000} & \texttt{0.9472} & \texttt{0.0856} & \texttt{0.0059} & \texttt{0.0021} & \texttt{84,395} \\ \midrule
+    \texttt{\makecell[l]{K-Nearest\\Neighbors}} & \texttt{0.9088} & \texttt{0.8667} & \texttt{0.0026} & \texttt{0.0102} & \texttt{0.0727} & \texttt{10,256,123} \\ \midrule
+    \texttt{\makecell[l]{Gaussian\\Naive Bayes}} & \texttt{0.8278} & \texttt{0.9666} & \texttt{0.0066} & \texttt{0.0051} & \texttt{0.0224} & \texttt{155,647} \\ \midrule
+    \texttt{\makecell[l]{Gradient\\Boosting}} & \texttt{1.0000} & \texttt{0.9139} & \texttt{8.5160} & \texttt{0.0141} & \texttt{0.0047} & \texttt{1,359,941} \\ \midrule
+    \texttt{\makecell[l]{LightGBM}} & \texttt{1.0000} & \texttt{0.9472} & \texttt{0.5565} & \texttt{0.0026} & \texttt{0.0077} & \texttt{3,124,964} \\ \midrule
+    \texttt{\makecell[l]{GridSearch\\Random Forest}} & \texttt{1.0000} & \texttt{0.9444} & \texttt{4.6893} & \texttt{0.0104} & \texttt{0.0257} & \texttt{19,661,484} \\ \midrule
+    \texttt{\makecell[l]{GridSearch\\MLP Classifier}} & \texttt{1.0000} & \texttt{0.9361} & \texttt{7.3340} & \texttt{0.0389} & \texttt{0.0089} & \texttt{1,465,209} \\ \midrule \midrule
+    \texttt{\makecell[l]{Green\\Tsetlin\\Classifier}} & \texttt{0.9548} & \texttt{0.8972} & \texttt{1.7259} & \texttt{0.0041} & \texttt{0.0121} & \texttt{1,794,040} \\ \midrule
+    \texttt{\makecell[l]{C Tsetlin\\Classifier}} & \texttt{0.9882} & \texttt{0.9222} & \texttt{16.8023} & \texttt{0.7999} & \texttt{0.1967} & \texttt{1,831,040} \\ \midrule
+    \texttt{\makecell[l]{GridSearch\\C Tsetlin\\Classifier}} & \texttt{0.9139} & \texttt{0.9937} & \texttt{69.4101} & \texttt{0.2658} & \texttt{1.1082} & \texttt{2,746,540} \\ \bottomrule
+\end{tabularx}
+\label{tab:digits-results}
+\end{table}
+
 \section{Fashion MNIST dataset}
+% - like digits but more features
+
+\paragraph{Dataset and Problem Representation}
+% - Fashion-MNIST is a dataset of Zalando's article images—consisting of a training set of 60,000 examples and a test set of 10,000 examples. Each example is a 28x28 grayscale image, associated with a label from 10 classes. We intend Fashion-MNIST to serve as a direct drop-in replacement for the original MNIST dataset for benchmarking machine learning algorithms. It shares the same image size and structure of training and testing splits.
+
+\begin{figure}[!htbp]
+    \centering
+    \includegraphics[width=.9\textwidth]{images/fmnist-vis.png}
+    \caption[TODO]{TODO} % TODO: Write caption
+    \label{fig:fmnist-vis}
+\end{figure}
+
+\paragraph{Preprocessing and Input Format}
+% - Subset Selection: The first 10,000 samples are selected from the dataset.
+% - Normalization/Quantization: Pixel values are divided by 16 and cast to uint8.
+% - Downsampling: Images are reshaped to 28x28 and then downsampled to 14x14 by taking every second pixel in both dimensions ([:, ::2, ::2]).
+% - Flattening: The 14x14 images are reshaped into 1D arrays (196 features).
+% - One-Hot Encoding: The features are transformed using OneHotEncoder with max\_categories=8.
+% - Train/Test Split: The data is split into training (80\%) and testing (20\%) sets, stratified by the target labels.
+% - Figure~\ref{fig:fmnist-vis}
+
+\paragraph{Model Hyperparameters}
+% - less models due to training time
+% - reduced clauses to limit training time
+% - Table~\ref{tab:f-mnist-params}
+
+\begin{table}[!htbp]
+\centering
+\caption[Fashion-MNIST Hyperparameters]{Hyperparameters for the Fashion-MNIST dataset. The table lists only parameters that differ from model defaults.}
+\begin{tabularx}{\columnwidth}{@{}l X@{}} \toprule
+    \textbf{Model} & \textbf{Modified Parameters} \\ \midrule \midrule
+    \texttt{SVC} & \texttt{---} \\ \midrule \midrule
+    \texttt{Green Tsetlin Classifier} & \texttt{---} \\ \midrule
+    \texttt{C Tsetlin Classifier} & \texttt{num\_clauses=100} \\ \bottomrule
+\end{tabularx}
+\label{tab:f-mnist-params}
+\end{table}
+
+\paragraph{Results and Comparison}
+% to many features for binary approach of Tsetlin Machines
+% shows limitation in scaling, where all times start becoming too long
+% Table~\ref{tab:f-mnist-results}
+
+\begin{table}[!htbp]
+\centering
+\caption[Fashion-MNIST Benchmark Results]{Benchmark results for the Fashion-MNIST dataset. Model sizes are estimated based on internal data structures for Tsetlin-based models and via \texttt{pickle} exports for standard models, requiring caution when comparing directly.}
+\begin{tabularx}{\textwidth}{@{}l c c c c c r@{}} \toprule
+    \textbf{\makecell[l]{Model}} & \textbf{\makecell[l]{Train\\Acc.}} & \textbf{\makecell[l]{Test\\Acc.}} & \textbf{\makecell[l]{Train\\Time (s)}} & \textbf{\makecell[l]{Train Pred.\\Time (s)}} & \textbf{\makecell[l]{Test Pred.\\Time (s)}} & \textbf{\makecell[l]{Model\\Size (B)}} \\ \midrule \midrule
+    \texttt{\makecell[l]{SVC}} & \texttt{0.9329} & \texttt{0.8260} & \texttt{6.8504} & \texttt{28.4580} & \texttt{7.0930} & \texttt{66,885,009} \\ \midrule \midrule
+    \texttt{\makecell[l]{Green\\Tsetlin\\Classifier}} & \texttt{0.7917} & \texttt{0.7620} & \texttt{15.4220} & \texttt{0.0396} & \texttt{0.0117} & \texttt{3,124,040} \\ \midrule
+    \texttt{\makecell[l]{C Tsetlin\\Classifier}} & \texttt{0.7652} & \texttt{0.7530} & \texttt{21.5637} & \texttt{0.6618} & \texttt{0.1638} & \texttt{316,140} \\ \bottomrule
+\end{tabularx}
+\label{tab:f-mnist-results}
+\end{table}
+
 \section{Impact of parameters on Noisy-XOR}
+% - describe the importance on gridsearch
+% Plot showing train/test curves based on batch number: Figure~\ref{fig:noisy-xor-grid}
+% - TODO: Insert plot showing that 1000 clauses learn faster than 100 clauses
+% Figure~\ref{fig:noisy-xor-100-1} and Figure~\ref{fig:noisy-xor-1000-1}
+% - it may pose a problem in continual learning, where the balance between reteining old data and memeorizing new patterns is crucial (due to forgetting mechanism)
+% - TODO: Insert plot showing that increasing epochs per batch makes results WORSE due to forgetting implementing in feedback mechanism to prevent overfitting
+% Figure~\ref{fig:noisy-xor-1000-1} and Figure~\ref{fig:noisy-xor-1000-10}
+
+\begin{figure}[!htbp]
+    \centering
+    % Row 1, Left
+    \begin{minipage}{0.49\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{images/noisy-xor-100-clauses-1-epoch-per-batch.png}
+        \caption{100 clauses, 1 epoch}
+        \label{fig:noisy-xor-100-1}
+    \end{minipage}
+    \hfill
+    % Row 1, Right
+    \begin{minipage}{0.49\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{images/noisy-xor-1000-clauses-1-epoch-per-batch.png}
+        \caption{1000 clauses, 1 epoch}
+        \label{fig:noisy-xor-1000-1}
+    \end{minipage}
+
+    \vspace{1em}
+
+    % Row 2, Left
+    \begin{minipage}{0.49\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{images/noisy-xor-100-clauses-10-epoch-per-batch.png}
+        \caption{100 clauses, 10 epochs}
+        \label{fig:noisy-xor-100-10}
+    \end{minipage}
+    \hfill
+    % Row 2, Right
+    \begin{minipage}{0.49\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{images/noisy-xor-1000-clauses-10-epoch-per-batch.png}
+        \caption{1000 clauses, 10 epochs}
+        \label{fig:noisy-xor-1000-10}
+    \end{minipage}
+
+    \caption[TODO]{Comparison of Noisy XOR performance.} % TODO: Write caption
+    \label{fig:noisy-xor-grid}
+\end{figure}
+
+
 \section{Noisy-XOR model on Raspberry Pi Pico}
+% - we were able to run the core C library excluding third-party libraries on very simple development board for embedded devices Raspberry Pi Pico
+% - we have done benchmarks similar to the ones in Python on Noisy-XOR dataset, but we also attached results of tests where we used number of clauses to uneccessary big to handle performed on desktop cpu
+% - memory is proportional to number of clauses
+% - time is proportional to ...
+% - small impact of parameters except num_clauses or extreme settings
+% - hard memory benchmarking (overhead on Ubuntu)
+% TODO: Insert Table (Maybe bold best rows or sth)
+% Table~\ref{tab:noisy-xor-pi-pico}
+
+\begin{table}[!htbp]
+\centering
+\scriptsize
+\setlength{\tabcolsep}{3pt}
+\caption[Noisy-XOR Performance on Raspberry Pi Pico]{Noisy-XOR results on Raspberry Pi Pico and Ubuntu Desktop, testing how hyperparameters affect accuracy and execution time. Peak RAM usage was calculated on the Ubuntu Desktop environment and includes system overhead. Due to hardware performance limits, configurations exceeding the 1000 clauses were benchmarked only on Ubuntu (marked with \textbf{(U)} prefix).}
+\begin{tabular}{@{}r r r r r r r r r r r r r r r r r r r@{}} \toprule
+    \textbf{SAM} & \textbf{CLS} & \textbf{THR} & \textbf{LIT} & \textbf{CLU} & \textbf{MXS} & \textbf{MNS} & \textbf{BST} & \textbf{SNS} & \textbf{EPC} & \textbf{TRT} & \textbf{EVT} & \textbf{COP} & \textbf{TOP} & \textbf{ACC} & \textbf{TMM} & \textbf{DSM} & \textbf{PMU} \\ \midrule
+    1000 & 2 & 1000 & 16 & 1000 & 127 & -127 & 0 & 3.0 & 1 & 24.73 & 0.88 & 183 & 200 & 0.92 & 36.21 & 19.53 & \textbf{(U)}1728.0 \\
+    1000 & 2 & 1000 & 16 & 1000 & 127 & -127 & 0 & 3.0 & 2 & 41.30 & 0.87 & 183 & 200 & 0.92 & 36.21 & 19.53 & \textbf{(U)}1728.0 \\
+    1000 & 2 & 1000 & 16 & 1000 & 127 & -127 & 0 & 3.0 & 4 & 72.51 & 0.88 & 183 & 200 & 0.92 & 36.21 & 19.53 & \textbf{(U)}1728.0 \\
+    1000 & 2 & 1000 & 16 & 1000 & 63 & -63 & 0 & 3.0 & 1 & 24.73 & 0.88 & 183 & 200 & 0.92 & 36.21 & 19.53 & \textbf{(U)}1728.0 \\
+    1000 & 2 & 1000 & 16 & 1000 & 31 & -31 & 0 & 3.0 & 1 & 24.73 & 0.88 & 183 & 200 & 0.92 & 36.21 & 19.53 & \textbf{(U)}1728.0 \\
+    1000 & 2 & 1000 & 16 & 1000 & 15 & -15 & 0 & 3.0 & 1 & 24.51 & 0.86 & 183 & 200 & 0.92 & 36.21 & 19.53 & \textbf{(U)}1728.0 \\
+    1000 & 2 & 1000 & 16 & 500 & 127 & -127 & 0 & 3.0 & 1 & 12.92 & 0.40 & 183 & 200 & 0.92 & 18.15 & 19.53 & \textbf{(U)}1728.0 \\
+    1000 & 2 & 1000 & 16 & 250 & 127 & -127 & 0 & 3.0 & 1 & 6.79 & 0.21 & 183 & 200 & 0.92 & 9.12 & 19.53 & \textbf{(U)}1728.0 \\
+    1000 & 2 & 1000 & 16 & 125 & 127 & -127 & 0 & 3.0 & 1 & 3.54 & 0.10 & 183 & 200 & 0.92 & 4.6 & 19.53 & \textbf{(U)}1728.0 \\
+    1000 & 2 & 1000 & 16 & 64 & 127 & -127 & 0 & 3.0 & 10 & 11.93 & 0.05 & 183 & 200 & 0.92 & 2.39 & 19.53 & \textbf{(U)}1728.0 \\
+    1000 & 2 & 1000 & 16 & 1000 & 127 & -127 & 0 & 3.0 & 10 & 163.19 & 0.89 & 182 & 200 & 0.91 & 36.21 & 19.53 & \textbf{(U)}1728.0 \\
+    1000 & 2 & 500 & 16 & 1000 & 127 & -127 & 0 & 3.0 & 1 & 22.98 & 0.87 & 182 & 200 & 0.91 & 36.21 & 19.53 & \textbf{(U)}1728.0 \\
+    1000 & 2 & 1000 & 16 & 1000 & 127 & -127 & 1 & 3.0 & 1 & 24.53 & 0.82 & 181 & 200 & 0.91 & 36.21 & 19.53 & \textbf{(U)}1728.0 \\
+    1000 & 2 & 250 & 16 & 1000 & 127 & -127 & 0 & 3.0 & 1 & 22.58 & 0.89 & 180 & 200 & 0.9 & 36.21 & 19.53 & \textbf{(U)}1728.0 \\
+    1000 & 2 & 1000 & 16 & 1000 & 127 & -127 & 0 & 6.0 & 1 & 26.33 & 0.67 & 179 & 200 & 0.9 & 36.21 & 19.53 & \textbf{(U)}1728.0 \\
+    1000 & 2 & 32 & 16 & 1000 & 127 & -127 & 0 & 3.0 & 1 & 21.30 & 0.87 & 179 & 200 & 0.9 & 36.21 & 19.53 & \textbf{(U)}1728.0 \\
+    250 & 2 & 1000 & 16 & 1000 & 127 & -127 & 0 & 3.0 & 10 & 47.14 & 0.22 & 44 & 50 & 0.88 & 36.21 & 4.88 & \textbf{(U)}1728.0 \\
+    1000 & 2 & 125 & 16 & 1000 & 127 & -127 & 0 & 3.0 & 1 & 21.54 & 0.88 & 173 & 200 & 0.87 & 36.21 & 19.53 & \textbf{(U)}1728.0 \\
+    1000 & 2 & 64 & 16 & 1000 & 127 & -127 & 0 & 3.0 & 1 & 21.03 & 0.88 & 170 & 200 & 0.85 & 36.21 & 19.53 & \textbf{(U)}1728.0 \\
+    1000 & 2 & 32 & 16 & 500 & 127 & -127 & 0 & 3.0 & 1 & 10.87 & 0.44 & 168 & 200 & 0.84 & 18.15 & 19.53 & \textbf{(U)}1728.0 \\
+    1000 & 2 & 32 & 16 & 500 & 127 & -127 & 0 & 3.0 & 10 & 79.82 & 0.46 & 166 & 200 & 0.83 & 18.15 & 19.53 & \textbf{(U)}1728.0 \\
+    1000 & 2 & 1000 & 16 & 1000 & 7 & -7 & 0 & 3.0 & 1 & 27.17 & 0.81 & 165 & 200 & 0.83 & 36.21 & 19.53 & \textbf{(U)}1728.0 \\
+    1000 & 2 & 1000 & 16 & 64 & 127 & -127 & 0 & 3.0 & 1 & 1.85 & 0.05 & 162 & 200 & 0.81 & 2.39 & 19.53 & \textbf{(U)}1728.0 \\
+    1000 & 2 & 16 & 16 & 1000 & 127 & -127 & 0 & 3.0 & 1 & 21.27 & 0.85 & 161 & 200 & 0.81 & 36.21 & 19.53 & \textbf{(U)}1728.0 \\
+    500 & 2 & 1000 & 16 & 1000 & 127 & -127 & 0 & 3.0 & 1 & 36.21 & 0.44 & 80 & 100 & 0.8 & 36.21 & 9.77 & \textbf{(U)}1728.0 \\
+    1000 & 2 & 32 & 16 & 500 & 127 & -127 & 1 & 3.0 & 1 & 10.74 & 0.42 & 150 & 200 & 0.75 & 18.15 & 19.53 & \textbf{(U)}1728.0 \\
+    1000 & 2 & 1000 & 16 & 64 & 127 & -127 & 1 & 3.0 & 1 & 1.79 & 0.05 & 142 & 200 & 0.71 & 2.39 & 19.53 & \textbf{(U)}1728.0 \\
+    1000 & 2 & 1000 & 16 & 1000 & 127 & -127 & 0 & 1.5 & 1 & 30.84 & 1.15 & 124 & 200 & 0.62 & 36.21 & 19.53 & \textbf{(U)}1728.0 \\
+    250 & 2 & 1000 & 16 & 1000 & 127 & -127 & 0 & 3.0 & 1 & 7.21 & 0.22 & 27 & 50 & 0.54 & 36.21 & 4.88 & \textbf{(U)}1728.0 \\
+    1000 & 2 & 1000 & 16 & 1000 & 3 & -3 & 0 & 3.0 & 1 & 28.43 & 0.73 & 100 & 200 & 0.5 & 36.21 & 19.53 & \textbf{(U)}1728.0 \\
+    1000 & 2 & 1000 & 16 & 10000 & 127 & -127 & 0 & 3.0 & 1 & \textbf{(U)}1.16 & \textbf{(U)}0.11 & 172 & 200 & 0.86 & 361.45 & 19.53 & \textbf{(U)}2112.0 \\
+    1000 & 2 & 1000 & 16 & 100000 & 127 & -127 & 0 & 3.0 & 1 & \textbf{(U)}11.61 & \textbf{(U)}1.17 & 167 & 200 & 0.84 & 3613.4 & 19.53 & \textbf{(U)}5376.0 \\
+    1000 & 2 & 1000 & 16 & 200000 & 127 & -127 & 0 & 3.0 & 1 & \textbf{(U)}23.00 & \textbf{(U)}2.32 & 165 & 200 & 0.83 & 7226.68 & 19.53 & \textbf{(U)}8832.0 \\ \bottomrule
+\end{tabular}
+\vspace{1ex}
+\begin{flushleft}
+\textbf{Legend:} 
+\textbf{SAM}:~Number of Samples, 
+\textbf{CLS}:~Number of Classes, 
+\textbf{THR}:~Threshold, 
+\textbf{LIT}:~Number of Literals, 
+\textbf{CLU}:~Number of Clauses, 
+\textbf{MXS}:~Maximum State,
+\textbf{MNS}:~Minimum State,
+\textbf{BST}:~Boost True Positive Feedback,
+\textbf{SNS}:~Learning Sensitivity (s),
+\textbf{EPC}:~Training Epochs,
+\textbf{TRT}:~Training Time [s],
+\textbf{EVT}:~Evaluation Time [s],
+\textbf{COP}:~Correct Predictions,
+\textbf{TOP}:~Total Predictions,
+\textbf{ACC}:~Accuracy,
+\textbf{TMM}:~TM Memory Usage [KB],
+\textbf{DSM}:~Dataset Memory Usage (\texttt{static}) [KB],
+\textbf{PMU}:~Peak Memory Usage on Ubuntu Desktop [KB]
+\end{flushleft}
+\label{tab:noisy-xor-pi-pico}
+\end{table}
+
+\section{Summary}
+% - initial results show potential and encurage further benchmarking and improvements
+% - TMs performance is strongly tied to hyperparaneters and especislly number of training epochs making it not possible to implement one-fit-all default hyperparamters, because of its continual learning and forgeting mechanism
+% - also it may pose a problem in continual learning, where the balance between reteining old data and memeorizing new patterns is crucial (due to forgetting mechanism)
+% - one challenge we ran into is that the green_tsetlin library uses several undocumented optimizations and parameter changes. (literal_budget, which is not described in research)
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -1646,27 +2188,24 @@ Experiment results / evaluation
 % poniższą zawartość rodziału należy usunąć z finalnej wersji pracy.
 % \emph{Wskazanie wyników projektu (co konkretnie udało się uzyskać: oprogramowanie, dokumentacja, raporty z testów/wdrożenia, itd.), prezentacja wyników i ocena ich użyteczności (jak zostało to zweryfikowane --- np.\ wnioski klienta/użytkownika, zrealizowane testy wydajnościowe, itd.), istniejące ograniczenia i propozycje dalszych prac.}
 
-The previous chapters have described the goals of the project. This concluding chapter reflects on the objectives that were achieved successfully and identifies any missing parts. It also proposes further work, research and improvements to the project as well as Tsetlin Machines in general.
+The previous chapters have described the goals of the project. This concluding chapter reflects on the objectives that were achieved successfully and identifies any areas of improvement. It also proposes further work, research and improvements to the project as well as TMs in general.
 
 \section{Summary}
-The project work resulted in a functional product. All base requirements were fulfilled; the Tsetlin Machine execution engine can be used to both infer and train in a limited resource environment, model data is stored in an efficient, easy to utilize format. Admittedly not all the specified features could be successfully implemented, in part due to lack of available knowledge sources and documentation on how to put the Tsetlin Machine theory into practice -- which gap this thesis also tries to bridge. Nevertheless the product is mostly production-ready, save for being able to compile it to a specific production architecture.
-
-\section{Restrictions}
-The Sparse Tsetlin Machine variant implementation, although able to train, achieves obviously worse results than the \GreenTsetlinName implementation. This is expected to be caused by a software bug, although the training logic seems to match, and the exact cause couldn't be identified.
+The project work resulted in a functional, stable and optimized open-source product, pending only cosmetic or experiential refinements. All base requirements were fulfilled; the Tsetlin Machine execution engine can be used to both infer and train in a limited resource environment, model data is stored in an efficient, easy to utilize format. The project further mitigates a gap in the ecosystem encountered during its development -- the lack of available knowledge sources and documentation on how to put the TM theory into practice. The product is suitable for production use, though compilation for non-standard or specialized architectures requires additional effort.
 
 \section{Further work}
-Due to time constraints and other circumstances, not the full scope of the thesis could be realized. During this time many fascinating ideas were born that would require more research.
+During the development period of the project, numerous promising ideas emerged that warrant further investigation. These ideas merit further investigation and could meaningfully enhance both the research outcomes and the overall robustness of the project.
 
 \subsection{Cross compilation}
 An immediate extension that would increase the utility and reach of this project is the introduction of a formal cross-compilation pipeline. Implementing cross-compilation would enable automated builds for multiple target architectures (e.g. ARM, RISC-V, x86\_64) and ABIs, improving portability and facilitating deployment on embedded and heterogeneous systems. Addressing this would broaden its applicable use cases.
 
-\subsection{Coalesced Tsetlin Machine and the Linear layer}
-Seeing the similarities between Tsetlin Machine and a Perceptron \cite{sharma2022equivalenceweightedtsetlinmachine}, further parallels could be drawn between a Coalesced Tsetlin Machine and a whole Linear layer and activation function of a Neural Network. More research is necessary to find out whether they could be used interchangeably. Likely results would vary a lot based on task complexity and data structure. Another idea to explore is whether Tsetlin Machines could be combined sequentially with creating a larger model, with or without other layer types.
-\par Due to how customizable \LibraryName is, a custom feedback function and output activation function can be written to facilitate a Tsetlin Machine to be used as a layer of a larger model - painlessly, without the need to rewrite the main logic of the execution engine.
+\subsection{Coalesced TM and the Linear layer}
+Seeing the similarities between TM and a Perceptron \cite{sharma2022equivalenceweightedtsetlinmachine}, further parallels could be drawn between a Coalesced TM and a whole Linear layer and activation function of a Neural Network. More research is necessary to find out whether they could be used interchangeably. Likely results would vary a lot based on task complexity and data structure. Another idea to explore is whether TMs could be combined sequentially with creating a larger model, with or without other layer types.
+\par Due to how customizable \LibraryName is, a custom feedback function and output activation function can be written to facilitate a TM to be used as a layer of a larger model - painlessly, without the need to rewrite the main logic of the execution engine.
 
-\subsection{Integer only implementation of Tsetlin Machine}
-Some processors and compute units don't natively provide a floating-point unit, especially on embedded systems and similar hardware. Tsetlin Machine design typically requires floating point operations, however authors believe it shouldn't be difficult to implement.
-\par All floating point operations in Tsetlin Machine design originate from the parameter \textit{s} -- learning sensitivity -- which handles how often specific feedback types should apply. This is traditionally done using floating point, however rewriting this behaviour to integer-only logic seems rather straightforward.
+\subsection{Integer only implementation of TM}
+Some processors and compute units don't natively provide a floating-point unit, especially on embedded systems and similar hardware. TM design typically requires floating point operations, however authors believe it shouldn't be difficult to implement.
+\par All floating point operations in TM design originate from the parameter \textit{s} -- learning sensitivity -- which handles how often specific feedback types should apply. This is traditionally done using floating point, however rewriting this behaviour to integer-only logic seems rather straightforward.
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
