@@ -494,7 +494,6 @@ It was also decided \LibraryName should support multiple different TM variants s
 \newpage
 \subsection{Model serialization library}
 Several libraries were compiled and compared as possible options to implement the model serialization format. Only C libraries were taken into consideration. See table ~\ref{tab:serial-lib-comp}
-% TODO: czemu to nie jest 4.1
 \begin{table}[h]
 \centering
 \begin{tabularx}{\textwidth}{
@@ -513,9 +512,9 @@ ONNX & A standardized way to store models and operation graphs & High & Low - ne
 \hline
 FlatBuffers & "Protocol buffers lite" & Low & Very fast, zero-copy & Acceptable \\
 \hline
-\end{tabularx}
 \caption{Comparison of selected model serialization libraries}
 \label{tab:serial-lib-comp}
+\end{tabularx}
 \end{table}
 
 \newpage
@@ -1839,6 +1838,21 @@ We used two different environments, to cover two different use cases:
     \item Embedded: Raspberry Pi Pico with Pi Pico SDK V2.2.0~\cite{pico-sdk}
 \end{compactitem}
 
+\paragraph{Tsetlin Machine Default Parameters}
+The values of the default parameters are shown in Table~\ref{tab:tm-default-params}. They were established during the project development and were matched in all Tsetlin Machine based models. During this, we observed that the \GreenTsetlinName library uses undocumented optimizations such \texttt{as the literal\_budget} parameter which is not properly described anywhere.
+
+\begin{table}[!htbp]
+\centering
+\caption[Tsetlin Machine Default Parameters]{Standardized default hyperparameters across Tsetlin Machine implementations, established using the \texttt{C Tsetlin Classifier} baseline.}
+\begin{tabularx}{\columnwidth}{@{}l X@{}} \toprule
+    \textbf{Model} & \textbf{Default Parameters} \\ \midrule \midrule
+    \texttt{C Tsetlin Classifier} & \texttt{threshold=1000, num\_clauses=1000, max\_state=127, min\_state=-127, boost\_true\_positive\_feedback=False, s=3.0, epochs=10} \\ \midrule
+    \texttt{Green Tsetlin Classifier} & \texttt{threshold=1000, n\_clauses=1000, boost\_true\_positives=False, s=3.0, n\_epochs=10, literal\_budget=None} \\ \midrule
+    \texttt{Green Tsetlin Sparse Classifier} & \texttt{threshold=1000, n\_clauses=1000, boost\_true\_positives=False, s=3.0, n\_epochs=10, literal\_budget=None, dynamic\_AL=True, lower\_ta\_threshold=-40, active\_literals\_size=100, clause\_size=50} \\ \bottomrule
+\end{tabularx}
+\label{tab:tm-default-params}
+\end{table}
+
 \paragraph{Metrics}
 The host uses our Python bindings to run benchmarks from Jupyter Notebooks. This approach allowed us to easily compare our implementation directly against standard Scikit-learn models and, with some work, the \GreenTsetlinName library. We tracked these metrics to get an estimated performance: \textbf{Accuracy on Training Dataset}, \textbf{Accuracy on Testing Dataset}, \textbf{Training Time}, \textbf{Prediction Time on Training Dataset}, \textbf{Prediction Time on Testing Dataset}, \textbf{Estimated Model Size} (estimation is based on the internal data structure for TM models and Python ''pickle`` exports for other models, so they should be compared with caution).
 
@@ -1860,7 +1874,7 @@ The dataset consists of randomly generated $1000$ samples and $16$ features. The
 The final dataset was divided into training ($80\%$) and testing dataset ($20\%$) with proportions of approximately $53\%$ for $\text{Class } 0$ and $47\%$ for $\text{Class } 1$. Since Tsetlin Machines operate using Boolean algebra and the generated data was already binary, no additional preprocessing was necessary and raw bits were passed to the models directly. 
 
 \paragraph{Model Hyperparameters}
-For our C Tsetlin Classifier as a baseline, we found sensible default parameters that emerged during the development process, and we tried to keep the base models with the defaults and only tune some of them performing GridSearchCV. The parameters used are shown in Table~\ref{tab:noisy-xor-params} and we can observe that for this problem having only 16 binary features GridSearchCV found that using 64 clauses is enough.
+We tried to keep the base models with the defaults and only tune some of them performing GridSearchCV. The parameters used are shown in Table~\ref{tab:noisy-xor-params} and we can observe that for this problem having only 16 binary features GridSearchCV found that using 64 clauses is enough.
 
 \begin{table}[!htbp]
 \centering
@@ -1880,6 +1894,7 @@ For our C Tsetlin Classifier as a baseline, we found sensible default parameters
     \texttt{GridSearch Random Forest} & \texttt{n\_estimators: [\textbf{50}, 100, 200], max\_depth: [\textbf{None}, 10, 20, 30], min\_samples\_split: [2, 5, \textbf{10}]} \\ \midrule
     \texttt{GridSearch MLP Classifier} & \texttt{hidden\_layer\_sizes: [(50,), \textbf{(100,)}, (50, 50)], activation: [\textbf{"relu"}, "tanh"], alpha: [0.0001, 0.001, \textbf{0.01}]} \\ \midrule \midrule
     \texttt{Green Tsetlin Classifier} & \texttt{---} \\ \midrule
+    \texttt{Green Tsetlin Sparse Classifier} & \texttt{---} \\ \midrule
     \texttt{C Tsetlin Classifier} & \texttt{---} \\ \midrule
     \texttt{GridSearch C Tsetlin} & \texttt{boost\_true\_positive\_feedback: [\textbf{False}, True], num\_clauses: [\textbf{64}, 125, 500]} \\ \bottomrule
 \end{tabularx}
@@ -1888,29 +1903,29 @@ For our C Tsetlin Classifier as a baseline, we found sensible default parameters
 
 \paragraph{Results and Comparison}
 % -  difficulty comparing performance of C and various Scikit-learn implementations (especially model size)
-% TODO: green_tsetlin library uses several undocumented optimizations and parameter changes.
-The results shown in Table~\ref{tab:noisy-xor-results} show that our \texttt{C Tsetlin Classifier} is competitive, matching accuracy of established machine learning models. It is close to the \texttt{Green Tsetlin Classifier}. Important observation is that due to added noise, we except the model to cap at $0.9$ accuracy on training dataset, unless it over-fits (which is present in some models e.g. \texttt{Random Forest} and \texttt{MLP Classifier}). On the testing dataset it scores the best results tying with \texttt{SVC} and \texttt{Green Tsetlin Classifier}. Other observation shows that version found via GridSearch is much smaller and faster performing that using the default parameters, highlighting the need to tune parameters where possible. It is important to not rely to much on performance and memory results when comparing them to different models due to the implementation overhead and model size estimation. Other important observation that came out during this is that \GreenTsetlinName library used several undocumented optimizations not treating parameters exactly when building Tsetlin Machine under the hood.
+The results shown in Table~\ref{tab:noisy-xor-results} show that our \texttt{C Tsetlin Classifier} is competitive, matching accuracy of established machine learning models. It is close to the \texttt{Green Tsetlin Classifier}. Important observation is that due to added noise, we except the model to cap at $0.9$ accuracy on training dataset, unless it over-fits (which is present in some models e.g. \texttt{Random Forest} and \texttt{MLP Classifier}). On the testing dataset it scores the best results tying with \texttt{SVC} and \texttt{Green Tsetlin Classifier}. Other observation shows that version found via GridSearch is much smaller and faster performing that using the default parameters, highlighting the need to tune parameters where possible. It is important to not rely to much on performance and memory results when comparing them to different models due to the implementation overhead and model size estimation. 
 
 \begin{table}[!htbp]
 \centering
 \caption[Noisy-XOR Benchmark Results]{Benchmark results for the Noisy-XOR dataset. Model sizes are estimated based on internal data structures for Tsetlin-based models and via \texttt{pickle} exports for standard models, requiring caution when comparing directly.}
 \begin{tabularx}{\textwidth}{@{}l c c c c c r@{}} \toprule
     \textbf{\makecell[l]{Model}} & \textbf{\makecell[l]{Train\\Acc.}} & \textbf{\makecell[l]{Test\\Acc.}} & \textbf{\makecell[l]{Train\\Time (s)}} & \textbf{\makecell[l]{Train Pred.\\Time (s)}} & \textbf{\makecell[l]{Test Pred.\\Time (s)}} & \textbf{\makecell[l]{Model\\Size (B)}} \\ \midrule \midrule
-    \texttt{\makecell[l]{Logistic\\Regression}} & \texttt{0.5487} & \texttt{0.4750} & \texttt{0.0025} & \texttt{0.0004} & \texttt{0.0003} & \texttt{1,122} \\ \midrule
-    \texttt{\makecell[l]{Decision\\Tree}} & \texttt{0.9962} & \texttt{0.7350} & \texttt{0.0017} & \texttt{0.0004} & \texttt{0.0003} & \texttt{33,536} \\ \midrule
-    \texttt{\makecell[l]{Random\\Forest}} & \texttt{0.9962} & \texttt{0.8700} & \texttt{0.0757} & \texttt{0.0065} & \texttt{0.0035} & \texttt{4,127,036} \\ \midrule
-    \texttt{\makecell[l]{MLP Classifier}} & \texttt{0.9962} & \texttt{0.8150} & \texttt{0.1054} & \texttt{0.0008} & \texttt{0.0010} & \texttt{35,897} \\ \midrule
-    \texttt{\makecell[l]{SVC}} & \texttt{0.8950} & \texttt{0.9300} & \texttt{0.0148} & \texttt{0.0145} & \texttt{0.0042} & \texttt{104,823} \\ \midrule
-    \texttt{\makecell[l]{Linear SVC}} & \texttt{0.5450} & \texttt{0.4750} & \texttt{0.0015} & \texttt{0.0004} & \texttt{0.0004} & \texttt{1,006} \\ \midrule
-    \texttt{\makecell[l]{K-Nearest\\Neighbors}} & \texttt{0.8250} & \texttt{0.7650} & \texttt{0.0005} & \texttt{0.0259} & \texttt{0.0049} & \texttt{20,179} \\ \midrule
-    \texttt{\makecell[l]{Gaussian\\Naive Bayes}} & \texttt{0.5513} & \texttt{0.4700} & \texttt{0.0008} & \texttt{0.0004} & \texttt{0.0003} & \texttt{1,373} \\ \midrule
-    \texttt{\makecell[l]{Gradient\\Boosting}} & \texttt{0.8962} & \texttt{0.9150} & \texttt{0.0743} & \texttt{0.0015} & \texttt{0.0009} & \texttt{139,263} \\ \midrule
-    \texttt{\makecell[l]{LightGBM}} & \texttt{0.9850} & \texttt{0.8950} & \texttt{0.0456} & \texttt{0.0014} & \texttt{0.0007} & \texttt{350,233} \\ \midrule
-    \texttt{\makecell[l]{GridSearch\\Random Forest}} & \texttt{0.9200} & \texttt{0.9150} & \texttt{2.5263} & \texttt{0.0026} & \texttt{0.0014} & \texttt{622,791} \\ \midrule
-    \texttt{\makecell[l]{GridSearch\\MLP Classifier}} & \texttt{0.9962} & \texttt{0.8500} & \texttt{2.1048} & \texttt{0.0007} & \texttt{0.0003} & \texttt{39,978} \\ \midrule \midrule
-    \texttt{\makecell[l]{Green\\Tsetlin\\Classifier}} & \texttt{0.8938} & \texttt{0.9300} & \texttt{0.2596} & \texttt{0.0056} & \texttt{0.0012} & \texttt{38,008} \\ \midrule
-    \texttt{\makecell[l]{C Tsetlin\\Classifier}} & \texttt{0.8900} & \texttt{0.9300} & \texttt{0.3217} & \texttt{0.0144} & \texttt{0.0040} & \texttt{43,008} \\ \midrule
-    \texttt{\makecell[l]{GridSearch\\C Tsetlin\\Classifier}} & \texttt{0.8925} & \texttt{0.9300} & \texttt{0.2765} & \texttt{0.0019} & \texttt{0.0007} & \texttt{2,760} \\ \bottomrule
+    \texttt{\makecell[l]{Logistic\\Regression}} & \texttt{0.5487} & \texttt{0.4750} & \texttt{0.0033} & \texttt{0.0007} & \texttt{0.0006} & \texttt{1,122} \\ \midrule
+    \texttt{\makecell[l]{Decision\\Tree}} & \texttt{0.9962} & \texttt{0.7350} & \texttt{0.0030} & \texttt{0.0007} & \texttt{0.0005} & \texttt{33,536} \\ \midrule
+    \texttt{\makecell[l]{Random\\Forest}} & \texttt{0.9962} & \texttt{0.8700} & \texttt{0.1279} & \texttt{0.0084} & \texttt{0.0044} & \texttt{4,127,036} \\ \midrule
+    \texttt{\makecell[l]{MLP Classifier}} & \texttt{0.9962} & \texttt{0.8150} & \texttt{2.2756} & \texttt{0.0037} & \texttt{0.0007} & \texttt{35,897} \\ \midrule
+    \texttt{\makecell[l]{SVC}} & \texttt{0.8950} & \texttt{0.9300} & \texttt{0.0309} & \texttt{0.0372} & \texttt{0.0053} & \texttt{104,823} \\ \midrule
+    \texttt{\makecell[l]{Linear SVC}} & \texttt{0.5450} & \texttt{0.4750} & \texttt{0.0022} & \texttt{0.0006} & \texttt{0.0005} & \texttt{1,006} \\ \midrule
+    \texttt{\makecell[l]{K-Nearest\\Neighbors}} & \texttt{0.8250} & \texttt{0.7650} & \texttt{0.0008} & \texttt{0.0102} & \texttt{0.0034} & \texttt{20,179} \\ \midrule
+    \texttt{\makecell[l]{Gaussian\\Naive Bayes}} & \texttt{0.5513} & \texttt{0.4700} & \texttt{0.0012} & \texttt{0.0007} & \texttt{0.0005} & \texttt{1,373} \\ \midrule
+    \texttt{\makecell[l]{Gradient\\Boosting}} & \texttt{0.8962} & \texttt{0.9150} & \texttt{0.1082} & \texttt{0.0021} & \texttt{0.0011} & \texttt{139,263} \\ \midrule
+    \texttt{\makecell[l]{LightGBM}} & \texttt{0.9850} & \texttt{0.8950} & \texttt{0.0277} & \texttt{0.0024} & \texttt{0.0011} & \texttt{350,232} \\ \midrule
+    \texttt{\makecell[l]{GridSearch\\Random Forest}} & \texttt{0.9200} & \texttt{0.9150} & \texttt{7.1572} & \texttt{0.0036} & \texttt{0.0023} & \texttt{622,791} \\ \midrule
+    \texttt{\makecell[l]{GridSearch\\MLP Classifier}} & \texttt{0.9962} & \texttt{0.8500} & \texttt{12.6468} & \texttt{0.0014} & \texttt{0.0008} & \texttt{39,978} \\ \midrule \midrule
+    \texttt{\makecell[l]{Green\\Tsetlin\\Classifier}} & \texttt{0.8925} & \texttt{0.9300} & \texttt{0.4354} & \texttt{0.0061} & \texttt{0.0021} & \texttt{38,008} \\ \midrule
+    \texttt{\makecell[l]{Green Tsetlin\\Sparse\\Classifier}} & \texttt{0.8925} & \texttt{0.9300} & \texttt{2.7727} & \texttt{0.0050} & \texttt{0.0017} & \texttt{807,608} \\ \midrule
+    \texttt{\makecell[l]{C Tsetlin\\Classifier}} & \texttt{0.8900} & \texttt{0.9300} & \texttt{0.6159} & \texttt{0.0234} & \texttt{0.0064} & \texttt{43,008} \\ \midrule
+    \texttt{\makecell[l]{GridSearch\\C Tsetlin\\Classifier}} & \texttt{0.8925} & \texttt{0.9300} & \texttt{1.0268} & \texttt{0.0021} & \texttt{0.0009} & \texttt{2,760} \\ \bottomrule
 \end{tabularx}
 \label{tab:noisy-xor-results}
 \end{table}
@@ -1918,15 +1933,17 @@ The results shown in Table~\ref{tab:noisy-xor-results} show that our \texttt{C T
 
 \section{Digits dataset}
 % - digit recognition is a common test task in ML
+The Digits dataset is an example of the hand-written digits recognition task common in ML. The dataset was included into Scikit-learn~\cite{scikit-learn} library and is based on the ''Pen-Based Recognition of Handwritten Digits``~\cite{pen-based_recognition_of_handwritten_digits_81}.
 
 \paragraph{Dataset and Problem Representation}
 % - This dataset is made up of 1797 8x8 images. Each image, like the one shown below, is of a hand-written digit. In order to utilize an 8x8 figure like this, we’d have to first transform it into a feature vector with length 64.
 % - Figure~\ref{fig:digits-vis}
+The dataset is made up of 1797 grayscale $8 \times 8$ images with a sample shown in Figure~\ref{fig:digits-vis}. Each pixel has brightness levels ranging from 0 to 16. It is represented as a feature vector with length 64.
 
 \begin{figure}[!htbp]
     \centering
     \includegraphics[width=.9\textwidth]{images/digits-vis.png}
-    \caption[TODO]{TODO} % TODO: Write caption
+    \caption[Five Samples from the Digits Dataset]{Five $8 \times 8$ samples from the Digits dataset with brightness levels from $0$ to $16$. Correct labels are shown above.}
     \label{fig:digits-vis}
 \end{figure}
 
@@ -1934,10 +1951,12 @@ The results shown in Table~\ref{tab:noisy-xor-results} show that our \texttt{C T
 % - y: [0 1 2 3 4 5 6 7 8 9]
 % - X: (1797, 64), [ 0.  1.  ... 16.] -(OneHotEncoder)-> X: (1797, 890), [0. 1.]
 % - 80/20 % split
+This time we encounter multiclass classification ($y: [0,1,\dots,9]$) and the input vector has more than two possible features so we need to transform it into binary format accepted by TM. We achieve this using Scikit-learn's \texttt{OneHotEncoder} transforming $X: (1797, 64), [0,1,\dots,16]$ into $X: (1797, 890), [0,1]$. We use the typical $80\%$, $20\%$ train, test split mentaining class proportions.
 
 \paragraph{Model Hyperparameters}
 % - similar to Noisy-XOR subchapter
 % - Table~\ref{tab:digits-params}
+Similar to the Noisy-XOR subchapter we default parameters only modifying GridSearchCV for our classifier as shown in Table~\ref{tab:digits-params}. As this problem has much more features, the parameter search found that it is beneficial to increase clauses used to 1500.
 
 \begin{table}[!htbp]
 \centering
@@ -1957,7 +1976,7 @@ The results shown in Table~\ref{tab:noisy-xor-results} show that our \texttt{C T
     \texttt{GridSearch Random Forest} & \texttt{n\_estimators: [50, 100, \textbf{200}], max\_depth: [None, 10, 20, \textbf{30}], min\_samples\_split: [\textbf{2}, 5, 10]} \\ \midrule
     \texttt{GridSearch MLP Classifier} & \texttt{hidden\_layer\_sizes: [(50,), \textbf{(100,)}, (50, 50)], activation: ["relu", \textbf{"tanh"}], alpha: [0.0001, 0.001, \textbf{0.01}]} \\ \midrule \midrule
     \texttt{Green Tsetlin Classifier} & \texttt{---}\\ \midrule
-    \texttt{Green Tsetlin Sparse} & \texttt{---}\\ \midrule
+    \texttt{Green Tsetlin Sparse Classifier} & \texttt{---} \\ \midrule
     \texttt{C Tsetlin Classifier} & \texttt{---} \\ \midrule
     \texttt{GridSearch C Tsetlin} & \texttt{boost\_true\_positive\_feedback: [\textbf{False}, True], num\_clauses: [500, 1000, \textbf{1500}]} \\ \bottomrule
 \end{tabularx}
@@ -1967,41 +1986,46 @@ The results shown in Table~\ref{tab:noisy-xor-results} show that our \texttt{C T
 \paragraph{Results and Comparison}
 % - describe results
 % Table~\ref{tab:digits-results}
+The results shown in Table~\ref{tab:digits-results}. They prove that TM models can work with more difficult dataset, but due to limitations in the input format being binary models need more clauses to capture patterns. It consequently increases both time and memory requirements, which is visible compared to different models. This makes the necessary preprocessing that converts features into binary vector not much suitable in image recognition problems. No matter, we keep accuracy similar to the \GreenTsetlinName library likely confirming the correctness of our implementation.
 
 \begin{table}[!htbp]
 \centering
 \caption[Digits Dataset Benchmark Results]{Benchmark results for the Digits dataset. Model sizes are estimated based on internal data structures for Tsetlin-based models and via \texttt{pickle} exports for standard models, requiring caution when comparing directly.}
 \begin{tabularx}{\textwidth}{@{}l c c c c c r@{}} \toprule
     \textbf{\makecell[l]{Model}} & \textbf{\makecell[l]{Train\\Acc.}} & \textbf{\makecell[l]{Test\\Acc.}} & \textbf{\makecell[l]{Train\\Time (s)}} & \textbf{\makecell[l]{Train Pred.\\Time (s)}} & \textbf{\makecell[l]{Test Pred.\\Time (s)}} & \textbf{\makecell[l]{Model\\Size (B)}} \\ \midrule \midrule
-    \texttt{\makecell[l]{Logistic\\Regression}} & \texttt{1.0000} & \texttt{0.9528} & \texttt{0.9314} & \texttt{0.0039} & \texttt{0.0036} & \texttt{84,514} \\ \midrule
-    \texttt{\makecell[l]{Decision\\Tree}} & \texttt{1.0000} & \texttt{0.7833} & \texttt{0.0451} & \texttt{0.0049} & \texttt{0.0021} & \texttt{59,928} \\ \midrule
-    \texttt{\makecell[l]{Random\\Forest}} & \texttt{1.0000} & \texttt{0.9444} & \texttt{0.1791} & \texttt{0.0140} & \texttt{0.0061} & \texttt{9,855,780} \\ \midrule
-    \texttt{\makecell[l]{MLP Classifier}} & \texttt{1.0000} & \texttt{0.9306} & \texttt{5.2221} & \texttt{0.0256} & \texttt{0.0229} & \texttt{1,461,199} \\ \midrule
-    \texttt{\makecell[l]{SVC}} & \texttt{0.9965} & \texttt{0.9583} & \texttt{0.2799} & \texttt{0.4019} & \texttt{0.1145} & \texttt{9,585,426} \\ \midrule
-    \texttt{\makecell[l]{Linear SVC}} & \texttt{1.0000} & \texttt{0.9472} & \texttt{0.0856} & \texttt{0.0059} & \texttt{0.0021} & \texttt{84,395} \\ \midrule
-    \texttt{\makecell[l]{K-Nearest\\Neighbors}} & \texttt{0.9088} & \texttt{0.8667} & \texttt{0.0026} & \texttt{0.0102} & \texttt{0.0727} & \texttt{10,256,123} \\ \midrule
-    \texttt{\makecell[l]{Gaussian\\Naive Bayes}} & \texttt{0.8278} & \texttt{0.9666} & \texttt{0.0066} & \texttt{0.0051} & \texttt{0.0224} & \texttt{155,647} \\ \midrule
-    \texttt{\makecell[l]{Gradient\\Boosting}} & \texttt{1.0000} & \texttt{0.9139} & \texttt{8.5160} & \texttt{0.0141} & \texttt{0.0047} & \texttt{1,359,941} \\ \midrule
-    \texttt{\makecell[l]{LightGBM}} & \texttt{1.0000} & \texttt{0.9472} & \texttt{0.5565} & \texttt{0.0026} & \texttt{0.0077} & \texttt{3,124,964} \\ \midrule
-    \texttt{\makecell[l]{GridSearch\\Random Forest}} & \texttt{1.0000} & \texttt{0.9444} & \texttt{4.6893} & \texttt{0.0104} & \texttt{0.0257} & \texttt{19,661,484} \\ \midrule
-    \texttt{\makecell[l]{GridSearch\\MLP Classifier}} & \texttt{1.0000} & \texttt{0.9361} & \texttt{7.3340} & \texttt{0.0389} & \texttt{0.0089} & \texttt{1,465,209} \\ \midrule \midrule
-    \texttt{\makecell[l]{Green\\Tsetlin\\Classifier}} & \texttt{0.9548} & \texttt{0.8972} & \texttt{1.7259} & \texttt{0.0041} & \texttt{0.0121} & \texttt{1,794,040} \\ \midrule
-    \texttt{\makecell[l]{C Tsetlin\\Classifier}} & \texttt{0.9882} & \texttt{0.9222} & \texttt{16.8023} & \texttt{0.7999} & \texttt{0.1967} & \texttt{1,831,040} \\ \midrule
-    \texttt{\makecell[l]{GridSearch\\C Tsetlin\\Classifier}} & \texttt{0.9139} & \texttt{0.9937} & \texttt{69.4101} & \texttt{0.2658} & \texttt{1.1082} & \texttt{2,746,540} \\ \bottomrule
+    \texttt{\makecell[l]{Logistic\\Regression}} & \texttt{1.0000} & \texttt{0.9528} & \texttt{1.8761} & \texttt{0.0169} & \texttt{0.0275} & \texttt{84,514} \\ \midrule
+    \texttt{\makecell[l]{Decision\\Tree}} & \texttt{1.0000} & \texttt{0.7833} & \texttt{0.0930} & \texttt{0.0042} & \texttt{0.0030} & \texttt{59,928} \\ \midrule
+    \texttt{\makecell[l]{Random\\Forest}} & \texttt{1.0000} & \texttt{0.9444} & \texttt{0.3059} & \texttt{0.0194} & \texttt{0.0082} & \texttt{9,855,780} \\ \midrule
+    \texttt{\makecell[l]{MLP Classifier}} & \texttt{1.0000} & \texttt{0.9306} & \texttt{4.7254} & \texttt{0.0218} & \texttt{0.0483} & \texttt{1,461,199} \\ \midrule
+    \texttt{\makecell[l]{SVC}} & \texttt{0.9965} & \texttt{0.9583} & \texttt{0.4370} & \texttt{0.8217} & \texttt{0.2206} & \texttt{9,585,426} \\ \midrule
+    \texttt{\makecell[l]{Linear SVC}} & \texttt{1.0000} & \texttt{0.9472} & \texttt{0.1229} & \texttt{0.0041} & \texttt{0.0061} & \texttt{84,395} \\ \midrule
+    \texttt{\makecell[l]{K-Nearest\\Neighbors}} & \texttt{0.9088} & \texttt{0.8639} & \texttt{0.0045} & \texttt{0.0998} & \texttt{0.0125} & \texttt{10,256,123} \\ \midrule
+    \texttt{\makecell[l]{Gaussian\\Naive Bayes}} & \texttt{0.8278} & \texttt{0.9666} & \texttt{0.0099} & \texttt{0.0427} & \texttt{0.0100} & \texttt{155,647} \\ \midrule
+    \texttt{\makecell[l]{Gradient\\Boosting}} & \texttt{1.0000} & \texttt{0.9139} & \texttt{11.9949} & \texttt{0.0204} & \texttt{0.0070} & \texttt{1,359,941} \\ \midrule
+    \texttt{\makecell[l]{LightGBM}} & \texttt{1.0000} & \texttt{0.9472} & \texttt{0.4931} & \texttt{0.0074} & \texttt{0.0233} & \texttt{3,124,963} \\ \midrule
+    \texttt{\makecell[l]{GridSearch\\Random Forest}} & \texttt{1.0000} & \texttt{0.9444} & \texttt{16.1212} & \texttt{0.0142} & \texttt{0.0373} & \texttt{19,661,484} \\ \midrule
+    \texttt{\makecell[l]{GridSearch\\MLP Classifier}} & \texttt{1.0000} & \texttt{0.9361} & \texttt{13.5714} & \texttt{0.0423} & \texttt{0.0527} & \texttt{1,465,209} \\ \midrule \midrule
+    \texttt{\makecell[l]{Green\\Tsetlin\\Classifier}} & \texttt{0.9923} & \texttt{0.9222} & \texttt{2.1518} & \texttt{0.0320} & \texttt{0.0089} & \texttt{1,794,040} \\ \midrule
+    \texttt{\makecell[l]{Green Tsetlin\\Sparse\\Classifier}} & \texttt{0.9402} & \texttt{0.8889} & \texttt{21.0531} & \texttt{0.0063} & \texttt{0.0185} & \texttt{822,040} \\ \midrule
+    \texttt{\makecell[l]{C Tsetlin\\Classifier}} & \texttt{0.9882} & \texttt{0.9222} & \texttt{30.3514} & \texttt{0.6466} & \texttt{0.1763} & \texttt{1,831,040} \\ \midrule
+    \texttt{\makecell[l]{GridSearch\\C Tsetlin\\Classifier}} & \texttt{0.9937} & \texttt{0.9139} & \texttt{271.3032} & \texttt{0.9751} & \texttt{0.2460} & \texttt{2,746,540} \\ \bottomrule
 \end{tabularx}
 \label{tab:digits-results}
 \end{table}
 
-\section{Fashion MNIST dataset}
+\section{Fashion-MNIST dataset}
 % - like digits but more features
+The Fashion-MNIST dataset~\cite{xiao2017/online} is another popular image classification task in ML developed as a drop-in replacement for the original MNIST dataset. We used it to test the limits and scaling of TM as it is even more difficult than the Digits dataset. This test is done only for research purposes, as we do not expect our implementation to be used in this task otherwise.
+
 
 \paragraph{Dataset and Problem Representation}
 % - Fashion-MNIST is a dataset of Zalando's article images—consisting of a training set of 60,000 examples and a test set of 10,000 examples. Each example is a 28x28 grayscale image, associated with a label from 10 classes. We intend Fashion-MNIST to serve as a direct drop-in replacement for the original MNIST dataset for benchmarking machine learning algorithms. It shares the same image size and structure of training and testing splits.
+Fashion-MNIST is a dataset consisting 70000 examples of Zalando's clothing articles images. Each individual example is a $28 \times 28$ grayscale (0 to 255) image with a label from one of 10 classes. Sample images are shown in Figure~\ref{fig:fmnist-vis}.
 
 \begin{figure}[!htbp]
     \centering
     \includegraphics[width=.9\textwidth]{images/fmnist-vis.png}
-    \caption[TODO]{TODO} % TODO: Write caption
+    \caption[Five Samples from the Fashion-MNIST Dataset]{Five $28 \times 28$ samples from the Fashion-MNIST dataset with brightness levels from $0$ to $255$ before preprocessing. Correct labels are shown above.}
     \label{fig:fmnist-vis}
 \end{figure}
 
@@ -2013,11 +2037,14 @@ The results shown in Table~\ref{tab:noisy-xor-results} show that our \texttt{C T
 % - One-Hot Encoding: The features are transformed using OneHotEncoder with max\_categories=8.
 % - Train/Test Split: The data is split into training (80\%) and testing (20\%) sets, stratified by the target labels.
 % - Figure~\ref{fig:fmnist-vis}
+To prepare the data for the Tsetlin Machine, we first selected a subset consisting of the first 10000 samples from the dataset. The pixel values were normalized by dividing them by 16 and casting the results to unsigned 8-bit integers. Original resolution was down-sampled to $14 \times 14$, by selecting every second pixel in both dimensions. These scaled images were flattened into vectors consisting of 196 features. Since TM require binary input, these features were transformed using Scikit-learn's \texttt{OneHotEncoder} with the maximum categories limited to 8. This process reduced input features from $X: (10000, 784), [0,1,\dots,255]$ to $X: (10000, 1555), [0,1]$. Finally, the data was split into training ($80\%$) and testing ($20\%$) sets mantaining class proportions.
 
 \paragraph{Model Hyperparameters}
 % - less models due to training time
 % - reduced clauses to limit training time
 % - Table~\ref{tab:f-mnist-params}
+Due to the significant increase in training time, we limited evaluated models to Support Vector Classifier only which is a common approach for this problem. Table~\ref{tab:f-mnist-params} shows that we choose to keep parameters to default values.
+
 
 \begin{table}[!htbp]
 \centering
@@ -2026,7 +2053,8 @@ The results shown in Table~\ref{tab:noisy-xor-results} show that our \texttt{C T
     \textbf{Model} & \textbf{Modified Parameters} \\ \midrule \midrule
     \texttt{SVC} & \texttt{---} \\ \midrule \midrule
     \texttt{Green Tsetlin Classifier} & \texttt{---} \\ \midrule
-    \texttt{C Tsetlin Classifier} & \texttt{num\_clauses=100} \\ \bottomrule
+    \texttt{Green Tsetlin Sparse Classifier} & \texttt{---} \\ \midrule
+    \texttt{C Tsetlin Classifier} & \texttt{---} \\ \bottomrule
 \end{tabularx}
 \label{tab:f-mnist-params}
 \end{table}
@@ -2034,28 +2062,36 @@ The results shown in Table~\ref{tab:noisy-xor-results} show that our \texttt{C T
 \paragraph{Results and Comparison}
 % to many features for binary approach of Tsetlin Machines
 % shows limitation in scaling, where all times start becoming too long
+% our implementation starts taking much longer than green_tsetlin
 % Table~\ref{tab:f-mnist-results}
+The results presented in Table~\ref{tab:f-mnist-results} indicates that this dataset contains too many features for the binary approach of Tsetlin Machines to remain efficient. This reveals a limitation in scaling, where all processing times start becoming significantly longer. Both train and test accuracy are worse than SVC, but predictions time are still better in TM based models. Notably our implementation starts taking much longer times than \GreenTsetlinName in all areas. These findings highlight that current approach which significantly increases dimensionality leads to performance bottlenecks of Tsetlin Machines that are more pronounced in our current implementation compared to third-party libraries.
 
 \begin{table}[!htbp]
 \centering
 \caption[Fashion-MNIST Benchmark Results]{Benchmark results for the Fashion-MNIST dataset. Model sizes are estimated based on internal data structures for Tsetlin-based models and via \texttt{pickle} exports for standard models, requiring caution when comparing directly.}
 \begin{tabularx}{\textwidth}{@{}l c c c c c r@{}} \toprule
     \textbf{\makecell[l]{Model}} & \textbf{\makecell[l]{Train\\Acc.}} & \textbf{\makecell[l]{Test\\Acc.}} & \textbf{\makecell[l]{Train\\Time (s)}} & \textbf{\makecell[l]{Train Pred.\\Time (s)}} & \textbf{\makecell[l]{Test Pred.\\Time (s)}} & \textbf{\makecell[l]{Model\\Size (B)}} \\ \midrule \midrule
-    \texttt{\makecell[l]{SVC}} & \texttt{0.9329} & \texttt{0.8260} & \texttt{6.8504} & \texttt{28.4580} & \texttt{7.0930} & \texttt{66,885,009} \\ \midrule \midrule
-    \texttt{\makecell[l]{Green\\Tsetlin\\Classifier}} & \texttt{0.7917} & \texttt{0.7620} & \texttt{15.4220} & \texttt{0.0396} & \texttt{0.0117} & \texttt{3,124,040} \\ \midrule
-    \texttt{\makecell[l]{C Tsetlin\\Classifier}} & \texttt{0.7652} & \texttt{0.7530} & \texttt{21.5637} & \texttt{0.6618} & \texttt{0.1638} & \texttt{316,140} \\ \bottomrule
+    \texttt{\makecell[l]{SVC}} & \texttt{0.9329} & \texttt{0.8260} & \texttt{16.7218} & \texttt{38.1429} & \texttt{9.4721} & \texttt{66,885,009} \\ \midrule \midrule
+    \texttt{\makecell[l]{Green\\Tsetlin\\Classifier}} & \texttt{0.8053} & \texttt{0.7785} & \texttt{17.8907} & \texttt{0.0903} & \texttt{0.0259} & \texttt{3,124,040} \\ \midrule
+    \texttt{\makecell[l]{Green Tsetlin\\Sparse\\Classifier}} & \texttt{0.6094} & \texttt{0.5965} & \texttt{228.7705} & \texttt{0.0970} & \texttt{0.0268} & \texttt{822,040} \\ \midrule
+    \texttt{\makecell[l]{C Tsetlin\\Classifier}} & \texttt{0.7600} & \texttt{0.7320} & \texttt{345.7975} & \texttt{6.8067} & \texttt{1.6525} & \texttt{3,161,040} \\ \bottomrule
 \end{tabularx}
 \label{tab:f-mnist-results}
 \end{table}
 
-\section{Impact of parameters on Noisy-XOR}
+\section{Incremental Noisy-XOR learning}
 % - describe the importance on gridsearch
 % Plot showing train/test curves based on batch number: Figure~\ref{fig:noisy-xor-grid}
 % - TODO: Insert plot showing that 1000 clauses learn faster than 100 clauses
 % Figure~\ref{fig:noisy-xor-100-1} and Figure~\ref{fig:noisy-xor-1000-1}
-% - it may pose a problem in continual learning, where the balance between reteining old data and memeorizing new patterns is crucial (due to forgetting mechanism)
+% - it may pose a problem in incremental learning, where the balance between reteining old data and memeorizing new patterns is crucial (due to forgetting mechanism)
 % - TODO: Insert plot showing that increasing epochs per batch makes results WORSE due to forgetting implementing in feedback mechanism to prevent overfitting
 % Figure~\ref{fig:noisy-xor-1000-1} and Figure~\ref{fig:noisy-xor-1000-10}
+The performance of Tsetlin Machines is highly sensitive to not always intuitive hyperparameter selection, showing importance of performing an optimal configuration search with tools like Grid Search. In this section, we evaluate the learning behavior of our model across data batches to understand how some parameters impact incremental learning.
+
+The training and testing accuracy curves based on batch number are shown in Figure~\ref{fig:noisy-xor-grid}. A comparison between models with different clauses demonstrated that using 1000 clauses allows model to learn faster and achieve higher stability than using 100 clauses. It is illustrated in Figures~\ref{fig:noisy-xor-100-1}~and~\ref{fig:noisy-xor-1000-1}, which may seem unintuitive, but possible explanation may be that using more clauses allows some of them to ''catch up`` patterns faster.
+
+Experimental results shown in Figures~\ref{fig:noisy-xor-1000-1}~and~\ref{fig:noisy-xor-1000-10} indicate that increasing number of epochs per batch improves accuracy on the current batch, but this leads to the degradation of previously learned patterns making overall results worse. This drop in performance possibly is a consequence of the TM's internal forgetting mechanism during feedback processing. It posses a problem for incremental learning, where maintaining a balance between retaining knowledge and memorizing new patterns is crucial.
 
 \begin{figure}[!htbp]
     \centering
@@ -2063,7 +2099,7 @@ The results shown in Table~\ref{tab:noisy-xor-results} show that our \texttt{C T
     \begin{minipage}{0.49\textwidth}
         \centering
         \includegraphics[width=\textwidth]{images/noisy-xor-100-clauses-1-epoch-per-batch.png}
-        \caption{100 clauses, 1 epoch}
+        \caption{100 clauses, 1 epoch per batch}
         \label{fig:noisy-xor-100-1}
     \end{minipage}
     \hfill
@@ -2071,7 +2107,7 @@ The results shown in Table~\ref{tab:noisy-xor-results} show that our \texttt{C T
     \begin{minipage}{0.49\textwidth}
         \centering
         \includegraphics[width=\textwidth]{images/noisy-xor-1000-clauses-1-epoch-per-batch.png}
-        \caption{1000 clauses, 1 epoch}
+        \caption{1000 clauses, 1 epoch per batch}
         \label{fig:noisy-xor-1000-1}
     \end{minipage}
 
@@ -2081,7 +2117,7 @@ The results shown in Table~\ref{tab:noisy-xor-results} show that our \texttt{C T
     \begin{minipage}{0.49\textwidth}
         \centering
         \includegraphics[width=\textwidth]{images/noisy-xor-100-clauses-10-epoch-per-batch.png}
-        \caption{100 clauses, 10 epochs}
+        \caption{100 clauses, 10 epochs per batch}
         \label{fig:noisy-xor-100-10}
     \end{minipage}
     \hfill
@@ -2089,16 +2125,16 @@ The results shown in Table~\ref{tab:noisy-xor-results} show that our \texttt{C T
     \begin{minipage}{0.49\textwidth}
         \centering
         \includegraphics[width=\textwidth]{images/noisy-xor-1000-clauses-10-epoch-per-batch.png}
-        \caption{1000 clauses, 10 epochs}
+        \caption{1000 clauses, 10 epochs per batch}
         \label{fig:noisy-xor-1000-10}
     \end{minipage}
 
-    \caption[TODO]{Comparison of Noisy XOR performance.} % TODO: Write caption
+    \caption[Train and Test Accuracy per Batch on the Noisy-XOR]{Train accuracy (dash-dot line) and test accuracy (solid line) per batch for the Noisy-XOR dataset. The evaluation tracks progress over 80 batches of 10 samples each. The darker curves represent an 8-batch moving average.}
     \label{fig:noisy-xor-grid}
 \end{figure}
 
 
-\section{Noisy-XOR model on Raspberry Pi Pico}
+\section{Embedded Noisy-XOR benchmarks}
 % - we were able to run the core C library excluding third-party libraries on very simple development board for embedded devices Raspberry Pi Pico
 % - we have done benchmarks similar to the ones in Python on Noisy-XOR dataset, but we also attached results of tests where we used number of clauses to uneccessary big to handle performed on desktop cpu
 % - memory is proportional to number of clauses
@@ -2107,51 +2143,67 @@ The results shown in Table~\ref{tab:noisy-xor-results} show that our \texttt{C T
 % - hard memory benchmarking (overhead on Ubuntu)
 % TODO: Insert Table (Maybe bold best rows or sth)
 % Table~\ref{tab:noisy-xor-pi-pico}
+We demonstrated the capability of our implementation by running the minimal version of the core C library on a resource-constrained hardware. As a target platform we choose Raspberry Pi Pico development board due to its popularity and good software support, mainly Pico-SDK~\cite{pico-sdk}.
+
+We conducted benchmarks on the Noisy-XOR dataset similar to those performed in Python, but we used wider range of configurations. Selected tests were performed on desktop PC under Ubuntu OS where the models exceeded the hardware performance limits of the Raspberry Pi Pico or the resource statistics necessary for peak memory usage being unavailable. Results are shown in Table~\ref{tab:noisy-xor-pi-pico}, where the values marked with \textbf{(U)} were gathered from Ubuntu desktop environment.
+
+The evaluation, highlights several key behaviors:
+\begin{compactitem}
+    \item Tsetlin Machine memory usage (\textbf{TMM}) is directly proportional only to the number of clauses.
+    \item Training time (\textbf{TRT}) is proportional to the number of clauses, samples and epochs.
+    \item Evaluation time (\textbf{EVT}) is also proportional to the number of clauses and samples.
+    \item We observed that other hyperparameters, except mentioned above, have relatively small impact on performance when we use values close to established model defaults.
+    \item Accurately measuring peak memory usage (\textbf{PMU}) proved difficult in the Ubuntu environment due to significant overhead.
+\end{compactitem}
+
+As shown in the table, our implementation remains usable on embedded hardware. For example, both configuration \textbf{9} and \textbf{10} accuracy is closely to the best possible (due to 10\% added noise). Additionally as we can observe, we can either trade for using more epochs and less clauses for longer training time but shorter prediction times and smaller memory footprint, which should not matter if the model is pretrained (\textbf{10}) or we can use one epoch with more clauses for faster learning, but worse prediction time and model size in case we require more on-device training (\textbf{9}).
+
 
 \begin{table}[!htbp]
 \centering
 \scriptsize
-\setlength{\tabcolsep}{3pt}
+\setlength{\tabcolsep}{2.5pt} % Slightly reduced to accommodate the extra column
 \caption[Noisy-XOR Performance on Raspberry Pi Pico]{Noisy-XOR results on Raspberry Pi Pico and Ubuntu Desktop, testing how hyperparameters affect accuracy and execution time. Peak RAM usage was calculated on the Ubuntu Desktop environment and includes system overhead. Due to hardware performance limits, configurations exceeding the 1000 clauses were benchmarked only on Ubuntu (marked with \textbf{(U)} prefix).}
-\begin{tabular}{@{}r r r r r r r r r r r r r r r r r r r@{}} \toprule
-    \textbf{SAM} & \textbf{CLS} & \textbf{THR} & \textbf{LIT} & \textbf{CLU} & \textbf{MXS} & \textbf{MNS} & \textbf{BST} & \textbf{SNS} & \textbf{EPC} & \textbf{TRT} & \textbf{EVT} & \textbf{COP} & \textbf{TOP} & \textbf{ACC} & \textbf{TMM} & \textbf{DSM} & \textbf{PMU} \\ \midrule
-    1000 & 2 & 1000 & 16 & 1000 & 127 & -127 & 0 & 3.0 & 1 & 24.73 & 0.88 & 183 & 200 & 0.92 & 36.21 & 19.53 & \textbf{(U)}1728.0 \\
-    1000 & 2 & 1000 & 16 & 1000 & 127 & -127 & 0 & 3.0 & 2 & 41.30 & 0.87 & 183 & 200 & 0.92 & 36.21 & 19.53 & \textbf{(U)}1728.0 \\
-    1000 & 2 & 1000 & 16 & 1000 & 127 & -127 & 0 & 3.0 & 4 & 72.51 & 0.88 & 183 & 200 & 0.92 & 36.21 & 19.53 & \textbf{(U)}1728.0 \\
-    1000 & 2 & 1000 & 16 & 1000 & 63 & -63 & 0 & 3.0 & 1 & 24.73 & 0.88 & 183 & 200 & 0.92 & 36.21 & 19.53 & \textbf{(U)}1728.0 \\
-    1000 & 2 & 1000 & 16 & 1000 & 31 & -31 & 0 & 3.0 & 1 & 24.73 & 0.88 & 183 & 200 & 0.92 & 36.21 & 19.53 & \textbf{(U)}1728.0 \\
-    1000 & 2 & 1000 & 16 & 1000 & 15 & -15 & 0 & 3.0 & 1 & 24.51 & 0.86 & 183 & 200 & 0.92 & 36.21 & 19.53 & \textbf{(U)}1728.0 \\
-    1000 & 2 & 1000 & 16 & 500 & 127 & -127 & 0 & 3.0 & 1 & 12.92 & 0.40 & 183 & 200 & 0.92 & 18.15 & 19.53 & \textbf{(U)}1728.0 \\
-    1000 & 2 & 1000 & 16 & 250 & 127 & -127 & 0 & 3.0 & 1 & 6.79 & 0.21 & 183 & 200 & 0.92 & 9.12 & 19.53 & \textbf{(U)}1728.0 \\
-    1000 & 2 & 1000 & 16 & 125 & 127 & -127 & 0 & 3.0 & 1 & 3.54 & 0.10 & 183 & 200 & 0.92 & 4.6 & 19.53 & \textbf{(U)}1728.0 \\
-    1000 & 2 & 1000 & 16 & 64 & 127 & -127 & 0 & 3.0 & 10 & 11.93 & 0.05 & 183 & 200 & 0.92 & 2.39 & 19.53 & \textbf{(U)}1728.0 \\
-    1000 & 2 & 1000 & 16 & 1000 & 127 & -127 & 0 & 3.0 & 10 & 163.19 & 0.89 & 182 & 200 & 0.91 & 36.21 & 19.53 & \textbf{(U)}1728.0 \\
-    1000 & 2 & 500 & 16 & 1000 & 127 & -127 & 0 & 3.0 & 1 & 22.98 & 0.87 & 182 & 200 & 0.91 & 36.21 & 19.53 & \textbf{(U)}1728.0 \\
-    1000 & 2 & 1000 & 16 & 1000 & 127 & -127 & 1 & 3.0 & 1 & 24.53 & 0.82 & 181 & 200 & 0.91 & 36.21 & 19.53 & \textbf{(U)}1728.0 \\
-    1000 & 2 & 250 & 16 & 1000 & 127 & -127 & 0 & 3.0 & 1 & 22.58 & 0.89 & 180 & 200 & 0.9 & 36.21 & 19.53 & \textbf{(U)}1728.0 \\
-    1000 & 2 & 1000 & 16 & 1000 & 127 & -127 & 0 & 6.0 & 1 & 26.33 & 0.67 & 179 & 200 & 0.9 & 36.21 & 19.53 & \textbf{(U)}1728.0 \\
-    1000 & 2 & 32 & 16 & 1000 & 127 & -127 & 0 & 3.0 & 1 & 21.30 & 0.87 & 179 & 200 & 0.9 & 36.21 & 19.53 & \textbf{(U)}1728.0 \\
-    250 & 2 & 1000 & 16 & 1000 & 127 & -127 & 0 & 3.0 & 10 & 47.14 & 0.22 & 44 & 50 & 0.88 & 36.21 & 4.88 & \textbf{(U)}1728.0 \\
-    1000 & 2 & 125 & 16 & 1000 & 127 & -127 & 0 & 3.0 & 1 & 21.54 & 0.88 & 173 & 200 & 0.87 & 36.21 & 19.53 & \textbf{(U)}1728.0 \\
-    1000 & 2 & 64 & 16 & 1000 & 127 & -127 & 0 & 3.0 & 1 & 21.03 & 0.88 & 170 & 200 & 0.85 & 36.21 & 19.53 & \textbf{(U)}1728.0 \\
-    1000 & 2 & 32 & 16 & 500 & 127 & -127 & 0 & 3.0 & 1 & 10.87 & 0.44 & 168 & 200 & 0.84 & 18.15 & 19.53 & \textbf{(U)}1728.0 \\
-    1000 & 2 & 32 & 16 & 500 & 127 & -127 & 0 & 3.0 & 10 & 79.82 & 0.46 & 166 & 200 & 0.83 & 18.15 & 19.53 & \textbf{(U)}1728.0 \\
-    1000 & 2 & 1000 & 16 & 1000 & 7 & -7 & 0 & 3.0 & 1 & 27.17 & 0.81 & 165 & 200 & 0.83 & 36.21 & 19.53 & \textbf{(U)}1728.0 \\
-    1000 & 2 & 1000 & 16 & 64 & 127 & -127 & 0 & 3.0 & 1 & 1.85 & 0.05 & 162 & 200 & 0.81 & 2.39 & 19.53 & \textbf{(U)}1728.0 \\
-    1000 & 2 & 16 & 16 & 1000 & 127 & -127 & 0 & 3.0 & 1 & 21.27 & 0.85 & 161 & 200 & 0.81 & 36.21 & 19.53 & \textbf{(U)}1728.0 \\
-    500 & 2 & 1000 & 16 & 1000 & 127 & -127 & 0 & 3.0 & 1 & 36.21 & 0.44 & 80 & 100 & 0.8 & 36.21 & 9.77 & \textbf{(U)}1728.0 \\
-    1000 & 2 & 32 & 16 & 500 & 127 & -127 & 1 & 3.0 & 1 & 10.74 & 0.42 & 150 & 200 & 0.75 & 18.15 & 19.53 & \textbf{(U)}1728.0 \\
-    1000 & 2 & 1000 & 16 & 64 & 127 & -127 & 1 & 3.0 & 1 & 1.79 & 0.05 & 142 & 200 & 0.71 & 2.39 & 19.53 & \textbf{(U)}1728.0 \\
-    1000 & 2 & 1000 & 16 & 1000 & 127 & -127 & 0 & 1.5 & 1 & 30.84 & 1.15 & 124 & 200 & 0.62 & 36.21 & 19.53 & \textbf{(U)}1728.0 \\
-    250 & 2 & 1000 & 16 & 1000 & 127 & -127 & 0 & 3.0 & 1 & 7.21 & 0.22 & 27 & 50 & 0.54 & 36.21 & 4.88 & \textbf{(U)}1728.0 \\
-    1000 & 2 & 1000 & 16 & 1000 & 3 & -3 & 0 & 3.0 & 1 & 28.43 & 0.73 & 100 & 200 & 0.5 & 36.21 & 19.53 & \textbf{(U)}1728.0 \\
-    1000 & 2 & 1000 & 16 & 10000 & 127 & -127 & 0 & 3.0 & 1 & \textbf{(U)}1.16 & \textbf{(U)}0.11 & 172 & 200 & 0.86 & 361.45 & 19.53 & \textbf{(U)}2112.0 \\
-    1000 & 2 & 1000 & 16 & 100000 & 127 & -127 & 0 & 3.0 & 1 & \textbf{(U)}11.61 & \textbf{(U)}1.17 & 167 & 200 & 0.84 & 3613.4 & 19.53 & \textbf{(U)}5376.0 \\
-    1000 & 2 & 1000 & 16 & 200000 & 127 & -127 & 0 & 3.0 & 1 & \textbf{(U)}23.00 & \textbf{(U)}2.32 & 165 & 200 & 0.83 & 7226.68 & 19.53 & \textbf{(U)}8832.0 \\ \bottomrule
+\begin{tabular}{@{}r r r r r r r r r r r r r r r r r r r r@{}} \toprule
+    \textbf{N} & \textbf{SAM} & \textbf{CLS} & \textbf{THR} & \textbf{LIT} & \textbf{CLU} & \textbf{MXS} & \textbf{MNS} & \textbf{BST} & \textbf{SNS} & \textbf{EPC} & \textbf{TRT} & \textbf{EVT} & \textbf{COP} & \textbf{TOP} & \textbf{ACC} & \textbf{TMM} & \textbf{DSM} & \textbf{PMU} \\ \midrule
+    1 & 1000 & 2 & 1000 & 16 & 1000 & 127 & -127 & 0 & 3.0 & 1 & 24.73 & 0.88 & 183 & 200 & 0.92 & 36.21 & 19.53 & \textbf{(U)}1728.0 \\
+    2 & 1000 & 2 & 1000 & 16 & 1000 & 127 & -127 & 0 & 3.0 & 2 & 41.30 & 0.87 & 183 & 200 & 0.92 & 36.21 & 19.53 & \textbf{(U)}1728.0 \\
+    3 & 1000 & 2 & 1000 & 16 & 1000 & 127 & -127 & 0 & 3.0 & 4 & 72.51 & 0.88 & 183 & 200 & 0.92 & 36.21 & 19.53 & \textbf{(U)}1728.0 \\
+    4 & 1000 & 2 & 1000 & 16 & 1000 & 63 & -63 & 0 & 3.0 & 1 & 24.73 & 0.88 & 183 & 200 & 0.92 & 36.21 & 19.53 & \textbf{(U)}1728.0 \\
+    5 & 1000 & 2 & 1000 & 16 & 1000 & 31 & -31 & 0 & 3.0 & 1 & 24.73 & 0.88 & 183 & 200 & 0.92 & 36.21 & 19.53 & \textbf{(U)}1728.0 \\
+    6 & 1000 & 2 & 1000 & 16 & 1000 & 15 & -15 & 0 & 3.0 & 1 & 24.51 & 0.86 & 183 & 200 & 0.92 & 36.21 & 19.53 & \textbf{(U)}1728.0 \\
+    7 & 1000 & 2 & 1000 & 16 & 500 & 127 & -127 & 0 & 3.0 & 1 & 12.92 & 0.40 & 183 & 200 & 0.92 & 18.15 & 19.53 & \textbf{(U)}1728.0 \\
+    8 & 1000 & 2 & 1000 & 16 & 250 & 127 & -127 & 0 & 3.0 & 1 & 6.79 & 0.21 & 183 & 200 & 0.92 & 9.12 & 19.53 & \textbf{(U)}1728.0 \\
+    \textbf{9} & 1000 & 2 & 1000 & 16 & 125 & 127 & -127 & 0 & 3.0 & 1 & 3.54 & 0.10 & 183 & 200 & 0.92 & 4.6 & 19.53 & \textbf{(U)}1728.0 \\
+    \textbf{10} & 1000 & 2 & 1000 & 16 & 64 & 127 & -127 & 0 & 3.0 & 10 & 11.93 & 0.05 & 183 & 200 & 0.92 & 2.39 & 19.53 & \textbf{(U)}1728.0 \\
+    11 & 1000 & 2 & 1000 & 16 & 1000 & 127 & -127 & 0 & 3.0 & 10 & 163.19 & 0.89 & 182 & 200 & 0.91 & 36.21 & 19.53 & \textbf{(U)}1728.0 \\
+    12 & 1000 & 2 & 500 & 16 & 1000 & 127 & -127 & 0 & 3.0 & 1 & 22.98 & 0.87 & 182 & 200 & 0.91 & 36.21 & 19.53 & \textbf{(U)}1728.0 \\
+    13 & 1000 & 2 & 1000 & 16 & 1000 & 127 & -127 & 1 & 3.0 & 1 & 24.53 & 0.82 & 181 & 200 & 0.91 & 36.21 & 19.53 & \textbf{(U)}1728.0 \\
+    14 & 1000 & 2 & 250 & 16 & 1000 & 127 & -127 & 0 & 3.0 & 1 & 22.58 & 0.89 & 180 & 200 & 0.9 & 36.21 & 19.53 & \textbf{(U)}1728.0 \\
+    15 & 1000 & 2 & 1000 & 16 & 1000 & 127 & -127 & 0 & 6.0 & 1 & 26.33 & 0.67 & 179 & 200 & 0.9 & 36.21 & 19.53 & \textbf{(U)}1728.0 \\
+    16 & 1000 & 2 & 32 & 16 & 1000 & 127 & -127 & 0 & 3.0 & 1 & 21.30 & 0.87 & 179 & 200 & 0.9 & 36.21 & 19.53 & \textbf{(U)}1728.0 \\
+    17 & 250 & 2 & 1000 & 16 & 1000 & 127 & -127 & 0 & 3.0 & 10 & 47.14 & 0.22 & 44 & 50 & 0.88 & 36.21 & 4.88 & \textbf{(U)}1728.0 \\
+    18 & 1000 & 2 & 125 & 16 & 1000 & 127 & -127 & 0 & 3.0 & 1 & 21.54 & 0.88 & 173 & 200 & 0.87 & 36.21 & 19.53 & \textbf{(U)}1728.0 \\
+    19 & 1000 & 2 & 64 & 16 & 1000 & 127 & -127 & 0 & 3.0 & 1 & 21.03 & 0.88 & 170 & 200 & 0.85 & 36.21 & 19.53 & \textbf{(U)}1728.0 \\
+    20 & 1000 & 2 & 32 & 16 & 500 & 127 & -127 & 0 & 3.0 & 1 & 10.87 & 0.44 & 168 & 200 & 0.84 & 18.15 & 19.53 & \textbf{(U)}1728.0 \\
+    21 & 1000 & 2 & 32 & 16 & 500 & 127 & -127 & 0 & 3.0 & 10 & 79.82 & 0.46 & 166 & 200 & 0.83 & 18.15 & 19.53 & \textbf{(U)}1728.0 \\
+    22 & 1000 & 2 & 1000 & 16 & 1000 & 7 & -7 & 0 & 3.0 & 1 & 27.17 & 0.81 & 165 & 200 & 0.83 & 36.21 & 19.53 & \textbf{(U)}1728.0 \\
+    23 & 1000 & 2 & 1000 & 16 & 64 & 127 & -127 & 0 & 3.0 & 1 & 1.85 & 0.05 & 162 & 200 & 0.81 & 2.39 & 19.53 & \textbf{(U)}1728.0 \\
+    24 & 1000 & 2 & 16 & 16 & 1000 & 127 & -127 & 0 & 3.0 & 1 & 21.27 & 0.85 & 161 & 200 & 0.81 & 36.21 & 19.53 & \textbf{(U)}1728.0 \\
+    25 & 500 & 2 & 1000 & 16 & 1000 & 127 & -127 & 0 & 3.0 & 1 & 36.21 & 0.44 & 80 & 100 & 0.8 & 36.21 & 9.77 & \textbf{(U)}1728.0 \\
+    26 & 1000 & 2 & 32 & 16 & 500 & 127 & -127 & 1 & 3.0 & 1 & 10.74 & 0.42 & 150 & 200 & 0.75 & 18.15 & 19.53 & \textbf{(U)}1728.0 \\
+    27 & 1000 & 2 & 1000 & 16 & 64 & 127 & -127 & 1 & 3.0 & 1 & 1.79 & 0.05 & 142 & 200 & 0.71 & 2.39 & 19.53 & \textbf{(U)}1728.0 \\
+    28 & 1000 & 2 & 1000 & 16 & 1000 & 127 & -127 & 0 & 1.5 & 1 & 30.84 & 1.15 & 124 & 200 & 0.62 & 36.21 & 19.53 & \textbf{(U)}1728.0 \\
+    29 & 250 & 2 & 1000 & 16 & 1000 & 127 & -127 & 0 & 3.0 & 1 & 7.21 & 0.22 & 27 & 50 & 0.54 & 36.21 & 4.88 & \textbf{(U)}1728.0 \\
+    30 & 1000 & 2 & 1000 & 16 & 1000 & 3 & -3 & 0 & 3.0 & 1 & 28.43 & 0.73 & 100 & 200 & 0.5 & 36.21 & 19.53 & \textbf{(U)}1728.0 \\
+    31 & 1000 & 2 & 1000 & 16 & 10000 & 127 & -127 & 0 & 3.0 & 1 & \textbf{(U)}1.16 & \textbf{(U)}0.11 & 172 & 200 & 0.86 & 361.45 & 19.53 & \textbf{(U)}2112.0 \\
+    32 & 1000 & 2 & 1000 & 16 & 100000 & 127 & -127 & 0 & 3.0 & 1 & \textbf{(U)}11.61 & \textbf{(U)}1.17 & 167 & 200 & 0.84 & 3613.4 & 19.53 & \textbf{(U)}5376.0 \\
+    33 & 1000 & 2 & 1000 & 16 & 200000 & 127 & -127 & 0 & 3.0 & 1 & \textbf{(U)}23.00 & \textbf{(U)}2.32 & 165 & 200 & 0.83 & 7226.68 & 19.53 & \textbf{(U)}8832.0 \\ \bottomrule
 \end{tabular}
 \vspace{1ex}
 \begin{flushleft}
 \textbf{Legend:} 
+\textbf{N}:~Configuration Number,
 \textbf{SAM}:~Number of Samples, 
 \textbf{CLS}:~Number of Classes, 
 \textbf{THR}:~Threshold, 
@@ -2175,10 +2227,7 @@ The results shown in Table~\ref{tab:noisy-xor-results} show that our \texttt{C T
 \end{table}
 
 \section{Summary}
-% - initial results show potential and encurage further benchmarking and improvements
-% - TMs performance is strongly tied to hyperparaneters and especislly number of training epochs making it not possible to implement one-fit-all default hyperparamters, because of its continual learning and forgeting mechanism
-% - also it may pose a problem in continual learning, where the balance between reteining old data and memeorizing new patterns is crucial (due to forgetting mechanism)
-% - one challenge we ran into is that the green_tsetlin library uses several undocumented optimizations and parameter changes. (literal_budget, which is not described in research)
+The initial evaluation of our Tsetlin Machine implementations shows potential, especially for resource-limited environments dealing with not overly high-dimensional data. We observed the impact of hyperparameters, mainly number of clauses and training epochs, making it essential to tune them for each task. We observed the mechanism inside TM designed to prevent overfitting, creating a challenge in incremental learning, where the balance between retaining old knowledge and memorizing new patterns is crucial. Furthermore, benchmarking was complicated due to the \GreenTsetlinName library design, which includes some undocumented optimizations (e.g. \texttt{literal\_budget} parameter that is not properly described).
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
