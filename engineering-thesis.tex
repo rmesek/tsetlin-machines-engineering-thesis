@@ -154,8 +154,8 @@ dr hab.\ inż.\ Tomasz Szydło, prof.\ AGH}
 \tableofcontents
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\chapter{\ChapterTitleProjectVision}
-\label{sec:goals-vision}
+\chapter{Project goals and vision}
+\label{chap:goals-vision}
 
 % poniższą zawartość rodziału należy usunąć z finalnej wersji pracy.
 % \emph{Charakterystyka problemu, motywacja projektu (w tym przegląd istniejących rozwiązań prowadząca do uzasadnienia celu prac), wizja produktu i analiza zagrożeń.}
@@ -179,11 +179,11 @@ The Tsetlin Machine model serialization format is another major topic of this pr
 \section{Competitive solutions}
 According to the authors' knowledge, \GreenTsetlinName is the only production-ready implementation of the TM. It is primarily a Python library with a C++ backend. A trained model can then be exported into a C header file and used for inference.  
 This approach was found lacking in a number of ways;
-\begin{enumerate}
+\begin{compactenum}
     \item the exported model cannot be interpreted back to its previous form to perform modifications on it
     \item in particular, it makes training and fine-tuning the model impossible
     \item the model serialization is saved in a text format, which in this case allows inference without a separate interpreter, but otherwise means wasting a lot of storage space
-\end{enumerate}
+\end{compactenum}
 
 There are also numerous projects with far less mature implementations that were taken into consideration that did not classify for this reason. \cite{granmo2018tsetlinmachine, granmo2018tsetlinmachinec, granmo2020pytsetlinmachinecuda}
 
@@ -198,23 +198,23 @@ There are also numerous projects with far less mature implementations that were 
 \section{Thesis structure}
 This thesis is organized into several chapters that collectively describe the theoretical foundations, design decisions, implementation, and evaluation of the proposed work. \\
 
-\par Chapter 2 -- the theoretical background relevant to this thesis. It introduces the fundamental concepts, models, and prior work required to understand the problem domain and motivates the chosen approach. \\
+\par Chapter~\ref{chap:theoretical-background} -- the theoretical background relevant to this thesis. It introduces the fundamental concepts, models, and prior work required to understand the problem domain and motivates the chosen approach. \\
 
-\par Chapter 3 -- the functional scope of the system. It outlines the objectives, functional and non-functional requirements. \\
+\par Chapter~\ref{chap:functional-scope} -- the functional scope of the system. It outlines the objectives, functional and non-functional requirements. \\
 
-\par Chapter 4 -- selected realization aspects. This chapter focuses on key design and implementation decisions, including important architectural choices and algorithms. \\
+\par Chapter~\ref{chap:realization-aspects} -- selected realization aspects. This chapter focuses on key design and implementation decisions, including important architectural choices and algorithms. \\
 
-\par Chapter 5 -- the organization of the work. It explains the task division and tooling, providing insight into how the project was structured and executed. \\
+\par Chapter~\ref{chap:work-organization} -- the organization of the work. It explains the task division and tooling, providing insight into how the project was structured and executed. \\
 
-\par Chapter 6 -- the user documentation, detailing how the Tsetlin Machine execution engine is configured, operated, and extended. This chapter is intended to support practical use of the developed solution. \\
+\par Chapter~\ref{chap:technical-documentation} -- the user documentation, detailing how the Tsetlin Machine execution engine is configured, operated, and extended. This chapter is intended to support practical use of the developed solution. \\
 
-\par Chapter 7 -- the experimental setup and results. It describes the evaluation methodology, test scenarios, and measured outcomes used to assess performance and behavior. \\
+\par Chapter~\ref{chap:evaluation} -- the experimental setup and results. It describes the evaluation methodology, test scenarios, and measured outcomes used to assess performance and behavior. \\
 
-\par Chapter 8 -- the results of the work. It summarizes the contributions of the thesis and outlines potential directions for future research and development. \\
+\par Chapter~\ref{chap:results} -- the results of the work. It summarizes the contributions of the thesis and outlines potential directions for future research and development. \\
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\chapter{\ChapterTitleTheory}
-\label{sec:theoretical-background}
+\chapter{Theoretical background}
+\label{chap:theoretical-background}
 This chapter introduces the Tsetlin Machine, a method for pattern recognition based on propositional logic and game theory. We briefly examine the ideas developed in the original research~\cite{granmo2021tsetlinmachinegame, glimsdal2021coalescedmultioutputtsetlinmachines} that were necessary for our work, explaining how the model is designed from the ground up. Finally, we discuss scenarios where this approach has the potential to be a viable alternative to neural networks. For a more extensive introduction to Tsetlin Machines, refer to~\cite{granmo2022tsetlinmachinebookchap1, granmo2022tsetlinmachinebookchap2}.
 
 \section{Tsetlin Machine Overview}
@@ -421,8 +421,8 @@ In conclusion, the Tsetlin Machine is a logic-based alternative for pattern reco
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\chapter{\ChapterTitleScope}
-\label{sec:functional-scope}
+\chapter{Functional scope}
+\label{chap:functional-scope}
 
 % poniższą zawartość rodziału należy usunąć z finalnej wersji pracy.
 % \emph{Kontekst użytkowania produktu (aktorzy, współpracujące systemy) oraz specyfikacja wymagań funkcjonalnych i niefunkcjonalnych.}
@@ -471,8 +471,8 @@ As with any software project, testing enhances the development process and maint
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\chapter{\ChapterTitleRealizationAspects}
-\label{sec:realization-aspects}
+\chapter{Selected realization aspects}
+\label{chap:realization-aspects}
 
 % poniższą zawartość rodziału należy usunąć z finalnej wersji pracy.
 % \emph{Przyjęte założenia, struktura i zasada działania systemu, wykorzystane rozwiązania technologiczne wraz z uzasadnieniem ich wyboru, istotne mechanizmy i zastosowane algorytmy.}
@@ -781,19 +781,19 @@ Coalesced TM is the variant most closely resembling the original TM out of those
 
 \subsection{Training}
 The training loop consists of three distinct steps repeated for each datapoint.
-\begin{enumerate}
+\begin{compactenum}
     \item Calculate clause output
     \item Sum votes
     \item Calculate and apply feedback
-\end{enumerate}
+\end{compactenum}
 
 \subsubsection{Calculate clause output}
 The current states of Tsetlin Automata in each clause are used to determine whether the clause activates - 1, or not - 0. This output is temporarily stored in an internal array. \\
 For this step specifically, a clause is active if either of two conditions is met:
-\begin{itemize}
+\begin{compactitem}
     \item \textbf{the clause is empty} - no Tsetlin Automaton is active
     \item for the training input datapoint, all bits corresponding to active positive Tsetlin Automata of this clause are set and all bits corresponding to active negative Tsetlin Automata of this clause are unset
-\end{itemize}
+\end{compactitem}
 
 \subsubsection{Sum votes}
 This step uses the information calculated in the previous point whether clauses are active or not. Active clauses vote for all possible classes with trained weights. Specifically, clause $i$ votes for class $j$ with trained weight $w_{i,j}$. $w_{i,j}$ can be positive or negative.\\
@@ -802,10 +802,10 @@ As all active clauses vote, each class accumulates their votes. The sum of votes
 \subsubsection{Calculate and apply feedback}
 As the sum of votes indicates whether a class should be chosen or not, that prediction can be compared to the actual datapoint label. Based on this information, a suitable feedback to be applied to Tsetlin Automata. \\
 For each datapoint two classes are specified for feedback
-\begin{enumerate}
+\begin{compactenum}
     \item positive - one of the classes, or the one class, specified by label
     \item negative - one of the classes not specified by label
-\end{enumerate}
+\end{compactenum}
 Both have a chance to trigger feedback to all clauses. \\
 For the positive class, the chance is inversely proportional to the clipped sum of votes it received. That means the model applies feedback more often the \textit{less} sure it is the class is correct. Although unintuitive at first, this practice is used to avoid overfitting. \\
 For the negative class, the chance is proportional to the clipped sum of votes it received. This means the model applies feedback more often the more sure it is the class is incorrect. \\
@@ -850,11 +850,11 @@ Nothing happens if the clause if inactive and would have voted incorrectly.
 
 \subsection{Inference}
 Inference on a datapoint looks very similar to training, with few key differences.
-\begin{enumerate}
+\begin{compactenum}
     \item Calculate clause output
     \item Sum votes
     \item Apply output activation
-\end{enumerate}
+\end{compactenum}
 
 \subsubsection{Calculate clause output}
 Unlike in training, an empty clause -- with no active Tsetlin Automata -- is inactive. Otherwise it does the same thing -- calculates which clauses are active with a given input.
@@ -916,9 +916,9 @@ A clause is represented as a simple array of Tsetlin Automata states. For the sa
 \subsection{Model serialization format}
 
 The model state is represented as:
-\begin{itemize}
+\begin{compactitem}
     \item Parameters:
-    \begin{itemize}
+    \begin{compactitem}
         \item number of classes
         \item threshold
         \item number of literals
@@ -927,11 +927,11 @@ The model state is represented as:
         \item minimum state
         \item boost true positive feedback
         \item learning sensitivity (s)
-    \end{itemize}
+    \end{compactitem}
     \item clause weights
     \item clauses - Tsetlin Automata states
     \item (optional) names of literals
-\end{itemize}
+\end{compactitem}
 This is described in FlatBuffers format in the listing~\ref{lst:dense-schema}
 
 \begin{lstlisting}[caption={[Coalesced TM FlatBuffers serialization format]Coalesced TM FlatBuffers serialization format},label=lst:dense-schema]
@@ -1166,8 +1166,8 @@ This chapter furthermore touches on the actual, low-level implementation of TM t
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\chapter{\ChapterTitleWorkOrganization}
-\label{sec:work-organization}
+\chapter{Work organization}
+\label{chap:work-organization}
 
 % poniższą zawartość rodziału należy usunąć z finalnej wersji pracy.
 % \emph{Struktura zespołu (role poszczególnych osób), krótki opis i uzasadnienie przyjętej metodyki i/lub kolejności prac, planowane i zrealizowane etapy prac ze wskazaniem udziału poszczególnych członków zespołu, wykorzystane praktyki i narzędzia w zarządzaniu projektem.}
@@ -1182,22 +1182,22 @@ This project combines elements of both research and development. Aside from impl
 The two team members worked on parts of the project based on their previous experience, specializations, and interests. The other person then reviewed it to the best of their ability and knowledge.
 
 \paragraph{Igor Sikora}
-\begin{itemize}
+\begin{compactitem}
     \item C implementation of the TM execution engine
     \item research into possible optimizations and their implementation
     \item correctness tests
     \item code and user documentation
-\end{itemize}
+\end{compactitem}
 
 \paragraph{Robert Mesek}
-\begin{itemize}
+\begin{compactitem}
     \item Python bindings of \LibraryName
     \item integration with \GreenTsetlinName
     \item benchmarks, efficiency tests
     \item Jupyter Notebook examples
     \item build system with CMake
     \item integration with FlatBuffers for model serialization and deserialization
-\end{itemize}
+\end{compactitem}
 
 Of course many aspects of the project had to be realized together, such as solving architectural issues and making sure the TM execution engine implementation is correct with the theoretical work~\cite{granmo2021tsetlinmachinegame}.
 
@@ -1227,8 +1227,8 @@ Overleaf was the tool used for writing and editing the \LaTeX{} report. Using a 
 % \section{Used methodologies}
   
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\chapter{\ChapterTitleDocumentation}
-\label{sec:documentation-usage}
+\chapter{Technical documentation}
+\label{chap:technical-documentation}
 
 The \LibraryName library is a low-level C implementation of the TM. It is optimized for speed and size, making it suitable for environments with limited resources. It comes with a model serialization format designed to minimize model size and a way to convert existing \GreenTsetlinName models to this format. It is also possible to use \LibraryName conveniently from Python with the same syntax as many popular Machine Learning libraries thanks to its python bindings.
 
@@ -1473,11 +1473,11 @@ if (tm == NULL) {
 The three main components of the \LibraryName library are the \emph{TsetlinMachine}, \emph{SparseTsetlinMachine}, and \emph{StatelessTsetlinMachine} classes.
 
 \paragraph{Data layout conventions used across the API:}
-\begin{itemize}
+\begin{compactitem}
     \item X: flat array of shape (rows, num\_literals) of uint8\_t (each value 0 or 1)
     \item y: flat array of shape (rows, y\_size) with element size y\_element\_size
     \item y\_pred: flat array of shape (rows, num\_classes) with element size y\_element\_size
-\end{itemize}
+\end{compactitem}
 
 \subsection{TsetlinMachine}
 The basic TM variant
@@ -1539,10 +1539,10 @@ The basic TM variant
 \subsubsection{Advanced usage}
 
 This implementation is highly versatile; both input and output may come in any shape. The only limiting factors are that the input is binary and it is a classification architecture (as opposed to regression). There are two presets available:
-\begin{enumerate}
+\begin{compactenum}
     \item class\_idx - the output is a 32-bit unsigned integer signifying the index of chosen class
     \item bin\_vector - the output is an array of 8-bit binary values, where 1 signifies a chosen class
-\end{enumerate}
+\end{compactenum}
 Custom formats can also be freely implemented. All that is required is to write the implementation based on the functions below and then set them as callbacks with the corresponding \texttt{tm\_set\_[...]}
 
 % \begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X}
@@ -1768,19 +1768,19 @@ cmake --build build
 \end{lstlisting}
 
 \subsection{Build requirements}
-\begin{itemize}
+\begin{compactitem}
     \item CMake 3.23+
     \item GCC-13 Compiler recommended
     \item uv Python manager (optional, for green\_tsetlin integration and jupyter notebooks examples)
-\end{itemize}
+\end{compactitem}
 
 \subsection{Build Options}
-\begin{itemize}
+\begin{compactitem}
     \item \texttt{-DBUILD\_FLATCC=ON/OFF} : Build FlatCC from third\_party
     \item \texttt{-DBUILD\_PYTHON=ON/OFF} : Enable building Python bindings
     \item \texttt{-DBUILD\_EXAMPLES=ON/OFF} : Enable building examples
     \item \texttt{-DBUILD\_TESTING=ON/OFF} : Enable building third\_party tests
-\end{itemize}
+\end{compactitem}
 
 
 \section{Installation}
@@ -1793,7 +1793,7 @@ cmake --install build --component tsetlin_machine_c
 
 \subsection{Install with Python}
 \begin{lstlisting}[style=cli]
-uv sync
+uv sync --extra green-tsetlin
 \end{lstlisting}
 
 \section{Testing and examples}
@@ -1818,7 +1818,7 @@ uv run python examples/mnist/python/get_pretrained.py
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \chapter{Evaluation}
-\label{sec:evaluation}
+\label{chap:evaluation}
 This chapter evaluates the performance of our Tsetlin Machine implementation. To ensure comparability with existing research, we focus on standard datasets used in the original studies~\cite{granmo2021tsetlinmachinegame} (e.g. the Noisy-XOR problem). In addition, we provide a baseline comparison with established machine learning models from the Scikit-learn~\cite{scikit-learn} library.
 
 \paragraph{Environment}
@@ -2175,8 +2175,8 @@ The initial evaluation of our Tsetlin Machine implementations shows potential, e
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\chapter{\ChapterTitleResults}
-\label{sec:results}
+\chapter{Project results}
+\label{chap:results}
 
 % poniższą zawartość rodziału należy usunąć z finalnej wersji pracy.
 % \emph{Wskazanie wyników projektu (co konkretnie udało się uzyskać: oprogramowanie, dokumentacja, raporty z testów/wdrożenia, itd.), prezentacja wyników i ocena ich użyteczności (jak zostało to zweryfikowane --- np.\ wnioski klienta/użytkownika, zrealizowane testy wydajnościowe, itd.), istniejące ograniczenia i propozycje dalszych prac.}
