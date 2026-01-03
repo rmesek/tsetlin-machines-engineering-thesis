@@ -1,0 +1,315 @@
+\chapter{Technical Documentation}
+\label{chap:technical-documentation}
+
+The \LibraryName library is a low-level C implementation of the TM.
+It is optimized for speed and size, making it suitable for environments with limited resources.
+It comes with a model serialization format designed to minimize model size and a way to convert existing \GreenTsetlinName models to this format.
+It is also possible to use \LibraryName conveniently from Python with the same syntax as many popular Machine Learning libraries thanks to its python bindings.
+
+\section{Case Study}
+For a quick start with \LibraryName, a usage example is provided -- where initial training is conducted in Python, then model is transferred over to edge device where it can be used for inference and incremental training.
+
+Listing ~\ref{lst:example-py-data} shows data preparation steps.
+
+\begin{listing}[!htbp]
+    \caption{Example Python data preparation steps\label{lst:example-py-data}}
+    \begin{minted}{python}
+import numpy as np
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.datasets import load_digits
+from sklearn.preprocessing import OneHotEncoder
+from sklearn.metrics import accuracy_score
+from tsetlin_machine_py.c_tsetlin_clf import CTsetlinClassifier
+
+# Generate the dataset with specified parameters
+digits = load_digits()
+X_data, y_data = digits.data, digits.target
+
+# Convert the dataset to binary classification
+X_data = OneHotEncoder(sparse_output=False).fit_transform(X_data)
+
+# Split the dataset into training and testing sets
+X_train_np, X_test_np, y_train, y_test = train_test_split(
+    X_data, y_data, test_size=0.2, stratify=y_data, random_state=42
+)
+
+# Convert NumPy arrays to Pandas DataFrames
+feature_names = [f"feature_{i}" for i in range(X_data.shape[1])]
+X_train = pd.DataFrame(X_train_np, columns=feature_names)
+X_test = pd.DataFrame(X_test_np, columns=feature_names)
+    \end{minted}
+\end{listing}
+\FloatBarrier
+
+Listing ~\ref{lst:example-py-fit} shows the fitting of the model. The model is initialized with default parameters.
+
+\begin{listing}[!htbp]
+    \caption{Example Python model fitting\label{lst:example-py-fit}}
+    \begin{minted}{python}
+# Fit the model
+model = CTsetlinClassifier(random_state=42)
+model.fit(X_train, y_train)
+    \end{minted}
+\end{listing}
+\FloatBarrier
+
+Listing ~\ref{lst:example-py-eval} shows the evaluation of the model, as an optional step.
+
+\begin{listing}[!htbp]
+    \caption{Example Python model evaluation\label{lst:example-py-eval}}
+    \begin{minted}{python}
+# Predict on the test set
+y_test_pred = model.predict(X_test)
+
+# Calculate Accuracy
+test_accuracy = accuracy_score(y_test, y_test_pred)
+print(test_accuracy)
+    \end{minted}
+\end{listing}
+\FloatBarrier
+
+Listing ~\ref{lst:example-py-save} shows the export of the model to FlatBuffers format.
+
+\begin{listing}[!htbp]
+    \caption{Example Python model export to FlatBuffers format\label{lst:example-py-save}}
+    \begin{minted}{python}
+# Save the model to FlatBuffers format
+model.save_model("path/to/file")
+    \end{minted}
+\end{listing}
+\FloatBarrier
+
+Listing ~\ref{lst:example-c-load} shows the import of the model in C.
+
+\begin{listing}[!htbp]
+    \caption{Example C model import\label{lst:example-c-load}}
+    \begin{minted}{c}
+#include <stdint.h>
+#include <stdlib.h>
+#include "tsetlin_machine.h"
+
+uint32_t y_size = 1;
+uint32_t y_element_size = sizeof(int32_t);
+// Load in model
+struct TsetlinMachine *tm = tm_load_fbs("path/to/file", y_size, y_element_size);
+    \end{minted}
+\end{listing}
+\FloatBarrier
+
+Listing ~\ref{lst:example-c-data} outlines the general steps to load data in C.
+
+\begin{listing}[!htbp]
+    \caption{Example C data loading\label{lst:example-c-data}}
+    \begin{minted}{c}
+// Load in data
+uint32_t rows = 70000;
+uint32_t cols = 784;
+uint8_t *x_data = malloc(rows * cols * sizeof(uint8_t));
+int32_t *y_data = malloc(rows * sizeof(int32_t));
+if (x_data == NULL || y_data == NULL) {
+    fprintf(stderr, "Failed to allocate memory for x_data or y_data\n");
+    return 1;
+}
+printf("Loading MNIST data\n");
+load_mnist_data(x_data, y_data);  // helper function to load data
+
+uint8_t *x_train = x_data;
+int32_t *y_train = y_data;
+uint8_t *x_test = x_data + 60000 * cols;
+int32_t *y_test = y_data + 60000;
+    \end{minted}
+\end{listing}
+\FloatBarrier
+
+Listing ~\ref{lst:example-c-fit} shows the fitting of the model in C. The same method can be used to incrementally train the model, for example on each new datapoint.
+
+\begin{listing}[!htbp]
+    \caption{Example C model fitting\label{lst:example-c-fit}}
+    \begin{minted}{c}
+// Train model on 1000 train rows for 1 epoch
+tm_train(tm, x_train, y_train, 1000, 1);
+    \end{minted}
+\end{listing}
+\FloatBarrier
+
+Listing ~\ref{lst:example-c-eval} shows the evaluation of the model in C, as an optional step.
+
+\begin{listing}[!htbp]
+    \caption{Example C model evaluation\label{lst:example-c-eval}}
+    \begin{minted}{c}
+// Evaluate model on 1000 test rows
+tm_evaluate(tm, x_test, y_test, 1000);
+    \end{minted}
+\end{listing}
+\FloatBarrier
+
+In C used structures have to be manually deallocated. Listing ~\ref{lst:example-c-free} shows this step.
+
+\begin{listing}[!htbp]
+    \caption{Example C deallocation\label{lst:example-c-free}}
+    \begin{minted}{c}
+// Clean up
+tm_free(tm);
+free(x_data);
+free(y_data);
+    \end{minted}
+\end{listing}
+\FloatBarrier
+
+Alternatively, a model instance can be created directly from C, instead of loading an existing model. Listing ~\ref{lst:example-c-init} shows such an example.
+
+\begin{listing}[!htbp]
+    \caption{Example C model initialization\label{lst:example-c-init}}
+    \begin{minted}{c}
+srand(42);
+// Set TsetlinMachine parameters
+uint32_t num_classes = 10;
+uint32_t threshold = 1200;
+uint32_t num_literals = 784;
+uint32_t num_clauses = 1000;
+int8_t max_state = 127;
+int8_t min_state = -127;
+uint8_t boost_true_positive_feedback = 1;
+uint32_t y_size = 1;
+uint32_t y_element_size = sizeof(int32_t);
+float s = 20.0f;
+uint32_t seed = 42;
+struct TsetlinMachine *tm = tm_create(num_classes, threshold, num_literals, num_clauses,
+    max_state, min_state, boost_true_positive_feedback, y_size, y_element_size, s, seed);
+if (tm == NULL) {
+    perror("tm_load failed");
+    return 1;
+}
+    \end{minted}
+\end{listing}
+\FloatBarrier
+
+\section{API}
+The three main components of the \LibraryName library are the \emph{TsetlinMachine}, \emph{SparseTsetlinMachine}, and \emph{StatelessTsetlinMachine} classes.
+
+\paragraph{Data layout conventions used across the API:}
+\begin{compactitem}
+    \item X: flat array of shape (rows, num\_literals) of uint8\_t (each value 0 or 1)
+    \item y: flat array of shape (rows, y\_size) with element size y\_element\_size
+    \item y\_pred: flat array of shape (rows, num\_classes) with element size y\_element\_size
+\end{compactitem}
+
+\subsection{TsetlinMachine}
+The basic TM variant
+
+\begin{tabularx}{\textwidth}{@{}l L@{}}
+\textbf{Parameters:} &  \\ 
+\texttt{num\_classes} & Number of classes to predict. \\
+\texttt{threshold} & Threshold for clause votes. \\
+\texttt{num\_literals} & Number of literals (features) in the input data. \\
+\texttt{num\_clauses} & Number of clauses in the TM. \\
+\texttt{max\_state} & Maximum automaton state value. \\
+\texttt{min\_state} & Minimum automaton state value. \\
+\texttt{boost\_true\_positive\_feedback} & Whether to boost true positive feedback (0/1). \\
+\texttt{y\_size} & Size of the output vector (e.g. 1 for single-label classification). \\
+\texttt{y\_element\_size} & Size of each output element (in bytes). \\
+\texttt{s} & Sensitivity / learning parameter ($> 1.0$). \\
+\texttt{seed} & Random seed for reproducibility. \\ 
+\end{tabularx}
+
+\subsubsection{Advanced Usage}
+
+This implementation is highly versatile; both input and output may come in any shape. The only limiting factors are that the input is binary and it is a classification architecture (as opposed to regression).
+There are two presets available:
+\begin{compactenum}
+    \item class\_idx - the output is a 32-bit unsigned integer signifying the index of chosen class
+    \item bin\_vector - the output is an array of 8-bit binary values, where 1 signifies a chosen class
+\end{compactenum}
+Custom formats can also be freely implemented. All that is required is to write the implementation based on the functions below and then set them as callbacks with the corresponding \texttt{tm\_set\_[...]}
+
+\subsection{SparseTsetlinMachine}
+A TM variant utilizing sparse memory layout. Its usage is very much symmetrical to the vanilla \texttt{TsetlinMachine}.
+
+\subsubsection{Advanced Usage}
+Similarly, custom formats can also be freely implemented. All that is required is to write the implementation based on the functions below and then set them as callbacks with the corresponding \texttt{stm\_set\_[...]}
+
+\subsection{StatelessTsetlinMachine}
+An inference-only TM variant utilizing sparse memory layout optimized for small size and inference speed.
+
+\subsubsection{Advanced Usage}
+Similarly, custom formats can also be freely implemented. All that is required is to write the implementation based on the functions below and then set them as callbacks with the corresponding \texttt{sltm\_set\_[...]} 
+
+\section{Build}
+The build is automated with CMake.
+
+\begin{listing}[!htbp]
+    \caption{Project build commands\label{lst:build-commands}}
+    \begin{minted}{console}
+cmake -B build
+cmake --build build
+    \end{minted}
+\end{listing}
+\FloatBarrier
+
+\subsection{Build Requirements}
+\begin{compactitem}
+    \item \texttt{CMake 3.23+}
+    \item \texttt{GCC-13} Compiler recommended
+    \item \texttt{uv} Python manager (optional, for green\_tsetlin integration and Jupyter Notebooks examples)
+\end{compactitem}
+
+\subsection{Build Options}
+\begin{compactitem}
+    \item \texttt{-DBUILD\_FLATCC=ON/OFF}: Build FlatCC from third\_party
+    \item \texttt{-DBUILD\_PYTHON=ON/OFF}: Enable building Python bindings
+    \item \texttt{-DBUILD\_EXAMPLES=ON/OFF}: Enable building examples
+    \item \texttt{-DBUILD\_TESTING=ON/OFF}: Enable building third\_party tests
+\end{compactitem}
+
+\section{Installation}
+To build the library into a shared object the following commands can be run.
+
+\begin{listing}[!htbp]
+    \caption{Library installation commands\label{lst:install-commands}}
+    \begin{minted}{console}
+cmake -B build -DCMAKE_INSTALL_PREFIX=install -DBUILD_SHARED_LIBS=ON
+cmake --build build
+cmake --install build --component tsetlin_machine_c
+    \end{minted}
+\end{listing}
+\FloatBarrier
+
+\subsection{Install with Python}
+
+\begin{listing}[!htbp]
+    \caption{Python environment synchronization\label{lst:python-sync}}
+    \begin{minted}{console}
+uv sync --extra green-tsetlin
+    \end{minted}
+\end{listing}
+\FloatBarrier
+
+\section{Testing and Examples}
+To run accuracy tests, the following commands can be run.
+
+\begin{listing}[!htbp]
+    \caption{Running accuracy tests\label{lst:run-tests}}
+    \begin{minted}{console}
+cmake -B build
+cmake --build build
+./build/tests/test_runner
+    \end{minted}
+\end{listing}
+\FloatBarrier
+
+Examples can be run as so:
+
+\begin{listing}[!htbp]
+    \caption{Running MNIST examples\label{lst:run-examples}}
+    \begin{minted}{console}
+uv sync
+uv run python examples/mnist/python/get_data.py
+./build/examples/mnist/mnist_training
+uv sync --extra green-tsetlin
+uv run python examples/mnist/python/get_pretrained.py
+./build/examples/mnist/mnist_pretrained_inference
+./build/examples/mnist/mnist_model_size
+    \end{minted}
+\end{listing}
+\FloatBarrier

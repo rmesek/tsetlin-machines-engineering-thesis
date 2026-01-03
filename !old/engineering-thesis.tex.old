@@ -1397,10 +1397,10 @@ Listing ~\ref{lst:example-c-load} shows the import of the model in C.
 
 uint32_t y_size = 1;
 uint32_t y_element_size = sizeof(int32_t);
-
 // Load in model
 struct TsetlinMachine *tm = tm_load_fbs("path/to/file", y_size, y_element_size);
 \end{lstlisting}
+
 
 Listing ~\ref{lst:example-c-data} outlines the general steps to load data in C.
 \begin{lstlisting}[language=C,caption={[Example C data loading]Example C data loading},label=lst:example-c-data]
@@ -1468,7 +1468,7 @@ if (tm == NULL) {
 \end{lstlisting}
 
 
-
+\clearpage
 \section{API}
 The three main components of the \LibraryName library are the \emph{TsetlinMachine}, \emph{SparseTsetlinMachine}, and \emph{StatelessTsetlinMachine} classes.
 
@@ -1782,7 +1782,7 @@ cmake --build build
     \item \texttt{-DBUILD\_TESTING=ON/OFF} : Enable building third\_party tests
 \end{compactitem}
 
-
+\clearpage
 \section{Installation}
 To build the library into a shared object the following commands can be run.
 \begin{lstlisting}[style=cli]
@@ -1837,6 +1837,7 @@ The default hyperparameters established during the development of our \texttt{C 
 \begin{tabularx}{\columnwidth}{@{}l L@{}} \toprule
     \textbf{Model} & \textbf{Default Parameters} \\ \midrule \midrule
     \texttt{C Tsetlin Classifier} & \texttt{threshold=1000, num\_clauses=1000, max\_state=127, min\_state=-127, boost\_true\_positive\_feedback=False, s=3.0, epochs=10} \\ \midrule
+    \texttt{C Tsetlin Sparse Classifier	} & \texttt{threshold=1000, num\_clauses=1000, max\_state=127, min\_state=-127, boost\_true\_positive\_feedback=False, s=3.0, epochs=10} \\ \midrule
     \texttt{Green Tsetlin Classifier} & \texttt{threshold=1000, n\_clauses=1000, boost\_true\_positives=False, s=3.0, n\_epochs=10, literal\_budget=None} \\ \midrule
     \texttt{Green Tsetlin Sparse Classifier} & \texttt{threshold=1000, n\_clauses=1000, boost\_true\_positives=False, s=3.0, n\_epochs=10, literal\_budget=None, dynamic\_AL=True, lower\_ta\_threshold=-40, active\_literals\_size=100, clause\_size=50} \\ \bottomrule
 \end{tabularx}
@@ -1882,7 +1883,9 @@ We aimed to evaluate the base models using the default parameters while tuning s
     \texttt{Green Tsetlin Classifier} & \texttt{---} \\ \midrule
     \texttt{Green Tsetlin Sparse Classifier} & \texttt{---} \\ \midrule
     \texttt{C Tsetlin Classifier} & \texttt{---} \\ \midrule
-    \texttt{GridSearch C Tsetlin} & \texttt{boost\_true\_positive\_feedback: [\textbf{False}, True], num\_clauses: [\textbf{64}, 125, 500]} \\ \bottomrule
+    \texttt{GridSearch C Tsetlin} & \texttt{boost\_true\_positive\_feedback: [\textbf{False}, True], num\_clauses: [\textbf{64}, 125, 500]} \\ \midrule
+    \texttt{C Tsetlin Sparse Classifier} & \texttt{---} \\ \midrule
+    \texttt{GridSearch C Tsetlin Sparse} & \texttt{boost\_true\_positive\_feedback: [\textbf{False}, True], num\_clauses: [\textbf{64}, 125, 500]} \\ \bottomrule
 \end{tabularx}
 \label{tab:noisy-xor-params}
 \end{table}
@@ -1892,6 +1895,10 @@ The results in Table~\ref{tab:noisy-xor-results} demonstrate that our \texttt{C 
 
 \begin{table}[!htbp]
 \centering
+\setlength{\tabcolsep}{4pt}
+\renewcommand{\arraystretch}{0.85}
+\setlength{\aboverulesep}{2pt}
+\setlength{\belowrulesep}{2pt}
 \caption[Noisy-XOR Benchmark Results]{Benchmark results for the Noisy-XOR dataset. Model sizes are estimated based on internal data structures for Tsetlin-based models and via \texttt{pickle} exports for standard models, requiring caution when comparing directly.}
 \begin{tabularx}{\textwidth}{@{}l c c c c c r@{}} \toprule
     \textbf{\makecell[l]{Model}} & \textbf{\makecell[l]{Train\\Acc.}} & \textbf{\makecell[l]{Test\\Acc.}} & \textbf{\makecell[l]{Train\\Time (s)}} & \textbf{\makecell[l]{Train Pred.\\Time (s)}} & \textbf{\makecell[l]{Test Pred.\\Time (s)}} & \textbf{\makecell[l]{Model\\Size (B)}} \\ \midrule \midrule
@@ -1907,10 +1914,12 @@ The results in Table~\ref{tab:noisy-xor-results} demonstrate that our \texttt{C 
     \texttt{\makecell[l]{LightGBM}} & \texttt{0.9850} & \texttt{0.8950} & \texttt{0.0277} & \texttt{0.0024} & \texttt{0.0011} & \texttt{350,232} \\ \midrule
     \texttt{\makecell[l]{GridSearch\\Random Forest}} & \texttt{0.9200} & \texttt{0.9150} & \texttt{7.1572} & \texttt{0.0036} & \texttt{0.0023} & \texttt{622,791} \\ \midrule
     \texttt{\makecell[l]{GridSearch\\MLP Classifier}} & \texttt{0.9962} & \texttt{0.8500} & \texttt{12.6468} & \texttt{0.0014} & \texttt{0.0008} & \texttt{39,978} \\ \midrule \midrule
-    \texttt{\makecell[l]{Green\\Tsetlin\\Classifier}} & \texttt{0.8925} & \texttt{0.9300} & \texttt{0.4354} & \texttt{0.0061} & \texttt{0.0021} & \texttt{38,008} \\ \midrule
-    \texttt{\makecell[l]{Green Tsetlin\\Sparse\\Classifier}} & \texttt{0.8925} & \texttt{0.9300} & \texttt{2.7727} & \texttt{0.0050} & \texttt{0.0017} & \texttt{807,608} \\ \midrule
+    \texttt{\makecell[l]{Green Tsetlin\\Classifier}} & \texttt{0.8925} & \texttt{0.9300} & \texttt{0.4354} & \texttt{0.0061} & \texttt{0.0021} & \texttt{38,008} \\ \midrule
+    \texttt{\makecell[l]{Green Tsetlin\\Sparse Classifier}} & \texttt{0.8925} & \texttt{0.9300} & \texttt{2.7727} & \texttt{0.0050} & \texttt{0.0017} & \texttt{807,608} \\ \midrule
     \texttt{\makecell[l]{C Tsetlin\\Classifier}} & \texttt{0.8900} & \texttt{0.9300} & \texttt{0.6159} & \texttt{0.0234} & \texttt{0.0064} & \texttt{43,008} \\ \midrule
-    \texttt{\makecell[l]{GridSearch\\C Tsetlin\\Classifier}} & \texttt{0.8925} & \texttt{0.9300} & \texttt{1.0268} & \texttt{0.0021} & \texttt{0.0009} & \texttt{2,760} \\ \bottomrule
+    \texttt{\makecell[l]{GridSearch\\C Tsetlin\\Classifier}} & \texttt{0.8925} & \texttt{0.9300} & \texttt{1.0268} & \texttt{0.0021} & \texttt{0.0009} & \texttt{2,760} \\ \midrule
+    \texttt{\makecell[l]{C Tsetlin\\Sparse Classifier}} & \texttt{0.8450} & \texttt{0.9050} & \texttt{0.7931} & \texttt{0.0281} & \texttt{0.0076} & \texttt{144,352} \\ \midrule
+    \texttt{\makecell[l]{GridSearch\\C Tsetlin\\Sparse Classifier}} & \texttt{0.8925} & \texttt{0.9300} & \texttt{1.1494} & \texttt{0.0016} & \texttt{0.0008} & \texttt{9,144} \\ \bottomrule
 \end{tabularx}
 \label{tab:noisy-xor-results}
 \end{table}
@@ -1955,7 +1964,9 @@ Similar to the Noisy-XOR evaluation, we maintained default parameters while only
     \texttt{Green Tsetlin Classifier} & \texttt{---}\\ \midrule
     \texttt{Green Tsetlin Sparse Classifier} & \texttt{---} \\ \midrule
     \texttt{C Tsetlin Classifier} & \texttt{---} \\ \midrule
-    \texttt{GridSearch C Tsetlin} & \texttt{boost\_true\_positive\_feedback: [\textbf{False}, True], num\_clauses: [500, 1000, \textbf{1500}]} \\ \bottomrule
+    \texttt{GridSearch C Tsetlin} & \texttt{boost\_true\_positive\_feedback: [\textbf{False}, True], num\_clauses: [500, 1000, \textbf{1500}]} \\ \midrule
+    \texttt{C Tsetlin Sparse Classifier} & \texttt{---} \\ \midrule
+    \texttt{GridSearch C Tsetlin Sparse} & \texttt{boost\_true\_positive\_feedback: [False, \textbf{True}], num\_clauses: [\textbf{500}, 1000, 1500]} \\ \bottomrule
 \end{tabularx}
 \label{tab:digits-params}
 \end{table}
@@ -1965,6 +1976,10 @@ The results summarized in Table~\ref{tab:digits-results} demonstrate that Tsetli
 
 \begin{table}[!htbp]
 \centering
+\setlength{\tabcolsep}{4pt}
+\renewcommand{\arraystretch}{0.85}
+\setlength{\aboverulesep}{2pt}
+\setlength{\belowrulesep}{2pt}
 \caption[Digits Dataset Benchmark Results]{Benchmark results for the Digits dataset. Model sizes are estimated based on internal data structures for Tsetlin-based models and via \texttt{pickle} exports for standard models, requiring caution when comparing directly.}
 \begin{tabularx}{\textwidth}{@{}l c c c c c r@{}} \toprule
     \textbf{\makecell[l]{Model}} & \textbf{\makecell[l]{Train\\Acc.}} & \textbf{\makecell[l]{Test\\Acc.}} & \textbf{\makecell[l]{Train\\Time (s)}} & \textbf{\makecell[l]{Train Pred.\\Time (s)}} & \textbf{\makecell[l]{Test Pred.\\Time (s)}} & \textbf{\makecell[l]{Model\\Size (B)}} \\ \midrule \midrule
@@ -1980,10 +1995,12 @@ The results summarized in Table~\ref{tab:digits-results} demonstrate that Tsetli
     \texttt{\makecell[l]{LightGBM}} & \texttt{1.0000} & \texttt{0.9472} & \texttt{0.4931} & \texttt{0.0074} & \texttt{0.0233} & \texttt{3,124,963} \\ \midrule
     \texttt{\makecell[l]{GridSearch\\Random Forest}} & \texttt{1.0000} & \texttt{0.9444} & \texttt{16.1212} & \texttt{0.0142} & \texttt{0.0373} & \texttt{19,661,484} \\ \midrule
     \texttt{\makecell[l]{GridSearch\\MLP Classifier}} & \texttt{1.0000} & \texttt{0.9361} & \texttt{13.5714} & \texttt{0.0423} & \texttt{0.0527} & \texttt{1,465,209} \\ \midrule \midrule
-    \texttt{\makecell[l]{Green\\Tsetlin\\Classifier}} & \texttt{0.9923} & \texttt{0.9222} & \texttt{2.1518} & \texttt{0.0320} & \texttt{0.0089} & \texttt{1,794,040} \\ \midrule
-    \texttt{\makecell[l]{Green Tsetlin\\Sparse\\Classifier}} & \texttt{0.9402} & \texttt{0.8889} & \texttt{21.0531} & \texttt{0.0063} & \texttt{0.0185} & \texttt{822,040} \\ \midrule
+    \texttt{\makecell[l]{Green Tsetlin\\Classifier}} & \texttt{0.9923} & \texttt{0.9222} & \texttt{2.1518} & \texttt{0.0320} & \texttt{0.0089} & \texttt{1,794,040} \\ \midrule
+    \texttt{\makecell[l]{Green Tsetlin\\Sparse Classifier}} & \texttt{0.9402} & \texttt{0.8889} & \texttt{21.0531} & \texttt{0.0063} & \texttt{0.0185} & \texttt{822,040} \\ \midrule
     \texttt{\makecell[l]{C Tsetlin\\Classifier}} & \texttt{0.9882} & \texttt{0.9222} & \texttt{30.3514} & \texttt{0.6466} & \texttt{0.1763} & \texttt{1,831,040} \\ \midrule
-    \texttt{\makecell[l]{GridSearch\\C Tsetlin\\Classifier}} & \texttt{0.9937} & \texttt{0.9139} & \texttt{271.3032} & \texttt{0.9751} & \texttt{0.2460} & \texttt{2,746,540} \\ \bottomrule
+    \texttt{\makecell[l]{GridSearch\\C Tsetlin\\Classifier}} & \texttt{0.9937} & \texttt{0.9139} & \texttt{271.3032} & \texttt{0.9751} & \texttt{0.2460} & \texttt{2,746,540} \\ \midrule
+    \texttt{\makecell[l]{C Tsetlin\\Sparse Classifier}} & \texttt{0.6715} & \texttt{0.5972} & \texttt{38.1936} & \texttt{0.5590} & \texttt{0.1399} & \texttt{970,992} \\ \midrule
+    \texttt{\makecell[l]{GridSearch\\C Tsetlin\\Sparse Classifier}} & \texttt{0.8337} & \texttt{0.7167} & \texttt{65.0887} & \texttt{0.2091} & \texttt{0.0527} & \texttt{486,892} \\ \bottomrule
 \end{tabularx}
 \label{tab:digits-results}
 \end{table}
@@ -2016,23 +2033,29 @@ Due to the significant increase in training times with this dataset, we restrict
     \texttt{SVC} & \texttt{---} \\ \midrule \midrule
     \texttt{Green Tsetlin Classifier} & \texttt{---} \\ \midrule
     \texttt{Green Tsetlin Sparse Classifier} & \texttt{---} \\ \midrule
-    \texttt{C Tsetlin Classifier} & \texttt{---} \\ \bottomrule
+    \texttt{C Tsetlin Classifier} & \texttt{---} \\ \midrule
+    \texttt{C Tsetlin Sparse Classifier} & \texttt{---} \\ \bottomrule
 \end{tabularx}
 \label{tab:f-mnist-params}
 \end{table}
 
 \paragraph{Results and Comparison}
-The results in Table~\ref{tab:f-mnist-results} indicate that this dataset contains too many features for the current binary approach to TMs to remain efficient. This reveals a limitation in scaling, as all processing times increase significantly. Although both training and testing accuracy were lower than those of the \texttt{SVC}, prediction times for TM-based models remained faster. In particular, our implementation took significantly longer processing times than the \GreenTsetlinName library across all metrics. These findings suggest that the increase in dimensionality and the number of training samples creates performance bottlenecks that are more pronounced in our current implementation than in existing third-party libraries.
+The results in Table~\ref{tab:f-mnist-results} indicate that this dataset contains too many features for the current binary approach to TMs to remain efficient. This reveals a limitation in scaling, as all processing times increase significantly. Although both training and testing accuracy were lower than those of the \texttt{SVC}, prediction times for TM-based models remained faster. In particular, our implementation took significantly longer processing times than the \GreenTsetlinName library across all metrics. These findings suggest that the increase in dimensionality and the number of training samples creates performance bottlenecks that are more pronounced in our current implementation than in existing third-party libraries, likely because of low-level optimizations such as vectorization not implemented in our library. 
 
 \begin{table}[!htbp]
 \centering
+\setlength{\tabcolsep}{4pt}
+\renewcommand{\arraystretch}{0.85}
+\setlength{\aboverulesep}{2pt}
+\setlength{\belowrulesep}{2pt}
 \caption[Fashion-MNIST Benchmark Results]{Benchmark results for the Fashion-MNIST dataset. Model sizes are estimated based on internal data structures for Tsetlin-based models and via \texttt{pickle} exports for standard models, requiring caution when comparing directly.}
 \begin{tabularx}{\textwidth}{@{}l c c c c c r@{}} \toprule
     \textbf{\makecell[l]{Model}} & \textbf{\makecell[l]{Train\\Acc.}} & \textbf{\makecell[l]{Test\\Acc.}} & \textbf{\makecell[l]{Train\\Time (s)}} & \textbf{\makecell[l]{Train Pred.\\Time (s)}} & \textbf{\makecell[l]{Test Pred.\\Time (s)}} & \textbf{\makecell[l]{Model\\Size (B)}} \\ \midrule \midrule
     \texttt{\makecell[l]{SVC}} & \texttt{0.9329} & \texttt{0.8260} & \texttt{16.7218} & \texttt{38.1429} & \texttt{9.4721} & \texttt{66,885,009} \\ \midrule \midrule
     \texttt{\makecell[l]{Green\\Tsetlin\\Classifier}} & \texttt{0.8053} & \texttt{0.7785} & \texttt{17.8907} & \texttt{0.0903} & \texttt{0.0259} & \texttt{3,124,040} \\ \midrule
     \texttt{\makecell[l]{Green Tsetlin\\Sparse\\Classifier}} & \texttt{0.6094} & \texttt{0.5965} & \texttt{228.7705} & \texttt{0.0970} & \texttt{0.0268} & \texttt{822,040} \\ \midrule
-    \texttt{\makecell[l]{C Tsetlin\\Classifier}} & \texttt{0.7600} & \texttt{0.7320} & \texttt{345.7975} & \texttt{6.8067} & \texttt{1.6525} & \texttt{3,161,040} \\ \bottomrule
+    \texttt{\makecell[l]{C Tsetlin\\Classifier}} & \texttt{0.7600} & \texttt{0.7320} & \texttt{345.7975} & \texttt{6.8067} & \texttt{1.6525} & \texttt{3,161,040} \\ \midrule
+    \texttt{\makecell[l]{C Tsetlin\\Sparse Classifier}} & \texttt{0.5821} & \texttt{0.5810} & \texttt{2047.2320} & \texttt{4.4228} & \texttt{1.0774} & \texttt{1,271,776} \\ \bottomrule
 \end{tabularx}
 \label{tab:f-mnist-results}
 \end{table}

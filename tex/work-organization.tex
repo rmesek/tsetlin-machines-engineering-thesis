@@ -1,0 +1,44 @@
+\chapter{Work Organization}
+\label{chap:work-organization}
+
+This project combines elements of both research and development. Aside from implementing a functional TM execution engine, other goals were to test its effectiveness in different conditions and develop a lightweight model serialization format. It was also essential to choose the right tools for the task.
+
+\par Since the topic of this thesis isn't very well known, before starting development it was necessary to gain a deep understanding of the TM architecture. The learning materials as well as documentation for existing solutions were found to be lacking, inspiring \LibraryName to provide better documentation for its users, as well as in-code comments for anyone seeking deeper understanding.
+
+\section{Team Members and Their Roles}
+
+The two team members worked on parts of the project based on their previous experience, specializations, and interests. The other person then reviewed it to the best of their ability and knowledge.
+
+\paragraph{Igor Sikora}
+\begin{compactitem}
+    \item C implementation of the TM execution engine
+    \item research into possible optimizations and their implementation
+    \item correctness tests
+    \item code and user documentation
+\end{compactitem}
+
+\paragraph{Robert Mesek}
+\begin{compactitem}
+    \item Python bindings of \LibraryName
+    \item integration with \GreenTsetlinName
+    \item benchmarks, efficiency tests
+    \item Jupyter Notebook examples
+    \item build system with CMake
+    \item integration with FlatBuffers for model serialization and deserialization
+\end{compactitem}
+
+Of course many aspects of the project had to be realized together, such as solving architectural issues and making sure the TM execution engine implementation is correct with the theoretical work~\cite{granmo2021tsetlinmachinegame}.
+
+\section{Used Tools}
+
+\paragraph{Git with GitHub}
+Git is the most popular version control system, in this case used together with GitHub as a hosting service. This setup made it much easier to keep track of changes, and made it possible to work simultaneously on multiple issues on separate branches. Using GitHub also helped with transparency, since every update was visible to the whole team, also making reviews straightforward.
+
+\paragraph{Discord}
+Discord served as the main platform for day-to-day communication. Different channels could were used to separate topics, which helped keep discussions on-track and organized instead of everything being mixed in one place. Text chat was the most common, but voice calls were also used when something needed to be explained in more detail, or simply during working sessions. Since Discord is free and everyone was already familiar with it, there were no technical hurdles in getting started, and the communication stayed active throughout the project.
+
+\paragraph{Email and MS Teams}
+Communication with the project supervisor relied on email and MS Teams. Email was mainly for more formal messages such as documenting milestones. MS Teams was used for scheduled meetings and sharing files that needed feedback. It was helpful to separate internal group communication from supervisor communication, since it kept the workflow cleaner and avoided unnecessary message clutter.
+
+\paragraph{Overleaf}
+Overleaf was the tool used for writing and editing the \LaTeX{} report. Using a shared online editor made collaboration much easier, making work in the same document possible without worrying about file versions. As it could be shared directly with the supervisor, no one had to wait for access to the latest version of the documents.

@@ -1,0 +1,53 @@
+\chapter{Project Goals and Vision}
+\label{chap:goals-vision}
+
+Machine learning architectures are becoming a popular topic of research as they continue to show promise in various use cases. Recent years have shown rapid developments in this field, aimed especially to improve model accuracy and scaling. Not all applications can benefit from these advancements however, as they typically suffer from issues such as low model explainability, high computation power requirements and high energy usage. This project explores how an implementation of the Tsetlin Machine (TM) machine learning architecture could bridge these gaps and allow for an efficient, lightweight execution engine that can train and infer even on edge devices. To allow transferring a model to and from the edge device, a lightweight model serialization format was developed.
+
+\vspace{10pt}
+The Tsetlin Machine is a logic-based, interpretable machine learning model that builds propositional formulas (conjunctive clauses of literals) utilizing large collectives of simple finite-state Tsetlin Automata which learn via reward/penalty feedback. It offers a transparent, lighter alternative to neural networks and is notable for simple, hardware-friendly primitives that can yield competitive accuracy while making learned rules easy to inspect. 
+
+\vspace{10pt}
+Due to these properties, it is the most fitting choice for resource-limited environments. To utilise this technology in this scenario two things are needed however; a Tsetlin Machine execution engine capable of operating with limited resources, together with a supported, lightweight model serialization format.
+
+\vspace{10pt}
+The Tsetlin Machine execution engine, to be able to run on edge devices, is limited in a number of ways. Firstly, it has to be implemented in a low-level programming language - C was chosen for that purpose. Secondly, the choice of available libraries that can be utilized is severely limited. And finally, the implementation itself has to be optimized to avoid unnecessarily using too much resources.
+
+\vspace{10pt}
+The Tsetlin Machine model serialization format is another major topic of this project. Due to the many limitations, popular ML model serialization formats like ONNX or Protocol Buffers couldn't be used. Either the library itself is too big and resource-intensive, or the resulting model file is too large or can't be memory-mapped. In this case, the only fitting option was found to be a minimalist C implementation of FlatBuffers.
+
+\newpage
+\section{Competitive Solutions}
+According to the authors' knowledge, \GreenTsetlinName is the only production-ready implementation of the TM. It is primarily a Python library with a C++ backend. A trained model can then be exported into a C header file and used for inference.  
+This approach was found lacking in a number of ways;
+\begin{compactenum}
+    \item the exported model cannot be interpreted back to its previous form to perform modifications on it
+    \item in particular, it makes training and fine-tuning the model impossible
+    \item the model serialization is saved in a text format, which in this case allows inference without a separate interpreter, but otherwise means wasting a lot of storage space
+\end{compactenum}
+
+There are also numerous projects with far less mature implementations that were taken into consideration that did not classify for this reason. \cite{granmo2018tsetlinmachine, granmo2018tsetlinmachinec, granmo2020pytsetlinmachinecuda}
+
+\section{Power Usage in Machine Learning}
+
+\par Recent advances in machine learning have been accompanied by a significant increase in computational and energy demands. Large-scale models and complex training procedures often require substantial processing power, specialized hardware, and extended execution times, which directly translate into higher power consumption -- resulting in high costs, energy grid strain and environmental damages.\\
+
+\par While such approaches are justified for problems that require high model capacity or large-scale data processing, not all tasks require the use of computationally intensive methods. For certain problem classes, simpler models or lightweight algorithms can achieve comparable performance with considerably lower energy and resource requirements.\\
+
+\par Recognizing the trade-off between model complexity and power usage is therefore essential. Selecting an appropriately scaled solution can reduce energy consumption, improve efficiency and practical deployability without compromising the intended functionality.\\
+
+\section{Thesis Structure}
+This thesis is organized into several chapters that collectively describe the theoretical foundations, design decisions, implementation, and evaluation of the proposed work. \\
+
+\par Chapter~\ref{chap:theoretical-background} -- the theoretical background relevant to this thesis. It introduces the fundamental concepts, models, and prior work required to understand the problem domain and motivates the chosen approach. \\
+
+\par Chapter~\ref{chap:functional-scope} -- the functional scope of the system. It outlines the objectives, functional and non-functional requirements. \\
+
+\par Chapter~\ref{chap:realization-aspects} -- selected realization aspects. This chapter focuses on key design and implementation decisions, including important architectural choices and algorithms. \\
+
+\par Chapter~\ref{chap:work-organization} -- the organization of the work. It explains the task division and tooling, providing insight into how the project was structured and executed. \\
+
+\par Chapter~\ref{chap:technical-documentation} -- the user documentation, detailing how the Tsetlin Machine execution engine is configured, operated, and extended. This chapter is intended to support practical use of the developed solution. \\
+
+\par Chapter~\ref{chap:evaluation} -- the experimental setup and results. It describes the evaluation methodology, test scenarios, and measured outcomes used to assess performance and behavior. \\
+
+\par Chapter~\ref{chap:conclusions} -- the results of the work. It summarizes the contributions of the thesis and outlines potential directions for future research and development. \\
