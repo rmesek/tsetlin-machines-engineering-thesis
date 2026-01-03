@@ -49,7 +49,7 @@ The results in Table~\ref{tab:noisy-xor-results} demonstrate that our \texttt{C 
 
 \begin{table}[!htbp]
 \centering
-\caption[Noisy-XOR hyperparameters]{Hyperparameters and \texttt{GridSearchCV} search spaces for the Noisy-XOR dataset. The table lists only parameters that differ from model defaults; for \texttt{GridSearchCV} the best-performing configuration is indicated in \texttt{\textbf{bold}}\label{tab:noisy-xor-params}.}
+\caption[Noisy-XOR hyperparameters]{Hyperparameters and \texttt{GridSearchCV} search spaces for the Noisy-XOR dataset. The table lists only parameters that differ from model defaults; for \texttt{GridSearchCV} the best-performing configuration is indicated in \texttt{\textbf{\underline{bold}}}\label{tab:noisy-xor-params}.}
 \begin{tabularx}{\textwidth}{@{}l L@{}} \toprule
     \textbf{Model} & \textbf{Modified Parameters} \\ \midrule \midrule
     \texttt{Logistic Regression} & \texttt{max\_iter=1000} \\ \midrule
@@ -62,14 +62,14 @@ The results in Table~\ref{tab:noisy-xor-results} demonstrate that our \texttt{C 
     \texttt{Gaussian Naive Bayes} & \texttt{---} \\ \midrule
     \texttt{Gradient Boosting} & \texttt{---} \\ \midrule
     \texttt{LightGBM} & \texttt{---} \\ \midrule
-    \texttt{GridSearch Random Forest} & \texttt{n\_estimators: [\textbf{50}, 100, 200], max\_depth: [\textbf{None}, 10, 20, 30], min\_samples\_split: [2, 5, \textbf{10}]} \\ \midrule
-    \texttt{GridSearch MLP} & \texttt{hidden\_layer\_sizes: [(50,), \textbf{(100,)}, (50, 50)], activation: [\textbf{"relu"}, "tanh"], alpha: [0.0001, 0.001, \textbf{0.01}]} \\ \midrule \midrule
+    \texttt{GridSearch Random Forest} & \texttt{n\_estimators: [\textbf{\underline{50}}, 100, 200], max\_depth: [\textbf{\underline{None}}, 10, 20, 30], min\_samples\_split: [2, 5, \textbf{\underline{10}}]} \\ \midrule
+    \texttt{GridSearch MLP} & \texttt{hidden\_layer\_sizes: [(50,), \textbf{\underline{(100,)}}, (50, 50)], activation: [\textbf{\underline{"relu"}}, "tanh"], alpha: [0.0001, 0.001, \textbf{\underline{0.01}}]} \\ \midrule \midrule
     \texttt{Green Tsetlin} & \texttt{---} \\ \midrule
     \texttt{Green Tsetlin Sparse} & \texttt{---} \\ \midrule
     \texttt{C Tsetlin} & \texttt{---} \\ \midrule
-    \texttt{GridSearch C Tsetlin} & \texttt{boost\_true\_positive\_feedback: [\textbf{False}, True], num\_clauses: [\textbf{64}, 125, 500], s: [\textbf{3}, 9]} \\ \midrule
+    \texttt{GridSearch C Tsetlin} & \texttt{boost\_true\_positive\_feedback: [\textbf{\underline{False}}, True], num\_clauses: [\textbf{\underline{64}}, 125, 500], s: [\textbf{\underline{3}}, 9]} \\ \midrule
     \texttt{C Tsetlin Sparse} & \texttt{---} \\ \midrule
-    \texttt{GridSearch C Tsetlin Sparse} & \texttt{boost\_true\_positive\_feedback: [\textbf{False}, True], num\_clauses: [\textbf{64}, 125, 500], s: [\textbf{3}, 9]} \\ \bottomrule
+    \texttt{GridSearch C Tsetlin Sparse} & \texttt{boost\_true\_positive\_feedback: [\textbf{\underline{False}}, True], num\_clauses: [\textbf{\underline{64}}, 125, 500], s: [\textbf{\underline{3}}, 9]} \\ \bottomrule
 \end{tabularx}
 \end{table}
 
@@ -128,7 +128,7 @@ The results summarized in Table~\ref{tab:digits-results} demonstrate that Tsetli
 
 \begin{table}[!htbp]
 \centering
-\caption[Digits hyperparameters]{Hyperparameters and \texttt{GridSearchCV} search spaces for the Digits dataset. The table lists only parameters that differ from model defaults; for \texttt{GridSearchCV} the best-performing configuration is indicated in \texttt{\textbf{bold}}\label{tab:digits-params}.}
+\caption[Digits hyperparameters]{Hyperparameters and \texttt{GridSearchCV} search spaces for the Digits dataset. The table lists only parameters that differ from model defaults; for \texttt{GridSearchCV} the best-performing configuration is indicated in \texttt{\textbf{\underline{bold}}}\label{tab:digits-params}.}
 \begin{tabularx}{\textwidth}{@{}l L@{}} \toprule
     \textbf{Model} & \textbf{Modified Parameters} \\ \midrule \midrule
     \texttt{Logistic Regression} & \texttt{max\_iter=1000} \\ \midrule
@@ -141,14 +141,14 @@ The results summarized in Table~\ref{tab:digits-results} demonstrate that Tsetli
     \texttt{Gaussian Naive Bayes} & \texttt{---} \\ \midrule
     \texttt{Gradient Boosting} & \texttt{---} \\ \midrule
     \texttt{LightGBM} & \texttt{---} \\ \midrule
-    \texttt{GridSearch Random Forest} & \texttt{n\_estimators: [50, 100, \textbf{200}], max\_depth: [None, 10, 20, \textbf{30}], min\_samples\_split: [\textbf{2}, 5, 10]} \\ \midrule
-    \texttt{GridSearch MLP} & \texttt{hidden\_layer\_sizes: [(50,), \textbf{(100,)}, (50, 50)], activation: ["relu", \textbf{"tanh"}], alpha: [0.0001, 0.001, \textbf{0.01}]} \\ \midrule \midrule
+    \texttt{GridSearch Random Forest} & \texttt{n\_estimators: [50, 100, \textbf{\underline{200}}], max\_depth: [None, 10, 20, \textbf{\underline{30}}], min\_samples\_split: [\textbf{\underline{2}}, 5, 10]} \\ \midrule
+    \texttt{GridSearch MLP} & \texttt{hidden\_layer\_sizes: [(50,), \textbf{\underline{(100,)}}, (50, 50)], activation: ["relu", \textbf{\underline{"tanh"}}], alpha: [0.0001, 0.001, \textbf{\underline{0.01}}]} \\ \midrule \midrule
     \texttt{Green Tsetlin} & \texttt{---}\\ \midrule
     \texttt{Green Tsetlin Sparse} & \texttt{---} \\ \midrule
     \texttt{C Tsetlin} & \texttt{---} \\ \midrule
-    \texttt{GridSearch C Tsetlin} & \texttt{boost\_true\_positive\_feedback: [\textbf{False}, True], num\_clauses: [500, 1000, \textbf{1500}], s: [\textbf{3}, 9]} \\ \midrule
+    \texttt{GridSearch C Tsetlin} & \texttt{boost\_true\_positive\_feedback: [\textbf{\underline{False}}, True], num\_clauses: [500, 1000, \textbf{\underline{1500}}], s: [\textbf{\underline{3}}, 9]} \\ \midrule
     \texttt{C Tsetlin Sparse} & \texttt{---} \\ \midrule
-    \texttt{GridSearch C Tsetlin Sparse} & \texttt{boost\_true\_positive\_feedback: [\textbf{False}, True], num\_clauses: [64, 125, 500, \textbf{1000}], s: [3, \textbf{9}]} \\ \bottomrule
+    \texttt{GridSearch C Tsetlin Sparse} & \texttt{boost\_true\_positive\_feedback: [\textbf{\underline{False}}, True], num\_clauses: [64, 125, 500, \textbf{\underline{1000}}], s: [3, \textbf{\underline{9}}]} \\ \bottomrule
 \end{tabularx}
 \end{table}
 
