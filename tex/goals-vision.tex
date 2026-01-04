@@ -7,13 +7,13 @@ Machine learning architectures are becoming a popular topic of research as they 
 The Tsetlin Machine is a logic-based, interpretable machine learning model that builds propositional formulas (conjunctive clauses of literals) utilizing large collectives of simple finite-state Tsetlin Automata which learn via reward/penalty feedback. It offers a transparent, lighter alternative to neural networks and is notable for simple, hardware-friendly primitives that can yield competitive accuracy while making learned rules easy to inspect. 
 
 \vspace{10pt}
-Due to these properties, it is the most fitting choice for resource-limited environments. To utilise this technology in this scenario two things are needed however; a Tsetlin Machine execution engine capable of operating with limited resources, together with a supported, lightweight model serialization format.
+Due to these properties, it is the most fitting choice for resource-limited environments. To utilize this technology in this scenario two things are needed however; a Tsetlin Machine execution engine capable of operating with limited resources, together with a supported, lightweight model serialization format.
 
 \vspace{10pt}
 The Tsetlin Machine execution engine, to be able to run on edge devices, is limited in a number of ways. Firstly, it has to be implemented in a low-level programming language - C was chosen for that purpose. Secondly, the choice of available libraries that can be utilized is severely limited. And finally, the implementation itself has to be optimized to avoid unnecessarily using too much resources.
 
 \vspace{10pt}
-The Tsetlin Machine model serialization format is another major topic of this project. Due to the many limitations, popular ML model serialization formats like ONNX or Protocol Buffers couldn't be used. Either the library itself is too big and resource-intensive, or the resulting model file is too large or can't be memory-mapped. In this case, the only fitting option was found to be a minimalist C implementation of FlatBuffers.
+The Tsetlin Machine model serialization format is another major topic of this project. Due to the many limitations, popular ML model serialization formats like ONNX or Protocol Buffers could not be used. Either the library itself is too big and resource-intensive, or the resulting model file is too large or cannot be memory-mapped. In this case, the only fitting option was found to be a minimalist C implementation of FlatBuffers.
 
 \newpage
 \section{Competitive Solutions}

@@ -5,10 +5,11 @@ This section describes the design choices of \LibraryName as well as the rationa
 
 
 \section{Design}
+\label{sec:design}
 Even though optimization was the primary objective, not every method could be utilized due to the target environments having very limited resources and hardware limitations. In particular, vectorization was completely out of the picture, even though \GreenTsetlinName has it enabled by default. GPU programming was obviously dismissed for the same reason - although notably, such an implementation is possible~\cite{granmo2020pytsetlinmachinecuda}.
 
 \subsection{Programming Language}
-Since the thesis topic requires \LibraryName to be designed for embedded devices, there were only a few suitable options like C/C++, Rust or MicroPython. C was chosen as the most widely used language for embedded systems - it is efficient, lightweight and portable. It's popularity also means it has extensive third party library support. The authors' previous experience working with C/C++ also influenced this decision.  
+Since the thesis topic requires \LibraryName to be designed for embedded devices, there were only a few suitable options like C/C++, Rust or MicroPython. C was chosen as the most widely used language for embedded systems - it is efficient, lightweight and portable. Its popularity also means it has extensive third party library support. The authors' previous experience working with C/C++ also influenced this decision.  
 Exporting models from \GreenTsetlinName is done in Python, as it is a Python library.  
 \LibraryName also has Python bindings so that it can be used conveniently from Python.
 
@@ -330,7 +331,7 @@ Also a custom comparison function can be set for the model, to override when the
 \subsubsection{Feedback}
 \label{feedback-dense}
 When a chosen class triggers feedback to all clauses, for each clause separately one of three feedback types may be applied. \\
-Tsetlin Automata changes specified in \textbf{Action} aren't always changed -- they have a random chance to do so based on the parameter \textit{s} -- sensitivity -- further explained in \textbf{Sensitivity} for each feedback type. \\
+Tsetlin Automata changes specified in \textbf{Action} are not always changed -- they have a random chance to do so based on the parameter \textit{s} -- sensitivity -- further explained in \textbf{Sensitivity} for each feedback type. \\
 
 \paragraph{Type Ia}
 \begin{description}
@@ -484,7 +485,7 @@ root_type Model;
 A Sparse TM~\cite{glimsdal2024sparsetsetlinmachine} aims to efficiently process sparse data. It uses the same core principles and mechanics as the Coalesced TM, its main difference being the underlying data layout. It also introduces \textit{Active Literals} -- it functions as a list of literals considered to be added to sparse state. Notably, both sparse state and \textit{Active Literals} need to have a limited size or the model is slower and larger than Coalesced TM, and learns poorly -- something not mentioned in the paper~\cite{glimsdal2024sparsetsetlinmachine}.
 
 \subsection{Data Layout}
-Unlike the Coalesced TM, the Sparse TM doesn't store all Tsetlin Automata. Simply put, it only keeps the Tsetlin Automata, which state is above a certain threshold. By doing so, in principle it doesn't need to waste space and computation power for Tsetlin Automata it deems unlikely to become active for a given clause. The simplified structure is shown in figure ~\ref{fig:sparse-data-layout}
+Unlike the Coalesced TM, the Sparse TM does not store all Tsetlin Automata. Simply put, it only keeps the Tsetlin Automata, which state is above a certain threshold. By doing so, in principle it does not need to waste space and computation power for Tsetlin Automata it deems unlikely to become active for a given clause. The simplified structure is shown in figure ~\ref{fig:sparse-data-layout}
 \par Since not all Tsetlin Automata are present in a clause a linked list is used as the underlying data structure. Identifying indices cannot be inferred from the data structure and need to be stored in nodes.
 
 \begin{figure}[!htbp]
@@ -554,10 +555,10 @@ Aside from obvious changes from Coalesced TM needed to accommodate the different
 
 
 \section{Stateless}
-A Stateless TM is a slimmed down version of Sparse TM that doesn't allow any model training, at the same time further reducing model size to the smallest and fastest possible for inference. It should only be created from a trained model of a different TM variant.
+A Stateless TM is a slimmed down version of Sparse TM that does not allow any model training, at the same time further reducing model size to the smallest and fastest possible for inference. It should only be created from a trained model of a different TM variant.
 
 \subsection{Data Layout}
-Stateless TM, as name suggests, doesn't store Tsetlin Automaton states at all. Here a degenerated version of Tsetlin Automaton is active if it is present at all. The simplified structure is shown in figure ~\ref{fig:stateless-data-layout}
+Stateless TM, as the name suggests, does not store Tsetlin Automaton states at all. Here a degenerated version of Tsetlin Automaton is active if it is present at all. The simplified structure is shown in figure ~\ref{fig:stateless-data-layout}
 
 
 \begin{figure}[!htbp]
@@ -618,10 +619,10 @@ Seeing as speed, size, portability as well as limiting the usage of power and me
 
 \subsection{Pseudo Random Number Generation}
 Analyzing the efficiency of a development version with valgrind and callgrind, it was obvious that most training time was spent on calls to \textit{rand()} - pseudo random number generation. \\
-While it isn't costly to call once, the cost quickly accumulates over millions of calls.
+While it is not costly to call once, the cost quickly accumulates over millions of calls.
 
 \subsubsection{Analysis}
-\textit{rand()} is costly because it aims for a uniform spread, as evenly as possible. \LibraryName intentionally adopts a design that relaxes this uniformity, accepting minor statistical deviations that average out over millions of calls -- in order to prioritize execution speed and reduced power consumption. The pseudo random number generation for this purpose doesn't need to be cryptographically secure either -- \textit{rand()} isn't anyways. \\
+\textit{rand()} is costly because it aims for a uniform spread, as evenly as possible. \LibraryName intentionally adopts a design that relaxes this uniformity, accepting minor statistical deviations that average out over millions of calls -- in order to prioritize execution speed and reduced power consumption. The pseudo random number generation for this purpose does not need to be cryptographically secure either -- \textit{rand()} is not anyway. \\
 A quick look at \GreenTsetlinName revealed that it suffered from the same problem. Its solution was to use a wyhash64 algorithm. Using just an 64-bit integer addition, two 128-bit integer multiplications and few bitwise operations as well as a double multiplication, it is overall a much cheaper solution.\\
 Listing ~\ref{lst:wyhash64} shows the \GreenTsetlinName implementation of wyhash64.
 \begin{listing}[!htbp]
@@ -645,7 +646,7 @@ double next_u()
 \subsubsection{Solution}
 Wyhash64 represents a significantly lower-cost solution compared to the alternative; however, its computational and energy costs remain non-negligible. 128-bit integer multiplications and double multiplication cost many precious CPU cycles which means time and power. \\
 Listing ~\ref{lst:fast-prng} shows the \LibraryName implementation of xorshift32. \\
-All that's really needed is a few bit shifts and XOR operations. It uses so few CPU cycles it's basically free. It might also be the case one of the authors likes low-level optimization an unhealthy amount. 
+All that is really needed are a few bit shifts and XOR operations. It uses so few CPU cycles it is basically free. It might also be the case one of the authors likes low-level optimization an unhealthy amount. 
 
 \begin{listing}[!htbp]
     \caption[\LibraryName implementation of xorshift32]{\LibraryName implementation of xorshift32\label{lst:fast-prng}}
