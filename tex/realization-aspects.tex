@@ -6,16 +6,16 @@ This section describes the design choices of \LibraryName as well as the rationa
 
 \section{Design}
 \label{sec:design}
-Even though optimization was the primary objective, not every method could be utilized due to the target environments having very limited resources and hardware limitations. In particular, vectorization was completely out of the picture, even though \GreenTsetlinName has it enabled by default. GPU programming was obviously dismissed for the same reason - although notably, such an implementation is possible~\cite{granmo2020pytsetlinmachinecuda}.
+Even though optimization was the primary objective, not every method could be utilized due to the target environments having very limited resources and hardware limitations. In particular, vectorization was completely out of the picture, even though \GreenTsetlinName has it enabled by default. GPU programming was obviously dismissed for the same reason -- although notably, such an implementation is possible~\cite{granmo2020pytsetlinmachinecuda}.
 
 \subsection{Programming Language}
-Since the thesis topic requires \LibraryName to be designed for embedded devices, there were only a few suitable options like C/C++, Rust or MicroPython. C was chosen as the most widely used language for embedded systems - it is efficient, lightweight and portable. Its popularity also means it has extensive third party library support. The authors' previous experience working with C/C++ also influenced this decision.  
+Since the thesis topic requires \LibraryName to be designed for embedded devices, there were only a few suitable options like C/C++, Rust or MicroPython. C was chosen as the most widely used language for embedded systems -- it is efficient, lightweight and portable. Its popularity also means it has extensive third party library support. The authors' previous experience working with C/C++ also influenced this decision.  
 Exporting models from \GreenTsetlinName is done in Python, as it is a Python library.  
 \LibraryName also has Python bindings so that it can be used conveniently from Python.
 
 \subsection{Execution Engine}
 Even though there exists a number of existing libraries implementing the Tsetlin Machines, \LibraryName was essentially created from the ground up without taking much inspiration or hints from them. It was required to be written primarily with optimization in mind so that it works as fast as possible while maintaining small size and portability on top of utilizing little power and memory. \\
-It was also decided \LibraryName should support multiple different TM variants so their efficiency could be tested - Coalesced, Sparse and Stateless.
+It was also decided \LibraryName should support multiple different TM variants so their efficiency could be tested -- Coalesced, Sparse and Stateless.
 
 \subsection{Model Serialization Library}
 Several libraries were compiled and compared as possible options to implement the model serialization format. Only C libraries were taken into consideration. See table ~\ref{tab:serial-lib-comp}
