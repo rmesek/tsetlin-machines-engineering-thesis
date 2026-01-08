@@ -379,7 +379,7 @@ Again, this can be fully customized. A custom output activation function can be 
 Another predefined function allows multi-class classification, where the output is an 8-bit integer array where the length is the number of classes, where value 1 signifies a class with a given identifier being chosen, value 0 - not chosen.
 
 \subsection{Data Layout}
-A clause is represented as a simple array of Tsetlin Automata states. For the sake of efficiency they are ordered by the literals they correspond to, in pairs of positive and negative Tsetlin Automata. This simplified representation is visualised in figure~\ref{fig:dense-data-layout}.
+A clause is represented as a simple array of Tsetlin Automata states. For the sake of efficiency they are ordered by the literals they correspond to, in pairs of positive and negative Tsetlin Automata. This simplified representation is visualized in figure~\ref{fig:dense-data-layout}.
 
 The \textit{i}-th array field represents the state of Tsetlin Automaton corresponding to literal with index $\lfloor \frac{i}{2} \rfloor$ -- positive if \textit{i} is even, negative if odd.
 
