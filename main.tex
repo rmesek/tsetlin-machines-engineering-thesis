@@ -129,6 +129,7 @@
 \makenomenclature % Otwórz plik 'example.nlo'
 % Pakiet 'minted'
 \setminted{breaklines=true}
+\setminted{fontsize=\small}
  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
  % Definicje komend
  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -137,6 +138,13 @@
 \newcommand*{\LibraryName}{\emph{tsetlin\_machine\_c }}
 \newcommand*{\GreenTsetlinName}{\emph{green\_tsetlin}~\cite{glimsdal2024greentsetlin} }
 \newcolumntype{L}{>{\raggedright\arraybackslash}X}
+% Pakiet 'minted' dla 'flatbuffers'
+\definecolor{kwColor}{RGB}{0,128,0}
+\definecolor{typeColor}{RGB}{176,0,64}
+\definecolor{commentColor}{RGB}{61,122,122}
+\newcommand{\kw}[1]{\textbf{\textcolor{kwColor}{#1}}}
+\newcommand{\tp}[1]{\textcolor{typeColor}{#1}}
+\newcommand{\cm}[1]{\textcolor{commentColor}{#1}}
  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
  % Twierdzenia i podobne struktury
  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

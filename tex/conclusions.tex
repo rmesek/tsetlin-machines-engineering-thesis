@@ -3,8 +3,8 @@
 
 The previous chapters have described the goals of the project. This concluding chapter reflects on the objectives that were achieved successfully and identifies any areas of improvement. It also proposes further work, research and improvements to the project as well as TMs in general.
 
-\section{Summary}
-The project work resulted in a functional, stable and optimized open-source product, pending only cosmetic or experiential refinements. All base requirements were fulfilled; the Tsetlin Machine execution engine can be used to both infer and train in a limited resource environment, model data is stored in an efficient, easy to utilize format. The project further mitigates a gap in the ecosystem encountered during its development -- the lack of available knowledge sources and documentation on how to put the TM theory into practice. The product is suitable for production use, though compilation for non-standard or specialized architectures requires additional effort.
+\section{Achieved Results}
+The project work resulted in a functional, stable and optimized open-source product, pending only cosmetic or experiential refinements. All base requirements were fulfilled -- the Tsetlin Machine execution engine can be used to both infer and train in a limited resource environment, model data is stored in an efficient, easy to utilize format. The project further mitigates a gap in the ecosystem encountered during its development -- the lack of available knowledge sources and documentation on how to put the TM theory into practice. The product is suitable for production use, though compilation for non-standard or specialized architectures requires additional effort.
 
 \section{Further Work}
 During the development period of the project, numerous promising ideas emerged that warrant further investigation. These ideas merit further investigation and could meaningfully enhance both the research outcomes and the overall robustness of the project.
@@ -13,9 +13,11 @@ During the development period of the project, numerous promising ideas emerged t
 An immediate extension that would increase the utility and reach of this project is the introduction of a formal cross-compilation pipeline. Implementing cross-compilation would enable automated builds for multiple target architectures (e.g. ARM, RISC-V, x86\_64) and ABIs, improving portability and facilitating deployment on embedded and heterogeneous systems. Addressing this would broaden its applicable use cases.
 
 \subsection{Coalesced TM and the Linear Layer}
-Seeing the similarities between TM and a Perceptron \cite{sharma2022equivalenceweightedtsetlinmachine}, further parallels could be drawn between a Coalesced TM and a whole Linear layer and activation function of a Neural Network. More research is necessary to find out whether they could be used interchangeably. Likely results would vary a lot based on task complexity and data structure. Another idea to explore is whether TMs could be combined sequentially with creating a larger model, with or without other layer types.
-\par Due to how customizable \LibraryName is, a custom feedback function and output activation function can be written to facilitate a TM to be used as a layer of a larger model -- painlessly, without the need to rewrite the main logic of the execution engine.
+Seeing the similarities between TM and a Perceptron~\cite{sharma2022equivalenceweightedtsetlinmachine}, further parallels could be drawn between a Coalesced TM and a whole Linear layer and activation function of a Neural Network. More research is necessary to find out whether they could be used interchangeably. Likely results would vary a lot based on task complexity and data structure. Another idea to explore is whether TMs could be combined sequentially with creating a larger model, with or without other layer types.
+
+Due to how customizable \LibraryName is, a custom feedback function and output activation function can be written to facilitate a TM to be used as a layer of a larger model -- painlessly, without the need to rewrite the main logic of the execution engine.
 
 \subsection{Integer Only Implementation of TM}
 Some processors and compute units do not natively provide a floating-point unit, especially on embedded systems and similar hardware. TM design typically requires floating point operations, however authors believe it should not be difficult to implement.
-\par All floating point operations in TM design originate from the parameter \textit{s} -- learning sensitivity -- which handles how often specific feedback types should apply. This is traditionally done using floating point, however rewriting this behavior to integer-only logic seems rather straightforward.
+
+All floating point operations in TM design originate from the parameter \textit{s} -- learning sensitivity -- which handles how often specific feedback types should apply. This is traditionally done using floating point, however rewriting this behavior to integer-only logic seems rather straightforward.

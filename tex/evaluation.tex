@@ -79,27 +79,27 @@ The results in Table~\ref{tab:noisy-xor-results} demonstrate that our \texttt{C 
 \renewcommand{\arraystretch}{0.85}
 \setlength{\aboverulesep}{2pt}
 \setlength{\belowrulesep}{2pt}
-\caption[Noisy-XOR benchmark results]{Benchmark results for the Noisy-XOR dataset. Model sizes are estimated based on internal data structures for Tsetlin-based models and via \texttt{pickle} exports for standard models, requiring caution when comparing directly\label{tab:noisy-xor-results}.}
+\caption[Noisy-XOR benchmark results]{Benchmark results for the Noisy-XOR dataset (evaluated on the Host (PC) environment). Model sizes are estimated based on internal data structures for Tsetlin-based models and via \texttt{pickle} exports for standard models, requiring caution when comparing directly. The best results are indicated in \texttt{\textbf{\underline{bold}}}\label{tab:noisy-xor-results}.}
 \begin{tabularx}{\textwidth}{@{}l c c c c c r@{}} \toprule
     \textbf{\makecell[l]{Model}} & \textbf{\makecell[l]{Train\\Acc.}} & \textbf{\makecell[l]{Test\\Acc.}} & \textbf{\makecell[l]{Train\\Time (s)}} & \textbf{\makecell[l]{Train\\Pred.\\Time (s)}} & \textbf{\makecell[l]{Test\\Pred.\\Time (s)}} & \textbf{\makecell[l]{Model\\Size (B)}} \\ \midrule
-    \texttt{\makecell[l]{Logistic Regression}} & \texttt{0.5487} & \texttt{0.4750} & \texttt{0.0028} & \texttt{0.0005} & \texttt{0.0003} & \texttt{1,122} \\
-    \texttt{\makecell[l]{Decision Tree}} & \texttt{0.9962} & \texttt{0.7350} & \texttt{0.0020} & \texttt{0.0004} & \texttt{0.0004} & \texttt{33,536} \\
-    \texttt{\makecell[l]{Random Forest}} & \texttt{0.9962} & \texttt{0.8700} & \texttt{0.0790} & \texttt{0.0068} & \texttt{0.0032} & \texttt{4,127,036} \\
-    \texttt{\makecell[l]{MLP}} & \texttt{0.9962} & \texttt{0.8150} & \texttt{0.1067} & \texttt{0.0008} & \texttt{0.0004} & \texttt{35,897} \\
-    \texttt{\makecell[l]{SVC}} & \texttt{0.8950} & \texttt{0.9300} & \texttt{0.0192} & \texttt{0.0146} & \texttt{0.0040} & \texttt{104,823} \\
-    \texttt{\makecell[l]{Linear SVC}} & \texttt{0.5450} & \texttt{0.4750} & \texttt{0.0013} & \texttt{0.0008} & \texttt{0.0004} & \texttt{1,006} \\
-    \texttt{\makecell[l]{K-Nearest Neighbors}} & \texttt{0.8250} & \texttt{0.7650} & \texttt{0.0008} & \texttt{0.0217} & \texttt{0.0062} & \texttt{20,179} \\
+    \texttt{\makecell[l]{Logistic Regression}} & \texttt{0.5487} & \texttt{0.4750} & \texttt{0.0028} & \texttt{0.0005} & \texttt{\textbf{\underline{0.0003}}} & \texttt{1,122} \\
+    \texttt{\makecell[l]{Decision Tree}} & \texttt{\textbf{\underline{0.9962}}} & \texttt{0.7350} & \texttt{0.0020} & \texttt{\textbf{\underline{0.0004}}} & \texttt{0.0004} & \texttt{33,536} \\
+    \texttt{\makecell[l]{Random Forest}} & \texttt{\textbf{\underline{0.9962}}} & \texttt{0.8700} & \texttt{0.0790} & \texttt{0.0068} & \texttt{0.0032} & \texttt{4,127,036} \\
+    \texttt{\makecell[l]{MLP}} & \texttt{\textbf{\underline{0.9962}}} & \texttt{0.8150} & \texttt{0.1067} & \texttt{0.0008} & \texttt{0.0004} & \texttt{35,897} \\
+    \texttt{\makecell[l]{SVC}} & \texttt{0.8950} & \texttt{\textbf{\underline{0.9300}}} & \texttt{0.0192} & \texttt{0.0146} & \texttt{0.0040} & \texttt{104,823} \\
+    \texttt{\makecell[l]{Linear SVC}} & \texttt{0.5450} & \texttt{0.4750} & \texttt{0.0013} & \texttt{0.0008} & \texttt{0.0004} & \texttt{\textbf{\underline{1,006}}} \\
+    \texttt{\makecell[l]{K-Nearest Neighbors}} & \texttt{0.8250} & \texttt{0.7650} & \texttt{\textbf{\underline{0.0008}}} & \texttt{0.0217} & \texttt{0.0062} & \texttt{20,179} \\
     \texttt{\makecell[l]{Gaussian Naive Bayes}} & \texttt{0.5513} & \texttt{0.4700} & \texttt{0.0012} & \texttt{0.0009} & \texttt{0.0004} & \texttt{1,373} \\
     \texttt{\makecell[l]{Gradient Boosting}} & \texttt{0.8962} & \texttt{0.9150} & \texttt{0.0767} & \texttt{0.0017} & \texttt{0.0006} & \texttt{139,263} \\
     \texttt{\makecell[l]{LightGBM}} & \texttt{0.9850} & \texttt{0.8950} & \texttt{0.0502} & \texttt{0.0016} & \texttt{0.0007} & \texttt{350,233} \\
     \texttt{\makecell[l]{GS Random Forest}} & \texttt{0.9200} & \texttt{0.9150} & \texttt{2.9232} & \texttt{0.0030} & \texttt{0.0015} & \texttt{622,791} \\
-    \texttt{\makecell[l]{GS MLP}} & \texttt{0.9962} & \texttt{0.8500} & \texttt{1.8754} & \texttt{0.0008} & \texttt{0.0003} & \texttt{39,978} \\ \midrule
-    \texttt{\makecell[l]{Green Tsetlin}} & \texttt{0.8925} & \texttt{0.9300} & \texttt{0.2858} & \texttt{0.0069} & \texttt{0.0016} & \texttt{38,008} \\
-    \texttt{\makecell[l]{Green Tsetlin Sparse}} & \texttt{0.8925} & \texttt{0.9300} & \texttt{1.7496} & \texttt{0.0031} & \texttt{0.0010} & \texttt{807,608} \\
-    \texttt{\makecell[l]{C Tsetlin}} & \texttt{0.8900} & \texttt{0.9300} & \texttt{0.3476} & \texttt{0.0147} & \texttt{0.0039} & \texttt{43,008} \\
-    \texttt{\makecell[l]{GS C Tsetlin}} & \texttt{0.8925} & \texttt{0.9300} & \texttt{0.4142} & \texttt{0.0013} & \texttt{0.0006} & \texttt{2,760} \\
+    \texttt{\makecell[l]{GS MLP}} & \texttt{\textbf{\underline{0.9962}}} & \texttt{0.8500} & \texttt{1.8754} & \texttt{0.0008} & \texttt{\textbf{\underline{0.0003}}} & \texttt{39,978} \\ \midrule
+    \texttt{\makecell[l]{Green Tsetlin}} & \texttt{0.8925} & \texttt{\textbf{\underline{0.9300}}} & \texttt{0.2858} & \texttt{0.0069} & \texttt{0.0016} & \texttt{38,008} \\
+    \texttt{\makecell[l]{Green Tsetlin Sparse}} & \texttt{0.8925} & \texttt{\textbf{\underline{0.9300}}} & \texttt{1.7496} & \texttt{0.0031} & \texttt{0.0010} & \texttt{807,608} \\
+    \texttt{\makecell[l]{C Tsetlin}} & \texttt{0.8900} & \texttt{\textbf{\underline{0.9300}}} & \texttt{0.3476} & \texttt{0.0147} & \texttt{0.0039} & \texttt{43,008} \\
+    \texttt{\makecell[l]{GS C Tsetlin}} & \texttt{0.8925} & \texttt{\textbf{\underline{0.9300}}} & \texttt{0.4142} & \texttt{0.0013} & \texttt{0.0006} & \texttt{2,760} \\
     \texttt{\makecell[l]{C Tsetlin Sparse}} & \texttt{0.8450} & \texttt{0.9050} & \texttt{0.4636} & \texttt{0.0141} & \texttt{0.0038} & \texttt{144,352} \\
-    \texttt{\makecell[l]{GS C Tsetlin Sparse}} & \texttt{0.8925} & \texttt{0.9300} & \texttt{0.4473} & \texttt{0.0009} & \texttt{0.0005} & \texttt{9,144} \\ \bottomrule
+    \texttt{\makecell[l]{GS C Tsetlin Sparse}} & \texttt{0.8925} & \texttt{\textbf{\underline{0.9300}}} & \texttt{0.4473} & \texttt{0.0009} & \texttt{0.0005} & \texttt{9,144} \\ \bottomrule
 \end{tabularx}
 \end{table}
 
@@ -158,21 +158,21 @@ The results summarized in Table~\ref{tab:digits-results} demonstrate that Tsetli
 \renewcommand{\arraystretch}{0.85}
 \setlength{\aboverulesep}{2pt}
 \setlength{\belowrulesep}{2pt}
-\caption[Digits dataset benchmark results]{Benchmark results for the Digits dataset. Model sizes are estimated based on internal data structures for Tsetlin-based models and via \texttt{pickle} exports for standard models, requiring caution when comparing directly\label{tab:digits-results}.}
+\caption[Digits dataset benchmark results]{Benchmark results for the Digits dataset (evaluated on the Host (PC) environment). Model sizes are estimated based on internal data structures for Tsetlin-based models and via \texttt{pickle} exports for standard models, requiring caution when comparing directly. The best results are indicated in \texttt{\textbf{\underline{bold}}}\label{tab:digits-results}.}
 \begin{tabularx}{\textwidth}{@{}l c c c c c r@{}} \toprule
     \textbf{\makecell[l]{Model}} & \textbf{\makecell[l]{Train\\Acc.}} & \textbf{\makecell[l]{Test\\Acc.}} & \textbf{\makecell[l]{Train\\Time (s)}} & \textbf{\makecell[l]{Train\\Pred.\\Time (s)}} & \textbf{\makecell[l]{Test\\Pred.\\Time (s)}} & \textbf{\makecell[l]{Model\\Size (B)}} \\ \midrule
-    \texttt{\makecell[l]{Logistic Regression}} & \texttt{1.0000} & \texttt{0.9528} & \texttt{1.5764} & \texttt{0.0035} & \texttt{0.0042} & \texttt{84,514} \\
-    \texttt{\makecell[l]{Decision Tree}} & \texttt{1.0000} & \texttt{0.7833} & \texttt{0.0472} & \texttt{0.0038} & \texttt{0.0024} & \texttt{59,928} \\
-    \texttt{\makecell[l]{Random Forest}} & \texttt{1.0000} & \texttt{0.9444} & \texttt{0.2000} & \texttt{0.0159} & \texttt{0.0068} & \texttt{9,855,780} \\
-    \texttt{\makecell[l]{MLP}} & \texttt{1.0000} & \texttt{0.9306} & \texttt{4.5576} & \texttt{0.0226} & \texttt{0.0338} & \texttt{1,461,199} \\
-    \texttt{\makecell[l]{SVC}} & \texttt{0.9965} & \texttt{0.9583} & \texttt{0.2974} & \texttt{0.3944} & \texttt{0.1206} & \texttt{9,585,426} \\
-    \texttt{\makecell[l]{Linear SVC}} & \texttt{1.0000} & \texttt{0.9472} & \texttt{0.1006} & \texttt{0.0137} & \texttt{0.0068} & \texttt{84,395} \\
-    \texttt{\makecell[l]{K-Nearest Neighbors}} & \texttt{0.9088} & \texttt{0.8667} & \texttt{0.0028} & \texttt{0.0679} & \texttt{0.0101} & \texttt{10,256,123} \\
+    \texttt{\makecell[l]{Logistic Regression}} & \texttt{\textbf{\underline{1.0000}}} & \texttt{0.9528} & \texttt{1.5764} & \texttt{\textbf{\underline{0.0035}}} & \texttt{0.0042} & \texttt{84,514} \\
+    \texttt{\makecell[l]{Decision Tree}} & \texttt{\textbf{\underline{1.0000}}} & \texttt{0.7833} & \texttt{0.0472} & \texttt{0.0038} & \texttt{\textbf{\underline{0.0024}}} & \texttt{\textbf{\underline{59,928}}} \\
+    \texttt{\makecell[l]{Random Forest}} & \texttt{\textbf{\underline{1.0000}}} & \texttt{0.9444} & \texttt{0.2000} & \texttt{0.0159} & \texttt{0.0068} & \texttt{9,855,780} \\
+    \texttt{\makecell[l]{MLP}} & \texttt{\textbf{\underline{1.0000}}} & \texttt{0.9306} & \texttt{4.5576} & \texttt{0.0226} & \texttt{0.0338} & \texttt{1,461,199} \\
+    \texttt{\makecell[l]{SVC}} & \texttt{0.9965} & \texttt{\textbf{\underline{0.9583}}} & \texttt{0.2974} & \texttt{0.3944} & \texttt{0.1206} & \texttt{9,585,426} \\
+    \texttt{\makecell[l]{Linear SVC}} & \texttt{\textbf{\underline{1.0000}}} & \texttt{0.9472} & \texttt{0.1006} & \texttt{0.0137} & \texttt{0.0068} & \texttt{84,395} \\
+    \texttt{\makecell[l]{K-Nearest Neighbors}} & \texttt{0.9088} & \texttt{0.8667} & \texttt{\textbf{\underline{0.0028}}} & \texttt{0.0679} & \texttt{0.0101} & \texttt{10,256,123} \\
     \texttt{\makecell[l]{Gaussian Naive Bayes}} & \texttt{0.9666} & \texttt{0.8278} & \texttt{0.0062} & \texttt{0.0219} & \texttt{0.0052} & \texttt{155,647} \\
-    \texttt{\makecell[l]{Gradient Boosting}} & \texttt{1.0000} & \texttt{0.9139} & \texttt{9.5533} & \texttt{0.0150} & \texttt{0.0053} & \texttt{1,359,941} \\
-    \texttt{\makecell[l]{LightGBM}} & \texttt{1.0000} & \texttt{0.9472} & \texttt{0.6413} & \texttt{0.0092} & \texttt{0.0031} & \texttt{3,124,964} \\
-    \texttt{\makecell[l]{GS Random Forest}} & \texttt{1.0000} & \texttt{0.9444} & \texttt{5.6181} & \texttt{0.0347} & \texttt{0.0139} & \texttt{19,661,484} \\
-    \texttt{\makecell[l]{GS MLP}} & \texttt{1.0000} & \texttt{0.9361} & \texttt{8.0691} & \texttt{0.0346} & \texttt{0.0080} & \texttt{1,465,209} \\ \midrule
+    \texttt{\makecell[l]{Gradient Boosting}} & \texttt{\textbf{\underline{1.0000}}} & \texttt{0.9139} & \texttt{9.5533} & \texttt{0.0150} & \texttt{0.0053} & \texttt{1,359,941} \\
+    \texttt{\makecell[l]{LightGBM}} & \texttt{\textbf{\underline{1.0000}}} & \texttt{0.9472} & \texttt{0.6413} & \texttt{0.0092} & \texttt{0.0031} & \texttt{3,124,964} \\
+    \texttt{\makecell[l]{GS Random Forest}} & \texttt{\textbf{\underline{1.0000}}} & \texttt{0.9444} & \texttt{5.6181} & \texttt{0.0347} & \texttt{0.0139} & \texttt{19,661,484} \\
+    \texttt{\makecell[l]{GS MLP}} & \texttt{\textbf{\underline{1.0000}}} & \texttt{0.9361} & \texttt{8.0691} & \texttt{0.0346} & \texttt{0.0080} & \texttt{1,465,209} \\ \midrule
     \texttt{\makecell[l]{Green Tsetlin}} & \texttt{0.9923} & \texttt{0.9222} & \texttt{1.8070} & \texttt{0.0181} & \texttt{0.0063} & \texttt{1,794,040} \\
     \texttt{\makecell[l]{Green Tsetlin Sparse}} & \texttt{0.9402} & \texttt{0.8889} & \texttt{16.0517} & \texttt{0.0113} & \texttt{0.0042} & \texttt{822,040} \\
     \texttt{\makecell[l]{C Tsetlin}} & \texttt{0.9882} & \texttt{0.9222} & \texttt{18.6141} & \texttt{0.7369} & \texttt{0.1846} & \texttt{1,831,040} \\
@@ -224,12 +224,12 @@ The results in Table~\ref{tab:f-mnist-results} indicate that this dataset contai
 \renewcommand{\arraystretch}{0.85}
 \setlength{\aboverulesep}{2pt}
 \setlength{\belowrulesep}{2pt}
-\caption[Fashion-MNIST benchmark results]{Benchmark results for the Fashion-MNIST dataset. Model sizes are estimated based on internal data structures for Tsetlin-based models and via \texttt{pickle} exports for standard models, requiring caution when comparing directly\label{tab:f-mnist-results}.}
+\caption[Fashion-MNIST benchmark results]{Benchmark results for the Fashion-MNIST dataset (evaluated on the Host (PC) environment). Model sizes are estimated based on internal data structures for Tsetlin-based models and via \texttt{pickle} exports for standard models, requiring caution when comparing directly. The best results are indicated in \texttt{\textbf{\underline{bold}}}\label{tab:f-mnist-results}.}
 \begin{tabularx}{\textwidth}{@{}l c c c c c r@{}} \toprule
     \textbf{\makecell[l]{Model}} & \textbf{\makecell[l]{Train\\Acc.}} & \textbf{\makecell[l]{Test\\Acc.}} & \textbf{\makecell[l]{Train\\Time (s)}} & \textbf{\makecell[l]{Train\\Pred.\\Time (s)}} & \textbf{\makecell[l]{Test\\Pred.\\Time (s)}} & \textbf{\makecell[l]{Model\\Size (B)}} \\ \midrule
-    \texttt{\makecell[l]{SVC}} & \texttt{0.9329} & \texttt{0.8260} & \texttt{8.3000} & \texttt{32.5356} & \texttt{8.2058} & \texttt{66,885,009} \\ \midrule
-    \texttt{\makecell[l]{Green Tsetlin}} & \texttt{0.8053} & \texttt{0.7785} & \texttt{15.9906} & \texttt{0.0475} & \texttt{0.0136} & \texttt{3,124,040} \\
-    \texttt{\makecell[l]{Green Tsetlin Sparse}} & \texttt{0.6094} & \texttt{0.5965} & \texttt{201.6389} & \texttt{0.0518} & \texttt{0.0151} & \texttt{822,040} \\
+    \texttt{\makecell[l]{SVC}} & \texttt{\textbf{\underline{0.9329}}} & \texttt{\textbf{\underline{0.8260}}} & \texttt{\textbf{\underline{8.3000}}} & \texttt{32.5356} & \texttt{8.2058} & \texttt{66,885,009} \\ \midrule
+    \texttt{\makecell[l]{Green Tsetlin}} & \texttt{0.8053} & \texttt{0.7785} & \texttt{15.9906} & \texttt{\textbf{\underline{0.0475}}} & \texttt{\textbf{\underline{0.0136}}} & \texttt{3,124,040} \\
+    \texttt{\makecell[l]{Green Tsetlin Sparse}} & \texttt{0.6094} & \texttt{0.5965} & \texttt{201.6389} & \texttt{0.0518} & \texttt{0.0151} & \texttt{\textbf{\underline{822,040}}} \\
     \texttt{\makecell[l]{C Tsetlin}} & \texttt{0.7600} & \texttt{0.7320} & \texttt{209.8398} & \texttt{6.5704} & \texttt{1.6151} & \texttt{3,161,040} \\
     \texttt{\makecell[l]{C Tsetlin Sparse}} & \texttt{0.5821} & \texttt{0.5810} & \texttt{633.4991} & \texttt{3.1626} & \texttt{0.7933} & \texttt{1,271,776} \\ \bottomrule
 \end{tabularx}
@@ -285,7 +285,7 @@ The experimental results presented in Figures~\ref{fig:noisy-xor-1000-1}~and~\re
 
 \clearpage
 \section{Embedded Noisy-XOR Benchmarks}
-We demonstrated the capability of our implementation by running the minimal version of the core C library on resource-constrained hardware. As a target platform, we chose the Raspberry Pi Pico development board due to its popularity and software support, specifically the Pico-SDK~\cite{pico-sdk}.
+We demonstrated the capability of our implementation by running the minimal version of the core C library on resource-constrained hardware. As a target platform, we chose the Raspberry Pi Pico development board due to its popularity and software support, specifically the Pico-SDK~\cite{pico-sdk}. The platform is powered by the RP2040 microcontroller chip, featuring a dual-core Arm Cortex-M0+ processor clocked at 133 MHz, 264 KB of SRAM and 2 MB of on-board flash memory.
 
 We conducted benchmarks on the Noisy-XOR dataset similar to those performed in Python but using a wider range of configurations. Selected tests were performed on a desktop PC running Ubuntu OS in cases where the models exceeded the hardware performance limits of the Raspberry Pi Pico or where peak memory statistics were unavailable. The results are detailed in Table~\ref{tab:noisy-xor-pi-pico}, with values gathered from the Ubuntu environment marked with a \textbf{(U)} prefix.
 
@@ -304,7 +304,7 @@ As shown in Table~\ref{tab:noisy-xor-pi-pico}, our implementation remains highly
 \centering
 \scriptsize
 \setlength{\tabcolsep}{2.5pt}
-\caption[Noisy-XOR performance on Raspberry Pi Pico]{Noisy-XOR results on Raspberry Pi Pico and Ubuntu Desktop, testing how hyperparameters affect accuracy and execution time. Peak RAM usage was calculated on the Ubuntu Desktop environment and includes system overhead. Due to hardware performance limits, configurations exceeding the 1000 clauses were benchmarked only on Ubuntu (marked with \textbf{(U)} prefix)\label{tab:noisy-xor-pi-pico}.}
+\caption[Noisy-XOR performance on Raspberry Pi Pico]{Noisy-XOR results on Raspberry Pi Pico and Ubuntu Desktop (the Host (PC) environment), testing how hyperparameters affect accuracy and execution time. Peak RAM usage was calculated on the Ubuntu Desktop and includes system overhead. Due to hardware performance limits, configurations exceeding the 1000 clauses were benchmarked only on Ubuntu (marked with \textbf{(U)} prefix)\label{tab:noisy-xor-pi-pico}.}
 \begin{tabular}{@{}r r r r r r r r r r r r r r r r r r r r@{}} \toprule
     \textbf{N} & \textbf{SAM} & \textbf{CLS} & \textbf{THR} & \textbf{LIT} & \textbf{CLU} & \textbf{MXS} & \textbf{MNS} & \textbf{BST} & \textbf{SNS} & \textbf{EPC} & \textbf{TRT} & \textbf{EVT} & \textbf{COP} & \textbf{TOP} & \textbf{ACC} & \textbf{TMM} & \textbf{DSM} & \textbf{PMU} \\ \midrule
     1 & 1000 & 2 & 1000 & 16 & 1000 & 127 & -127 & 0 & 3.0 & 1 & 24.73 & 0.88 & 183 & 200 & 0.92 & 36.21 & 19.53 & \textbf{(U)}1728.0 \\
@@ -315,8 +315,8 @@ As shown in Table~\ref{tab:noisy-xor-pi-pico}, our implementation remains highly
     6 & 1000 & 2 & 1000 & 16 & 1000 & 15 & -15 & 0 & 3.0 & 1 & 24.51 & 0.86 & 183 & 200 & 0.92 & 36.21 & 19.53 & \textbf{(U)}1728.0 \\
     7 & 1000 & 2 & 1000 & 16 & 500 & 127 & -127 & 0 & 3.0 & 1 & 12.92 & 0.40 & 183 & 200 & 0.92 & 18.15 & 19.53 & \textbf{(U)}1728.0 \\
     8 & 1000 & 2 & 1000 & 16 & 250 & 127 & -127 & 0 & 3.0 & 1 & 6.79 & 0.21 & 183 & 200 & 0.92 & 9.12 & 19.53 & \textbf{(U)}1728.0 \\
-    \textbf{9} & 1000 & 2 & 1000 & 16 & 125 & 127 & -127 & 0 & 3.0 & 1 & 3.54 & 0.10 & 183 & 200 & 0.92 & 4.6 & 19.53 & \textbf{(U)}1728.0 \\
-    \textbf{10} & 1000 & 2 & 1000 & 16 & 64 & 127 & -127 & 0 & 3.0 & 10 & 11.93 & 0.05 & 183 & 200 & 0.92 & 2.39 & 19.53 & \textbf{(U)}1728.0 \\
+    \textbf{\underline{9}} & 1000 & 2 & 1000 & 16 & 125 & 127 & -127 & 0 & 3.0 & 1 & 3.54 & 0.10 & 183 & 200 & 0.92 & 4.6 & 19.53 & \textbf{(U)}1728.0 \\
+    \textbf{\underline{10}} & 1000 & 2 & 1000 & 16 & 64 & 127 & -127 & 0 & 3.0 & 10 & 11.93 & 0.05 & 183 & 200 & 0.92 & 2.39 & 19.53 & \textbf{(U)}1728.0 \\
     11 & 1000 & 2 & 1000 & 16 & 1000 & 127 & -127 & 0 & 3.0 & 10 & 163.19 & 0.89 & 182 & 200 & 0.91 & 36.21 & 19.53 & \textbf{(U)}1728.0 \\
     12 & 1000 & 2 & 500 & 16 & 1000 & 127 & -127 & 0 & 3.0 & 1 & 22.98 & 0.87 & 182 & 200 & 0.91 & 36.21 & 19.53 & \textbf{(U)}1728.0 \\
     13 & 1000 & 2 & 1000 & 16 & 1000 & 127 & -127 & 1 & 3.0 & 1 & 24.53 & 0.82 & 181 & 200 & 0.91 & 36.21 & 19.53 & \textbf{(U)}1728.0 \\

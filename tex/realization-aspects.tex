@@ -3,9 +3,7 @@
 
 This section describes the design choices of \LibraryName as well as the rationale behind them, and the overarching architecture of the solution. The actual TM implementation is described in detail to make it intuitive. It describes used tools, solutions and algorithms. Additionally, it discusses several interesting problems that were encountered.
 
-
-\section{Design}
-\label{sec:design}
+\section{Design}\label{sec:design}
 Even though optimization was the primary objective, not every method could be utilized due to the target environments having very limited resources and hardware limitations. In particular, vectorization was completely out of the picture, even though \GreenTsetlinName has it enabled by default. GPU programming was obviously dismissed for the same reason -- although notably, such an implementation is possible~\cite{granmo2020pytsetlinmachinecuda}.
 
 \subsection{Programming Language}
@@ -14,11 +12,12 @@ Exporting models from \GreenTsetlinName is done in Python, as it is a Python lib
 \LibraryName also has Python bindings so that it can be used conveniently from Python.
 
 \subsection{Execution Engine}
-Even though there exists a number of existing libraries implementing the Tsetlin Machines, \LibraryName was essentially created from the ground up without taking much inspiration or hints from them. It was required to be written primarily with optimization in mind so that it works as fast as possible while maintaining small size and portability on top of utilizing little power and memory. \\
+Even though there exists a number of existing libraries implementing the Tsetlin Machines, \LibraryName was essentially created from the ground up without taking much inspiration or hints from them. It was required to be written primarily with optimization in mind so that it works as fast as possible while maintaining small size and portability on top of utilizing little power and memory.
+
 It was also decided \LibraryName should support multiple different TM variants so their efficiency could be tested -- Coalesced, Sparse and Stateless.
 
 \subsection{Model Serialization Library}
-Several libraries were compiled and compared as possible options to implement the model serialization format. Only C libraries were taken into consideration. See table ~\ref{tab:serial-lib-comp}
+Several libraries were compiled and compared as possible options to implement the model serialization format. Only C libraries were taken into consideration. See table ~\ref{tab:serial-lib-comp}.
 
 \begin{table}[!htbp]
 \centering
@@ -283,8 +282,8 @@ Since the core library is self-sufficient, it can also be compiled for the host 
 \end{figure}
 
 \section{Tsetlin Automaton}
-A Tsetlin Automaton is the smallest part of a TM, and it is what clauses consist of. Implementation-wise it is represented by a singular, 8-bit integer, meaning its values can range from -127 to 127 by default. The range can be made smaller by setting model parameters $max\_state$ and $min\_state$ \\
-Further on in this thesis, the term that a Tsetlin Automaton is active, means its internal integer value is greater or equal than halfway between $max\_state$ and $min\_state$; $value \ge \frac{max\_state + min\_state}{2}$  \\
+A Tsetlin Automaton is the smallest part of a TM, and it is what clauses consist of. Implementation-wise it is represented by a singular, 8-bit integer, meaning its values can range from -127 to 127 by default. The range can be made smaller by setting model parameters $max\_state$ and $min\_state$. 
+Further on in this thesis, the term that a Tsetlin Automaton is active, means its internal integer value is greater or equal than halfway between $max\_state$ and $min\_state$; $value \ge \frac{max\_state + min\_state}{2}$. 
 One input bit on position $i$ has two corresponding Tsetlin Automata at positions in clause $2 \times i$ and $2 \times i + 1$. The first one -- positive -- decides whether the input bit -- $x_i$ -- should be included in the clause, and the other -- negative -- whether its negation -- $\neg x_i$ -- should be included.
 
 \section{Coalesced TM}
@@ -299,7 +298,7 @@ The training loop consists of three distinct steps repeated for each datapoint.
 \end{compactenum}
 
 \subsubsection{Calculate Clause Output}
-The current states of Tsetlin Automata in each clause are used to determine whether the clause activates - 1, or not - 0. This output is temporarily stored in an internal array. \\
+The current states of Tsetlin Automata in each clause are used to determine whether the clause activates - 1, or not - 0. This output is temporarily stored in an internal array. 
 For this step specifically, a clause is active if either of two conditions is met:
 \begin{compactitem}
     \item \textbf{the clause is empty} - no Tsetlin Automaton is active
@@ -307,31 +306,29 @@ For this step specifically, a clause is active if either of two conditions is me
 \end{compactitem}
 
 \subsubsection{Sum Votes}
-This step uses the information calculated in the previous point whether clauses are active or not. Active clauses vote for all possible classes with trained weights. Specifically, clause $i$ votes for class $j$ with trained weight $w_{i,j}$. $w_{i,j}$ can be positive or negative.\\
+This step uses the information calculated in the previous point whether clauses are active or not. Active clauses vote for all possible classes with trained weights. Specifically, clause $i$ votes for class $j$ with trained weight $w_{i,j}$. $w_{i,j}$ can be positive or negative. 
 As all active clauses vote, each class accumulates their votes. The sum of votes is then clipped to parameter $threshold$. It serves the same purpose as gradient clipping in other ML architectures, mainly for numerical stability. %TODO: citation
 
 \subsubsection{Calculate and Apply Feedback}
-As the sum of votes indicates whether a class should be chosen or not, that prediction can be compared to the actual datapoint label. Based on this information, a suitable feedback to be applied to Tsetlin Automata. \\
-For each datapoint two classes are specified for feedback
+As the sum of votes indicates whether a class should be chosen or not, that prediction can be compared to the actual datapoint label. Based on this information, a suitable feedback to be applied to Tsetlin Automata. 
+For each datapoint two classes are specified for feedback:
 \begin{compactenum}
     \item positive - one of the classes, or the one class, specified by label
     \item negative - one of the classes not specified by label
 \end{compactenum}
-Both have a chance to trigger feedback to all clauses. \\
-For the positive class, the chance is inversely proportional to the clipped sum of votes it received. That means the model applies feedback more often the \textit{less} sure it is the class is correct. Although unintuitive at first, this practice is used to avoid overfitting. \\
-For the negative class, the chance is proportional to the clipped sum of votes it received. This means the model applies feedback more often the more sure it is the class is incorrect. \\
+Both have a chance to trigger feedback to all clauses. 
+For the positive class, the chance is inversely proportional to the clipped sum of votes it received. That means the model applies feedback more often the \textit{less} sure it is the class is correct. Although unintuitive at first, this practice is used to avoid overfitting. 
+For the negative class, the chance is proportional to the clipped sum of votes it received. This means the model applies feedback more often the more sure it is the class is incorrect.
 
 \paragraph{Customization}
-What is unique to \LibraryName, it allows both predictions and output to be customized to be any type of data. \\
-A custom feedback function can be set for the model, to override how positive and negative classes are chosen. The default uses normal classification, where the output and prediction is an integer identifying a class. \\
-Another predefined function allows multi-class classification, where output and prediction is an 8-bit integer array where the length is the number of classes, where value 1 signifies a class with a given identifier being chosen, value 0 - not chosen. \\
-\vspace{7pt}
+What is unique to \LibraryName, it allows both predictions and output to be customized to be any type of data. 
+A custom feedback function can be set for the model, to override how positive and negative classes are chosen. The default uses normal classification, where the output and prediction is an integer identifying a class. 
+Another predefined function allows multi-class classification, where output and prediction is an 8-bit integer array where the length is the number of classes, where value 1 signifies a class with a given identifier being chosen, value 0 - not chosen. 
 Also a custom comparison function can be set for the model, to override when the output and prediction data classes should be treated as equal. By default a simple memory comparison is used, which handles the vast majority of uses -- even when fully customized.
 
-\subsubsection{Feedback}
-\label{feedback-dense}
-When a chosen class triggers feedback to all clauses, for each clause separately one of three feedback types may be applied. \\
-Tsetlin Automata changes specified in \textbf{Action} are not always changed -- they have a random chance to do so based on the parameter \textit{s} -- sensitivity -- further explained in \textbf{Sensitivity} for each feedback type. \\
+\subsubsection{Feedback}\label{feedback-dense}
+When a chosen class triggers feedback to all clauses, for each clause separately one of three feedback types may be applied. 
+Tsetlin Automata changes specified in \textbf{Action} are not always changed -- they have a random chance to do so based on the parameter \textit{s} -- sensitivity -- further explained in \textbf{Sensitivity} for each feedback type.
 
 \paragraph{Type Ia}
 \begin{description}
@@ -377,12 +374,14 @@ Exactly the same as training. Sums up class votes from active clauses.
 Applies a function to determine the output from the summed up class votes. By default, it simply returns an integer -- an identifier of a class with the most votes.
 
 \paragraph{Customization}
-Again, this can be fully customized. A custom output activation function can be set for the model, to override what the model outputs based on the summed up weights. \\
+Again, this can be fully customized. A custom output activation function can be set for the model, to override what the model outputs based on the summed up weights.
+
 Another predefined function allows multi-class classification, where the output is an 8-bit integer array where the length is the number of classes, where value 1 signifies a class with a given identifier being chosen, value 0 - not chosen.
 
 \subsection{Data Layout}
 A clause is represented as a simple array of Tsetlin Automata states. For the sake of efficiency they are ordered by the literals they correspond to, in pairs of positive and negative Tsetlin Automata. This simplified representation is visualised in figure~\ref{fig:dense-data-layout}.
-\par The \textit{i}-th array field represents the state of Tsetlin Automaton corresponding to literal with index $\lfloor \frac{i}{2} \rfloor$ -- positive if \textit{i} is even, negative if odd.
+
+The \textit{i}-th array field represents the state of Tsetlin Automaton corresponding to literal with index $\lfloor \frac{i}{2} \rfloor$ -- positive if \textit{i} is even, negative if odd.
 
 \begin{figure}[!htbp]
 \centering
@@ -426,67 +425,46 @@ A clause is represented as a simple array of Tsetlin Automata states. For the sa
 
 \subsection{Model Serialization Format}
 
-The model state is represented as:
-\begin{compactitem}
-    \item Parameters:
-    \begin{compactitem}
-        \item number of classes
-        \item threshold
-        \item number of literals
-        \item number of clauses
-        \item maximum state
-        \item minimum state
-        \item boost true positive feedback
-        \item learning sensitivity (s)
-    \end{compactitem}
-    \item clause weights
-    \item clauses - Tsetlin Automata states
-    \item (optional) names of literals
-\end{compactitem}
-This is described in FlatBuffers format in the listing~\ref{lst:dense-schema}
+The model state is represented by the FlatBuffers schema in Listing~\ref{lst:dense-schema}. It defines the model parameters, clause weights, and the internal states of the Tsetlin Automata.
 
 \begin{listing}[!htbp]
     \caption[Coalesced TM FlatBuffers serialization format]{Coalesced TM FlatBuffers serialization format\label{lst:dense-schema}}
-    \begin{minted}[style=bw, fontfamily=tt]{protobuf}
-table Parameters {
-  threshold:  uint;  // tsetlin automaton threshold
-  n_literals: uint;  // total number of literals
-  n_clauses:  uint;  // total number of clauses
-  n_classes:  uint;  // number of output classes
-  max_state:  byte;  // maximum state for automaton
-  min_state:  byte;  // minimum state for automaton
-  boost_tp:   ubyte; // boost true positive feedback
-  learn_s:    float; // learning sensitivity (s)
+    \begin{minted}[escapeinside=||, fontfamily=tt]{text}
+|\kw{table}| Parameters {
+  threshold:  |\tp{uint}|;  |\cm{// tsetlin automaton threshold}|
+  n_literals: |\tp{uint}|;  |\cm{// total number of literals}|
+  n_clauses:  |\tp{uint}|;  |\cm{// total number of clauses}|
+  n_classes:  |\tp{uint}|;  |\cm{// number of output classes}|
+  max_state:  |\tp{byte}|;  |\cm{// maximum state for automaton}|
+  min_state:  |\tp{byte}|;  |\cm{// minimum state for automaton}|
+  boost_tp:   |\tp{ubyte}|; |\cm{// boost true positive feedback}|
+  learn_s:    |\tp{float}|; |\cm{// learning sensitivity (s)}|
 }
-
-table ClauseWeightsTensor {
-  weights: [short]; // clause weights
-  shape:   [uint];  // dimensions e.g. [n_clauses, n_classes]
+|\kw{table}| ClauseWeightsTensor {
+  weights: [|\tp{short}|]; |\cm{// clause weights}|
+  shape:   [|\tp{uint}|];  |\cm{// dimensions e.g. [n\_clauses, n\_classes]}|
 }
-
-table AutomatonStatesTensor {
-  states: [byte]; // automaton states
-  shape:  [uint]; // dimensions e.g. [n_clauses, n_literals, 2]
+|\kw{table}| AutomatonStatesTensor {
+  states: [|\tp{byte}|]; |\cm{// automaton states}|
+  shape:  [|\tp{uint}|]; |\cm{// dimensions e.g. [n\_clauses, n\_literals, 2]}|
 }
-
-table Model {
-  params:           Parameters            (required); // model parameters
-  automaton_states: AutomatonStatesTensor (required); // automaton states
-  clause_weights:   ClauseWeightsTensor   (required); // clause weights
-  literal_names:    [string];                         // names of literals
+|\kw{table}| Model {
+  params:           Parameters            (|\tp{required}|); |\cm{// model parameters}|
+  automaton_states: AutomatonStatesTensor (|\tp{required}|); |\cm{// automaton states}|
+  clause_weights:   ClauseWeightsTensor   (|\tp{required}|); |\cm{// clause weights}|
+  literal_names:    [|\tp{string}|];                         |\cm{// names of literals}|
 }
-
-root_type Model;
+|\kw{root\_type}| Model;
     \end{minted}
 \end{listing}
-
 
 \section{Sparse TM}
 A Sparse TM~\cite{glimsdal2024sparsetsetlinmachine} aims to efficiently process sparse data. It uses the same core principles and mechanics as the Coalesced TM, its main difference being the underlying data layout. It also introduces \textit{Active Literals} -- it functions as a list of literals considered to be added to sparse state. Notably, both sparse state and \textit{Active Literals} need to have a limited size or the model is slower and larger than Coalesced TM, and learns poorly -- something not mentioned in the paper~\cite{glimsdal2024sparsetsetlinmachine}.
 
 \subsection{Data Layout}
 Unlike the Coalesced TM, the Sparse TM does not store all Tsetlin Automata. Simply put, it only keeps the Tsetlin Automata, which state is above a certain threshold. By doing so, in principle it does not need to waste space and computation power for Tsetlin Automata it deems unlikely to become active for a given clause. The simplified structure is shown in figure ~\ref{fig:sparse-data-layout}
-\par Since not all Tsetlin Automata are present in a clause a linked list is used as the underlying data structure. Identifying indices cannot be inferred from the data structure and need to be stored in nodes.
+
+Since not all Tsetlin Automata are present in a clause a linked list is used as the underlying data structure. Identifying indices cannot be inferred from the data structure and need to be stored in nodes.
 
 \begin{figure}[!htbp]
 \centering
@@ -553,13 +531,11 @@ Unlike the Coalesced TM, the Sparse TM does not store all Tsetlin Automata. Simp
 \subsection{Training}
 Aside from obvious changes from Coalesced TM needed to accommodate the different data structure, the feedback mechanism has some modifications. Namely, a new Tsetlin Automaton can be introduced to a clause only in type Ia of feedback, only when the corresponding literal currently belongs to Active Literals of a class which triggered this feedback. A literal can be added to \textit{Active Literals} in feedback type II. \textit{Active Literals} are not being explicitly removed, but the oldest is replaced when adding a new one.
 
-
 \section{Stateless}
 A Stateless TM is a slimmed down version of Sparse TM that does not allow any model training, at the same time further reducing model size to the smallest and fastest possible for inference. It should only be created from a trained model of a different TM variant.
 
 \subsection{Data Layout}
 Stateless TM, as the name suggests, does not store Tsetlin Automaton states at all. Here a degenerated version of Tsetlin Automaton is active if it is present at all. The simplified structure is shown in figure ~\ref{fig:stateless-data-layout}
-
 
 \begin{figure}[!htbp]
 \centering
@@ -618,12 +594,12 @@ Stateless TM, as the name suggests, does not store Tsetlin Automaton states at a
 Seeing as speed, size, portability as well as limiting the usage of power and memory were all key requirements, optimizations were the main focus of this project. In this section a few of the more interesting examples are listed.
 
 \subsection{Pseudo Random Number Generation}
-Analyzing the efficiency of a development version with valgrind and callgrind, it was obvious that most training time was spent on calls to \textit{rand()} - pseudo random number generation. \\
+Analyzing the efficiency of a development version with valgrind and callgrind, it was obvious that most training time was spent on calls to \textit{rand()} - pseudo random number generation. 
 While it is not costly to call once, the cost quickly accumulates over millions of calls.
 
 \subsubsection{Analysis}
-\textit{rand()} is costly because it aims for a uniform spread, as evenly as possible. \LibraryName intentionally adopts a design that relaxes this uniformity, accepting minor statistical deviations that average out over millions of calls -- in order to prioritize execution speed and reduced power consumption. The pseudo random number generation for this purpose does not need to be cryptographically secure either -- \textit{rand()} is not anyway. \\
-A quick look at \GreenTsetlinName revealed that it suffered from the same problem. Its solution was to use a wyhash64 algorithm. Using just an 64-bit integer addition, two 128-bit integer multiplications and few bitwise operations as well as a double multiplication, it is overall a much cheaper solution.\\
+\textit{rand()} is costly because it aims for a uniform spread, as evenly as possible. \LibraryName intentionally adopts a design that relaxes this uniformity, accepting minor statistical deviations that average out over millions of calls -- in order to prioritize execution speed and reduced power consumption. The pseudo random number generation for this purpose does not need to be cryptographically secure either -- \textit{rand()} is not anyway. 
+A quick look at \GreenTsetlinName revealed that it suffered from the same problem. Its solution was to use a wyhash64 algorithm. Using just an 64-bit integer addition, two 128-bit integer multiplications and few bitwise operations as well as a double multiplication, it is overall a much cheaper solution. 
 Listing ~\ref{lst:wyhash64} shows the \GreenTsetlinName implementation of wyhash64.
 \begin{listing}[!htbp]
     \caption[\GreenTsetlinName implementation of wyhash64]{\GreenTsetlinName implementation of wyhash64\label{lst:wyhash64}}
@@ -644,8 +620,8 @@ double next_u()
 \end{listing}
 
 \subsubsection{Solution}
-Wyhash64 represents a significantly lower-cost solution compared to the alternative; however, its computational and energy costs remain non-negligible. 128-bit integer multiplications and double multiplication cost many precious CPU cycles which means time and power. \\
-Listing ~\ref{lst:fast-prng} shows the \LibraryName implementation of xorshift32. \\
+Wyhash64 represents a significantly lower-cost solution compared to the alternative; however, its computational and energy costs remain non-negligible. 128-bit integer multiplications and double multiplication cost many precious CPU cycles which means time and power. 
+Listing ~\ref{lst:fast-prng} shows the \LibraryName implementation of xorshift32. 
 All that is really needed are a few bit shifts and XOR operations. It uses so few CPU cycles it is basically free. It might also be the case one of the authors likes low-level optimization an unhealthy amount. 
 
 \begin{listing}[!htbp]
@@ -682,5 +658,5 @@ float prng_next_float(struct FastPRNG* prng) {
 
 
 \section{Summary}
-In conclusion, \LibraryName is a C library designed for resource-limited systems, using FlatBuffers format for model serialization. It can be used conveniently from Python on the host device, both inference and training is available from C on the edge device, and models can be transferred between them -- as shown in the System Architecture\ref{sec:system-architecture} section. \\
+In conclusion, \LibraryName is a C library designed for resource-limited systems, using FlatBuffers format for model serialization. It can be used conveniently from Python on the host device, both inference and training is available from C on the edge device, and models can be transferred between them -- as shown in the System Architecture\ref{sec:system-architecture} section. 
 This chapter furthermore touches on the actual, low-level implementation of TM types. Notable optimizations are also explained here.

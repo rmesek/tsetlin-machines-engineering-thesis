@@ -3,7 +3,9 @@
 
 This project combines elements of both research and development. Aside from implementing a functional TM execution engine, other goals were to test its effectiveness in different conditions and develop a lightweight model serialization format. It was also essential to choose the right tools for the task.
 
-\par Since the topic of this thesis is not very well known, before starting development it was necessary to gain a deep understanding of the TM architecture. The learning materials as well as documentation for existing solutions were found to be lacking, inspiring \LibraryName to provide better documentation for its users, as well as in-code comments for anyone seeking deeper understanding.
+Since the topic of this thesis is not very well known, before starting development it was necessary to gain a deep understanding of the TM architecture. The learning materials as well as documentation for existing solutions were found to be lacking, inspiring \LibraryName to provide better documentation for its users, as well as in-code comments for anyone seeking deeper understanding.
+
+The project followed an iterative methodology, cycling through stages of requirements definition, analysis, implementation, and testing. This approach was well-suited to the small team size and the research-oriented nature of the work, which made it difficult to estimate timelines or guarantee the feasibility of specific features from the beginning.
 
 \section{Team Members and Their Roles}
 
@@ -27,12 +29,12 @@ The two team members worked on parts of the project based on their previous expe
     \item integration with FlatBuffers for model serialization and deserialization
 \end{compactitem}
 
-Of course many aspects of the project had to be realized together, such as solving architectural issues and making sure the TM execution engine implementation is correct with the theoretical work~\cite{granmo2021tsetlinmachinegame}.
+Naturally, many aspects of the project had to be realized together, such as solving architectural issues and making sure the TM execution engine implementation is correct with the theoretical work~\cite{granmo2021tsetlinmachinegame}.
 
 \section{Used Tools}
 
 \paragraph{Git with GitHub}
-Git is the most popular version control system, in this case used together with GitHub as a hosting service. This setup made it much easier to keep track of changes, and made it possible to work simultaneously on multiple issues on separate branches. Using GitHub also helped with transparency, since every update was visible to the whole team, also making reviews straightforward.
+Git is the most popular version control system, in this case used together with GitHub as a hosting service. This setup made it much easier to keep track of changes, and made it possible to work simultaneously on multiple issues on separate branches. Using GitHub also helped with transparency, since every update was visible to the whole team, also making reviews straightforward. The source code for this project is available in the public repository~\cite{tsetlin_machine_c}.
 
 \paragraph{Discord}
 Discord served as the main platform for day-to-day communication. Different channels could were used to separate topics, which helped keep discussions on-track and organized instead of everything being mixed in one place. Text chat was the most common, but voice calls were also used when something needed to be explained in more detail, or simply during working sessions. Since Discord is free and everyone was already familiar with it, there were no technical hurdles in getting started, and the communication stayed active throughout the project.
