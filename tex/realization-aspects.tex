@@ -3,35 +3,7 @@
 
 This section describes the design choices of \LibraryName as well as the rationale behind them, and the overarching architecture of the solution. The actual TM implementation is described in detail to make it intuitive. It describes used tools, solutions and algorithms. Additionally, it discusses several interesting problems that were encountered.
 
-\section{Design}\label{sec:design}
-Even though optimization was the primary objective, not every method could be utilized due to the target environments having very limited resources and hardware limitations. In particular, vectorization was completely out of the picture, even though \GreenTsetlinName has it enabled by default. GPU programming was obviously dismissed for the same reason -- although notably, such an implementation is possible~\cite{granmo2020pytsetlinmachinecuda}.
-
-\subsection{Programming Language}
-Since the thesis topic requires \LibraryName to be designed for embedded devices, there were only a few suitable options like C/C++, Rust or MicroPython. C was chosen as the most widely used language for embedded systems -- it is efficient, lightweight and portable. Its popularity also means it has extensive third party library support. The authors' previous experience working with C/C++ also influenced this decision.  
-Exporting models from \GreenTsetlinName is done in Python, as it is a Python library.  
-\LibraryName also has Python bindings so that it can be used conveniently from Python.
-
-\subsection{Execution Engine}
-Even though there exists a number of existing libraries implementing the Tsetlin Machines, \LibraryName was essentially created from the ground up without taking much inspiration or hints from them. It was required to be written primarily with optimization in mind so that it works as fast as possible while maintaining small size and portability on top of utilizing little power and memory.
-
-It was also decided \LibraryName should support multiple different TM variants so their efficiency could be tested -- Coalesced, Sparse and Stateless.
-
-\subsection{Model Serialization Library}
-Several libraries were compiled and compared as possible options to implement the model serialization format. Only C libraries were taken into consideration. See table ~\ref{tab:serial-lib-comp}.
-
-\begin{table}[!htbp]
-\centering
-\caption[Comparison of model serialization libraries]{Comparison of selected model serialization libraries\label{tab:serial-lib-comp}}
-\begin{tabularx}{\textwidth}{@{}L L L L L@{}} \toprule
-    \textbf{Format name} & \textbf{Comment} & \textbf{Schema complexity} & \textbf{Efficiency on edge device} & \textbf{Library size on edge device} \\ \midrule \midrule
-    Protocol Buffers & Simple and small model representation & Low & Fast but needs object parsing & Too big \\ \midrule
-    ONNX & A standardized way to store models and operation graphs & High & Low - needs graph and tensor parsing & Much too big \\ \midrule
-    FlatBuffers & ``Protocol buffers lite'' & Low & Very fast, zero-copy & Acceptable \\ \bottomrule
-\end{tabularx}
-\end{table}
-
-\section{System Architecture and Data Workflow}
-\label{sec:system-architecture}
+\section{System Architecture and Data Workflow}\label{sec:system-architecture}
 The project's architecture and data flow are shown in Figure \ref{fig:projectdiagram}. The design is split between a \textbf{host (PC)} and an \textbf{embedded device}, allowing models to be developed on one platform and transferred to different hardware for deployment.
 
 \paragraph{Training and exporting}
@@ -55,7 +27,7 @@ Since the core library is self-sufficient, it can also be compiled for the host 
 
 \begin{figure}[!htbp]
 \centering
-\begin{tikzpicture}[scale=0.75, transform shape]
+\begin{tikzpicture}[scale=0.7, transform shape]
 \pgfdeclarelayer{background}
 \pgfsetlayers{background,main}
 \tikzset{refnode/.style={circle, draw, fill=white, inner sep=1pt, font=\scriptsize\bfseries}}
@@ -280,6 +252,34 @@ Since the core library is self-sufficient, it can also be compiled for the host 
 \caption[System architecture and data workflow]{System architecture and data workflow. Models can be pretrained using \GreenTsetlinName library (C). We provide a Python Interface (G) that handles model serialization and includes a Scikit-learn compatible wrapper. Our Core TM Library (O), implemented in the C programming language, executes the model on the target device, supporting both inference and on-device training.}
 \label{fig:projectdiagram}
 \end{figure}
+\FloatBarrier
+
+\section{Design}\label{sec:design}
+Even though optimization was the primary objective, not every method could be utilized due to the target environments having very limited resources and hardware limitations. In particular, vectorization was completely out of the picture, even though \GreenTsetlinName has it enabled by default. GPU programming was obviously dismissed for the same reason -- although notably, such an implementation is possible~\cite{granmo2020pytsetlinmachinecuda}.
+
+\subsection{Programming Language}
+Since the thesis topic requires \LibraryName to be designed for embedded devices, there were only a few suitable options like C/C++, Rust or MicroPython. C was chosen as the most widely used language for embedded systems -- it is efficient, lightweight and portable. Its popularity also means it has extensive third party library support. The authors' previous experience working with C/C++ also influenced this decision.  
+Exporting models from \GreenTsetlinName is done in Python, as it is a Python library.  
+\LibraryName also has Python bindings so that it can be used conveniently from Python.
+
+\subsection{Execution Engine}
+Even though there exists a number of existing libraries implementing the Tsetlin Machines, \LibraryName was essentially created from the ground up without taking much inspiration or hints from them. It was required to be written primarily with optimization in mind so that it works as fast as possible while maintaining small size and portability on top of utilizing little power and memory.
+
+It was also decided \LibraryName should support multiple different TM variants so their efficiency could be tested -- Coalesced, Sparse and Stateless.
+
+\subsection{Model Serialization Library}
+Several libraries were compiled and compared as possible options to implement the model serialization format. Only C libraries were taken into consideration. See table ~\ref{tab:serial-lib-comp}.
+
+\begin{table}[!htbp]
+\centering
+\caption[Comparison of model serialization libraries]{Comparison of selected model serialization libraries\label{tab:serial-lib-comp}}
+\begin{tabularx}{\textwidth}{@{}L L L L L@{}} \toprule
+    \textbf{Format name} & \textbf{Comment} & \textbf{Schema complexity} & \textbf{Efficiency on edge device} & \textbf{Library size on edge device} \\ \midrule \midrule
+    Protocol Buffers & Simple and small model representation & Low & Fast but needs object parsing & Too big \\ \midrule
+    ONNX & A standardized way to store models and operation graphs & High & Low - needs graph and tensor parsing & Much too big \\ \midrule
+    FlatBuffers & ``Protocol buffers lite'' & Low & Very fast, zero-copy & Acceptable \\ \bottomrule
+\end{tabularx}
+\end{table}
 
 \section{Tsetlin Automaton}
 A Tsetlin Automaton is the smallest part of a TM, and it is what clauses consist of. Implementation-wise it is represented by a singular, 8-bit integer, meaning its values can range from -127 to 127 by default. The range can be made smaller by setting model parameters $max\_state$ and $min\_state$. 
