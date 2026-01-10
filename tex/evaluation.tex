@@ -118,7 +118,7 @@ The dataset consists of $1797$ grayscale $8 \times 8$ images, examples of which 
 \end{figure}
 
 \paragraph{Preprocessing and input format}
-This task involves multiclass classification ($y$: $[0,1,\dots,9]$). Because the input vectors contain features with multiple possible values, they must be transformed into a binary format compatible with the Tsetlin Machine. We achieved this using Scikit-learn's \texttt{OneHotEncoder}, which expanded the feature set from $X$: $(1797, 64)$ with values in $[0,1,\dots,16]$ to $X$: $(1797, 890)$ with binary values $[0,1]$. The data was divided using a typical $80\%$ training and $20\%$ testing split while maintaining class proportions.
+This task involves multiclass classification $y$: $[0,1,\dots,9]$. Because the input vectors contain features with multiple possible values, they must be transformed into a binary format compatible with the Tsetlin Machine. We achieved this using Scikit-learn's \texttt{OneHotEncoder}, which expanded the feature set from $X$: $(1797, 64)$ with values in $[0,1,\dots,16]$ to $X$: $(1797, 890)$ with binary values $[0,1]$. The data was divided using a typical $80\%$ training and $20\%$ testing split while maintaining class proportions.
 
 \paragraph{Model hyperparameters}
 Similar to the Noisy-XOR evaluation, we maintained default parameters while only modifying the \texttt{GridSearchCV} space for our classifier, as shown in Table~\ref{tab:digits-params}. Given the significantly higher number of features in this dataset, the parameter search determined that increasing the number of clauses to $1500$ was beneficial for performance.

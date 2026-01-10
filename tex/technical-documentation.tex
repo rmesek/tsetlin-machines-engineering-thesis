@@ -190,36 +190,36 @@ The three main components of the \LibraryName library are the \emph{TsetlinMachi
 
 \paragraph{Data layout conventions used across the API:}
 \begin{compactitem}
-    \item X: flat array of shape (rows, num\_literals) of uint8\_t (each value 0 or 1)
-    \item y: flat array of shape (rows, y\_size) with element size y\_element\_size
-    \item y\_pred: flat array of shape (rows, num\_classes) with element size y\_element\_size
+    \item X: Flat array of shape (rows, num\_literals) of uint8\_t (each value 0 or 1).
+    \item y: Flat array of shape (rows, y\_size) with element size y\_element\_size.
+    \item y\_pred: Flat array of shape (rows, num\_classes) with element size y\_element\_size.
 \end{compactitem}
 
 \subsection{TsetlinMachine}
-The basic TM variant
+The basic TM variant.
 
-\begin{tabularx}{\textwidth}{@{}l L@{}}
-\textbf{Parameters:} &  \\ 
-\texttt{num\_classes} & Number of classes to predict. \\
-\texttt{threshold} & Threshold for clause votes. \\
-\texttt{num\_literals} & Number of literals (features) in the input data. \\
-\texttt{num\_clauses} & Number of clauses in the TM. \\
-\texttt{max\_state} & Maximum automaton state value. \\
-\texttt{min\_state} & Minimum automaton state value. \\
-\texttt{boost\_true\_positive\_feedback} & Whether to boost true positive feedback (0/1). \\
-\texttt{y\_size} & Size of the output vector (e.g. 1 for single-label classification). \\
-\texttt{y\_element\_size} & Size of each output element (in bytes). \\
-\texttt{s} & Sensitivity / learning parameter ($> 1.0$). \\
-\texttt{seed} & Random seed for reproducibility. \\ 
-\end{tabularx}
+\textbf{Parameters:}
+\begin{compactitem}
+    \item \texttt{num\_classes}: Number of classes to predict.
+    \item \texttt{threshold}: Threshold for clause votes.
+    \item \texttt{num\_literals}: Number of literals (features) in the input data.
+    \item \texttt{num\_clauses}: Number of clauses in the TM.
+    \item \texttt{max\_state}: Maximum automaton state value.
+    \item \texttt{min\_state}: Minimum automaton state value.
+    \item \texttt{boost\_true\_positive\_feedback}: Whether to boost true positive feedback (0/1).
+    \item \texttt{y\_size}: Size of the output vector (e.g., 1 for single-label classification).
+    \item \texttt{y\_element\_size}: Size of each output element (in bytes).
+    \item \texttt{s}: Sensitivity / learning parameter ($s > 1.0$).
+    \item \texttt{seed}: Random seed for reproducibility.
+\end{compactitem}
 
 \subsubsection{Advanced Usage}
 
 This implementation is highly versatile; both input and output may come in any shape. The only limiting factors are that the input is binary and it is a classification architecture (as opposed to regression). 
 There are two presets available:
 \begin{compactenum}
-    \item class\_idx - the output is a 32-bit unsigned integer signifying the index of chosen class
-    \item bin\_vector - the output is an array of 8-bit binary values, where 1 signifies a chosen class
+    \item class\_idx: The output is a 32-bit unsigned integer signifying the index of chosen class.
+    \item bin\_vector: The output is an array of 8-bit binary values, where 1 signifies a chosen class.
 \end{compactenum}
 Custom formats can also be freely implemented. All that is required is to write the implementation based on the functions below and then set them as callbacks with the corresponding \texttt{tm\_set\_[...]}
 

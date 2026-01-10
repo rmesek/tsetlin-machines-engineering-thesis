@@ -268,7 +268,7 @@ Even though there exists a number of existing libraries implementing the Tsetlin
 It was also decided \LibraryName should support multiple different TM variants so their efficiency could be tested -- Coalesced, Sparse and Stateless.
 
 \subsection{Model Serialization Library}
-Several libraries were compiled and compared as possible options to implement the model serialization format. Only C libraries were taken into consideration. See table ~\ref{tab:serial-lib-comp}.
+Several libraries were compiled and compared as possible options to implement the model serialization format. Only C libraries were taken into consideration. See Table~\ref{tab:serial-lib-comp}.
 
 \begin{table}[!htbp]
 \centering
@@ -281,82 +281,82 @@ Several libraries were compiled and compared as possible options to implement th
 \end{tabularx}
 \end{table}
 
-\section{Tsetlin Automaton}
+\section{TM implementation}
+This section describes the implementation of the different TM types. Each type is broken down into its main components, and provides technical intuition about their operation.
+
+\subsection{Tsetlin Automaton}
 A Tsetlin Automaton is the smallest part of a TM, and it is what clauses consist of. Implementation-wise it is represented by a singular, 8-bit integer, meaning its values can range from -127 to 127 by default. The range can be made smaller by setting model parameters $max\_state$ and $min\_state$. 
 Further on in this thesis, the term that a Tsetlin Automaton is active, means its internal integer value is greater or equal than halfway between $max\_state$ and $min\_state$; $value \ge \frac{max\_state + min\_state}{2}$. 
 One input bit on position $i$ has two corresponding Tsetlin Automata at positions in clause $2 \times i$ and $2 \times i + 1$. The first one -- positive -- decides whether the input bit -- $x_i$ -- should be included in the clause, and the other -- negative -- whether its negation -- $\neg x_i$ -- should be included.
 
-\section{Coalesced TM}
-Coalesced TM is the variant most closely resembling the original TM out of those implemented by \LibraryName. The implementation closely follows the paper.~\cite{glimsdal2021coalescedmultioutputtsetlinmachines}
+\subsection{Coalesced TM}
+Coalesced TM is the variant most closely resembling the original TM out of those implemented by \LibraryName. The implementation closely follows the paper~\cite{glimsdal2021coalescedmultioutputtsetlinmachines}.
 
-\subsection{Training}
-The training loop consists of three distinct steps repeated for each datapoint.
+\subsubsection{Training}
+The training loop consists of three distinct steps repeated for each datapoint, further explained below.
 \begin{compactenum}
-    \item Calculate clause output
-    \item Sum votes
-    \item Calculate and apply feedback
+    \item Calculate clause output.
+    \item Sum votes.
+    \item Calculate and apply feedback.
 \end{compactenum}
 
-\subsubsection{Calculate Clause Output}
-The current states of Tsetlin Automata in each clause are used to determine whether the clause activates - 1, or not - 0. This output is temporarily stored in an internal array. 
+\paragraph{Calculate Clause Output}
+The current states of Tsetlin Automata in each clause are used to determine whether the clause activates -- 1, or not -- 0. This output is temporarily stored in an internal array. 
 For this step specifically, a clause is active if either of two conditions is met:
 \begin{compactitem}
-    \item \textbf{the clause is empty} - no Tsetlin Automaton is active
-    \item for the training input datapoint, all bits corresponding to active positive Tsetlin Automata of this clause are set and all bits corresponding to active negative Tsetlin Automata of this clause are unset
+    \item \textbf{The clause is empty} -- no Tsetlin Automaton is active.
+    \item For the training input datapoint, all bits corresponding to active positive Tsetlin Automata of this clause are set and all bits corresponding to active negative Tsetlin Automata of this clause are unset.
 \end{compactitem}
 
-\subsubsection{Sum Votes}
+\paragraph{Sum Votes}
 This step uses the information calculated in the previous point whether clauses are active or not. Active clauses vote for all possible classes with trained weights. Specifically, clause $i$ votes for class $j$ with trained weight $w_{i,j}$. $w_{i,j}$ can be positive or negative. 
 As all active clauses vote, each class accumulates their votes. The sum of votes is then clipped to parameter $threshold$. It serves the same purpose as gradient clipping in other ML architectures, mainly for numerical stability. %TODO: citation
 
-\subsubsection{Calculate and Apply Feedback}
+\paragraph{Calculate and Apply Feedback}
 As the sum of votes indicates whether a class should be chosen or not, that prediction can be compared to the actual datapoint label. Based on this information, a suitable feedback to be applied to Tsetlin Automata. 
 For each datapoint two classes are specified for feedback:
-\begin{compactenum}
-    \item positive - one of the classes, or the one class, specified by label
-    \item negative - one of the classes not specified by label
-\end{compactenum}
+\begin{compactitem}
+    \item Positive -- one of the classes, or the one class, specified by label.
+    \item Negative -- one of the classes not specified by label.
+\end{compactitem}
 Both have a chance to trigger feedback to all clauses. 
 For the positive class, the chance is inversely proportional to the clipped sum of votes it received. That means the model applies feedback more often the \textit{less} sure it is the class is correct. Although unintuitive at first, this practice is used to avoid overfitting. 
 For the negative class, the chance is proportional to the clipped sum of votes it received. This means the model applies feedback more often the more sure it is the class is incorrect.
 
-\paragraph{Customization}
 What is unique to \LibraryName, it allows both predictions and output to be customized to be any type of data. 
 A custom feedback function can be set for the model, to override how positive and negative classes are chosen. The default uses normal classification, where the output and prediction is an integer identifying a class. 
-Another predefined function allows multi-class classification, where output and prediction is an 8-bit integer array where the length is the number of classes, where value 1 signifies a class with a given identifier being chosen, value 0 - not chosen. 
+Another predefined function allows multi-class classification, where output and prediction is an 8-bit integer array where the length is the number of classes, where value 1 signifies a class with a given identifier being chosen, value 0 -- not chosen. 
 Also a custom comparison function can be set for the model, to override when the output and prediction data classes should be treated as equal. By default a simple memory comparison is used, which handles the vast majority of uses -- even when fully customized.
 
-\subsubsection{Feedback}\label{feedback-dense}
+\paragraph{Feedback}\label{feedback-dense}
 When a chosen class triggers feedback to all clauses, for each clause separately one of three feedback types may be applied. 
 Tsetlin Automata changes specified in \textbf{Action} are not always changed -- they have a random chance to do so based on the parameter \textit{s} -- sensitivity -- further explained in \textbf{Sensitivity} for each feedback type.
+\begin{compactitem}
+\item \textbf{Type Ia}
+    \begin{compactitem}
+        \item \textbf{Condition:} The clause is active and voted correctly for the chosen class (with the correct weight sign).
+        \item \textbf{Action:} Reinforce Tsetlin Automata making up the clause, reinforce weight for the chosen class.
+        \item \textbf{Sensitivity:} The chance for change is either $\frac{1}{s}$ for true positive and true negative Tsetlin Automata, and otherwise its inversion -- $\frac{s - 1}{s}$. Model parameter \textit{boost\-\_true\-\_positive} makes it so that true positive Tsetlin Automata are always changed.
+        \item \textbf{Intuition:} The clause should continue to vote for the same class.
+    \end{compactitem}
+\item \textbf{Type Ib}
+    \begin{compactitem}
+        \item \textbf{Condition:} The clause is inactive and (would have) voted correctly for the chosen class.
+        \item \textbf{Action:} Lower the confidence of all the Tsetlin Automata making up the clause, positive and negative.
+        \item \textbf{Sensitivity:} The chance for change is always $\frac{1}{s}$.
+        \item \textbf{Intuition:} The clause should ``find something else to do'', countering force.
+    \end{compactitem}
+\item \textbf{Type II}
+    \begin{compactitem}
+        \item \textbf{Condition:} The clause is active and voted incorrectly for the chosen class.
+        \item \textbf{Action:} Raise, towards activation, inactive Tsetlin Automatons that could deactivate the clause for this datapoint, punish the weight of the chosen class towards zero.
+        \item \textbf{Sensitivity:} Change always happens.
+        \item \textbf{Intuition:} Try two things at once: exclude the clause and fix the weight (flip the sign). Although these goals are opposing, just one of them needs to come true, and the hope is one of them should do so before the other.
+    \end{compactitem}
+\item Nothing happens if the clause is inactive and would have voted incorrectly.
+\end{compactitem}
 
-\paragraph{Type Ia}
-\begin{description}
-    \item[Condition] the clause is active and voted correctly for the chosen class (with the correct weight sign)
-    \item[Action] reinforce Tsetlin Automata making up the clause, reinforce weight for the chosen class
-    \item[Sensitivity] the chance for change is either \( \frac{1}{s} \) for true positive and true negative Tsetlin Automata, and otherwise its inversion -- \( \frac{s - 1}{s} \). Model parameter \textit{boost\_true\_positive} makes it so that true positive Tsetlin Automata are always changed.
-    \item[Intuition] the clause should continue to vote for the same class
-\end{description}
-
-\paragraph{Type Ib}
-\begin{description}
-    \item[Condition] the clause is inactive and (would have) voted correctly for the chosen class
-    \item[Action] lower the confidence of all the Tsetlin Automata making up the clause, positive and negative
-    \item[Sensitivity] the chance for change is always \( \frac{1}{s} \)
-    \item[Intuition] the clause should "find something else to do", countering force
-\end{description}
-
-\paragraph{Type II}
-\begin{description}
-    \item[Condition] the clause is active and voted incorrectly for the chosen class
-    \item[Action] raise, towards activation, inactive Tsetlin Automatons that could deactivate the clause for this datapoint, punish the weight of the chosen class towards zero
-    \item[Sensitivity] change always happens
-    \item[Intuition] try two things at once: exclude the clause and fix the weight (flip the sign). Although these goals are opposing, just one of them needs to come true, and the hope is one of them should do so before the other.
-\end{description}
-
-Nothing happens if the clause if inactive and would have voted incorrectly.
-
-\subsection{Inference}
+\subsubsection{Inference}
 Inference on a datapoint looks very similar to training, with few key differences.
 \begin{compactenum}
     \item Calculate clause output
@@ -364,22 +364,21 @@ Inference on a datapoint looks very similar to training, with few key difference
     \item Apply output activation
 \end{compactenum}
 
-\subsubsection{Calculate Clause Output}
+\paragraph{Calculate Clause Output}
 Unlike in training, an empty clause -- with no active Tsetlin Automata -- is inactive. Otherwise it does the same thing -- calculates which clauses are active with a given input.
 
-\subsubsection{Sum Votes}
+\paragraph{Sum Votes}
 Exactly the same as training. Sums up class votes from active clauses.
 
-\subsubsection{Apply Output Activation}
+\paragraph{Apply Output Activation}
 Applies a function to determine the output from the summed up class votes. By default, it simply returns an integer -- an identifier of a class with the most votes.
 
-\paragraph{Customization}
 Again, this can be fully customized. A custom output activation function can be set for the model, to override what the model outputs based on the summed up weights.
 
 Another predefined function allows multi-class classification, where the output is an 8-bit integer array where the length is the number of classes, where value 1 signifies a class with a given identifier being chosen, value 0 - not chosen.
 
-\subsection{Data Layout}
-A clause is represented as a simple array of Tsetlin Automata states. For the sake of efficiency they are ordered by the literals they correspond to, in pairs of positive and negative Tsetlin Automata. This simplified representation is visualized in figure~\ref{fig:dense-data-layout}.
+\subsubsection{Data Layout}
+A clause is represented as a simple array of Tsetlin Automata states. For the sake of efficiency they are ordered by the literals they correspond to, in pairs of positive and negative Tsetlin Automata. This simplified representation is visualized in Figure~\ref{fig:dense-data-layout}.
 
 The \textit{i}-th array field represents the state of Tsetlin Automaton corresponding to literal with index $\lfloor \frac{i}{2} \rfloor$ -- positive if \textit{i} is even, negative if odd.
 
@@ -423,7 +422,7 @@ The \textit{i}-th array field represents the state of Tsetlin Automaton correspo
 \label{fig:dense-data-layout}
 \end{figure}
 
-\subsection{Model Serialization Format}
+\subsubsection{Model Serialization Format}
 
 The model state is represented by the FlatBuffers schema in Listing~\ref{lst:dense-schema}. It defines the model parameters, clause weights, and the internal states of the Tsetlin Automata.
 
@@ -458,10 +457,10 @@ The model state is represented by the FlatBuffers schema in Listing~\ref{lst:den
     \end{minted}
 \end{listing}
 
-\section{Sparse TM}
+\subsection{Sparse TM}
 A Sparse TM~\cite{glimsdal2024sparsetsetlinmachine} aims to efficiently process sparse data. It uses the same core principles and mechanics as the Coalesced TM, its main difference being the underlying data layout. It also introduces \textit{Active Literals} -- it functions as a list of literals considered to be added to sparse state. Notably, both sparse state and \textit{Active Literals} need to have a limited size or the model is slower and larger than Coalesced TM, and learns poorly -- something not mentioned in the paper~\cite{glimsdal2024sparsetsetlinmachine}.
 
-\subsection{Data Layout}
+\subsubsection{Data Layout}
 Unlike the Coalesced TM, the Sparse TM does not store all Tsetlin Automata. Simply put, it only keeps the Tsetlin Automata, which state is above a certain threshold. By doing so, in principle it does not need to waste space and computation power for Tsetlin Automata it deems unlikely to become active for a given clause. The simplified structure is shown in figure ~\ref{fig:sparse-data-layout}
 
 Since not all Tsetlin Automata are present in a clause a linked list is used as the underlying data structure. Identifying indices cannot be inferred from the data structure and need to be stored in nodes.
@@ -528,13 +527,13 @@ Since not all Tsetlin Automata are present in a clause a linked list is used as 
 \label{fig:sparse-data-layout}
 \end{figure}
 
-\subsection{Training}
+\subsubsection{Training}
 Aside from obvious changes from Coalesced TM needed to accommodate the different data structure, the feedback mechanism has some modifications. Namely, a new Tsetlin Automaton can be introduced to a clause only in type Ia of feedback, only when the corresponding literal currently belongs to Active Literals of a class which triggered this feedback. A literal can be added to \textit{Active Literals} in feedback type II. \textit{Active Literals} are not being explicitly removed, but the oldest is replaced when adding a new one.
 
-\section{Stateless}
+\subsection{Stateless TM}
 A Stateless TM is a slimmed down version of Sparse TM that does not allow any model training, at the same time further reducing model size to the smallest and fastest possible for inference. It should only be created from a trained model of a different TM variant.
 
-\subsection{Data Layout}
+\subsubsection{Data Layout}
 Stateless TM, as the name suggests, does not store Tsetlin Automaton states at all. Here a degenerated version of Tsetlin Automaton is active if it is present at all. The simplified structure is shown in figure ~\ref{fig:stateless-data-layout}
 
 \begin{figure}[!htbp]
@@ -599,10 +598,10 @@ While it is not costly to call once, the cost quickly accumulates over millions 
 
 \subsubsection{Analysis}
 \textit{rand()} is costly because it aims for a uniform spread, as evenly as possible. \LibraryName intentionally adopts a design that relaxes this uniformity, accepting minor statistical deviations that average out over millions of calls -- in order to prioritize execution speed and reduced power consumption. The pseudo random number generation for this purpose does not need to be cryptographically secure either -- \textit{rand()} is not anyway. 
-A quick look at \GreenTsetlinName revealed that it suffered from the same problem. Its solution was to use a wyhash64 algorithm. Using just an 64-bit integer addition, two 128-bit integer multiplications and few bitwise operations as well as a double multiplication, it is overall a much cheaper solution. 
-Listing ~\ref{lst:wyhash64} shows the \GreenTsetlinName implementation of wyhash64.
+A quick look at \GreenTsetlinName revealed that it suffered from the same problem. Its solution was to use a \texttt{wyhash64} algorithm. Using just an 64-bit integer addition, two 128-bit integer multiplications and few bitwise operations as well as a double multiplication, it is overall a much cheaper solution. 
+Listing ~\ref{lst:wyhash64} shows the \GreenTsetlinName implementation of \texttt{wyhash64}.
 \begin{listing}[!htbp]
-    \caption[\GreenTsetlinName implementation of wyhash64]{\GreenTsetlinName implementation of wyhash64\label{lst:wyhash64}}
+    \caption[\GreenTsetlinName implementation of \texttt{wyhash64}]{\GreenTsetlinName implementation of \texttt{wyhash64}\label{lst:wyhash64}}
     \begin{minted}{c}
 double next_u()
 {
@@ -620,12 +619,12 @@ double next_u()
 \end{listing}
 
 \subsubsection{Solution}
-Wyhash64 represents a significantly lower-cost solution compared to the alternative; however, its computational and energy costs remain non-negligible. 128-bit integer multiplications and double multiplication cost many precious CPU cycles which means time and power. 
-Listing ~\ref{lst:fast-prng} shows the \LibraryName implementation of xorshift32. 
+\texttt{Wyhash64} represents a significantly lower-cost solution compared to the alternative; however, its computational and energy costs remain non-negligible. 128-bit integer multiplications and double multiplication cost many precious CPU cycles which means time and power. 
+Listing ~\ref{lst:fast-prng} shows the \LibraryName implementation of \texttt{xorshift32}. 
 All that is really needed are a few bit shifts and XOR operations. It uses so few CPU cycles it is basically free. It might also be the case one of the authors likes low-level optimization an unhealthy amount. 
 
 \begin{listing}[!htbp]
-    \caption[\LibraryName implementation of xorshift32]{\LibraryName implementation of xorshift32\label{lst:fast-prng}}
+    \caption[\LibraryName implementation of \texttt{xorshift32}]{\LibraryName implementation of \texttt{xorshift32}\label{lst:fast-prng}}
     \begin{minted}{c}
 uint32_t prng_next_uint32(struct FastPRNG* prng) {
     uint32_t x = prng->state;
@@ -658,5 +657,5 @@ float prng_next_float(struct FastPRNG* prng) {
 
 
 \section{Summary}
-In conclusion, \LibraryName is a C library designed for resource-limited systems, using FlatBuffers format for model serialization. It can be used conveniently from Python on the host device, both inference and training is available from C on the edge device, and models can be transferred between them -- as shown in the System Architecture\ref{sec:system-architecture} section. 
+In conclusion, \LibraryName is a C library designed for resource-limited systems, using FlatBuffers format for model serialization. It can be used conveniently from Python on the host device, both inference and training is available from C on the edge device, and models can be transferred between them -- as shown in Section~\ref{sec:system-architecture}. 
 This chapter furthermore touches on the actual, low-level implementation of TM types. Notable optimizations are also explained here.
